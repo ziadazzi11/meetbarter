@@ -1,0 +1,455 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Enums removed for SQLite compatibility. using String instead.
+// Role: USER, ADMIN, MODERATOR
+// TradeStatus: OFFER_MADE, LOCKED, CONFIRMED_BY_BUYER, CONFIRMED_BY_SELLER, COMPLETED, DISPUTED, CANCELLED
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  passwordHash    String
+  fullName        String?
+  role            String   @default("USER") // Was Role
+  globalTrustScore Float   @default(1.0) // Base trust multiplier
+  walletBalance   Int      @default(0)   // Value Points (VP)
+  isSupporter     Boolean  @default(false) // Donations (Badge only)
+  phoneNumber     String?  // Privacy-protected contact info
+  country         String   @default("Lebanon")
+  subscriptionTier String  @default("FREE") // FREE, BUSINESS, PREMIUM
+  
+  // Ambassador Program
+  referredByUserId String?
+  ambassadorScore  Int     @default(0)
+  ambassadorStatus String  @default("NONE") // NONE, PENDING, ACTIVE, REJECTED
+
+  // Business Profile
+  isBusiness               Boolean @default(false)
+  businessName             String? // Trading name if different from full name
+  businessVerificationStatus String @default("NONE") // NONE, PENDING, REJECTED, VERIFIED
+  businessVerificationData String? // JSON: { country, notes, documentsChecked, adminId }
+
+  // Community Service Profile (Gardeners, Teachers, etc.)
+  communityRole            String? // DOCTOR, TEACHER, GARDENER, STUDENT, VETERAN, FIREFIGHTER
+  communityVerificationStatus String @default("NONE") // NONE, PENDING, REJECTED, VERIFIED
+  
+  // "Shy Gardener Protocol": Photo with tree is encouraged but OPTIONAL. 
+  // Standard ID or simple work proof is sufficient if user is shy.
+  communityEvidence        String? // JSON: { idPhotoUrl, certUrl, optionalTreeSelfieUrl }
+  
+  // Content Moderation
+  reportCount     Int      @default(0)
+  isBanned        Boolean  @default(false)
+  banReason       String?
+  bannedAt        DateTime?
+
+  // Terms of Service Acceptance
+  termsAcceptedAt DateTime?
+  termsVersion    String?  // e.g., "1.0", tracks which version user agreed to
+
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+
+  // Social Auth
+  authProvider     String?  // GOOGLE, FACEBOOK, OUTLOOK, INSTAGRAM
+  avatarUrl        String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  listings        Listing[]
+  buyerTrades     Trade[]   @relation("BuyerTrades")
+  sellerTrades    Trade[]   @relation("SellerTrades")
+  categoryTrusts  UserCategoryTrust[]
+  sentTransactions     Transaction[] @relation("Sender")
+  receivedTransactions Transaction[] @relation("Receiver")
+  receivedGrants       CommunityGrant[]
+  bounties        Bounty[]
+  moderationFlags ContentModerationFlag[]
+  successors      Successor[]
+
+  // Universal Succession & Continuity Protocol
+  heir1Name       String?
+  heir1Key        String? // Secret fingerprint
+  heir2Name       String?
+  heir2Key        String?
+  heir3Name       String?
+  heir3Key        String?
+  heir4Name       String?
+  heir4Key        String?
+  heir5Name       String?
+  heir5Key        String?
+
+  lastActivity    DateTime @default(now())
+  isDeceased      Boolean  @default(false)
+  deathDate       String?
+  deathPlace      String?
+  mokhtarName      String?
+  mokhtarLicense   String?
+  activityMetric   UserActivityMetric?
+}
+
+model Category {
+  id              String   @id @default(uuid())
+  name            String   @unique // e.g., "Vehicles", "Food"
+  description     String?
+  
+  // Category-Based Value Control
+  minVP           Int      @default(0)
+  maxVP           Int      @default(1000)
+  trustThreshold  Float    @default(0.8) // Min trust required to list
+  isLocked        Boolean  @default(false) // Admin freeze
+
+  // Phase 4.1: Legally Defensible Operational Escrow
+  escrowPercentage Float   @default(15.0) // Max percentage for this category
+  maxModerationVP  Int     @default(50)   // Max per bucket
+  maxVerificationVP Int    @default(50)
+  maxDisputeVP     Int     @default(100)
+  maxLogisticsVP   Int     @default(100)
+  maxFraudVP       Int     @default(200)
+
+  listings        Listing[]
+  userTrusts      UserCategoryTrust[]
+  trades          Trade[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model UserCategoryTrust {
+  id              String   @id @default(uuid())
+  userId          String
+  categoryId      String
+  trustScore      Float    @default(1.0) // Category-specific trust multiplier
+
+  user            User     @relation(fields: [userId], references: [id])
+  category        Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([userId, categoryId])
+}
+
+model Listing {
+  id              String   @id @default(uuid())
+  title           String
+  description     String
+  priceVP         Int
+  originalPrice   Int?     // Market price in Value Points
+  condition       String?  // NEW, USED_GOOD, USED_FAIR
+  images          String // Stored as JSON string locally
+  location        String   @default("Beirut") // Item Location
+  country         String   @default("Lebanon") // Worldwide accessibility
+  
+  // JSON field for category-specific attributes (e.g. proof of ownership, production date)
+  attributes      String? // Was Json, stored as string in SQLite
+  
+  // v1.2: Listing enhancements
+  listingType     String   @default("OFFER") // OFFER (normal) or REQUEST (reverse listing)
+  expiresAt       DateTime? // Optional expiration for time-limited listings
+  circleId        String?  // Optional: listing tagged to a Trade Circle
+  
+  // Content Moderation
+  isActive        Boolean  @default(true)
+  moderationStatus String  @default("APPROVED") // APPROVED, PENDING, REJECTED
+  
+  status          String   @default("ACTIVE") // ACTIVE, TRADED, ARCHIVED
+  
+  categoryId      String
+  sellerId        String
+  
+  category        Category @relation(fields: [categoryId], references: [id])
+  seller          User     @relation(fields: [sellerId], references: [id])
+  circle          TradeCircle? @relation(fields: [circleId], references: [id])
+  trades          Trade[]
+  messages        Message[]
+  moderationFlags ContentModerationFlag[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Trade {
+  id              String      @id @default(uuid())
+  listingId       String
+  buyerId         String
+  sellerId        String
+  categoryId      String
+
+  offerVP         Int
+  status          String      @default("OFFER_MADE") // Was TradeStatus (OFFER_MADE)
+  
+  // Phase 4: Dynamic Operational Escrow
+  operationalEscrowVP Int     @default(0)   // Calculated at creation
+  isVerified      Boolean     @default(false)
+  justification   String?     // Overall verification note
+  
+  // v1.2: Trade enhancements
+  intentTimestamp DateTime?   // Soft commitment timestamp (non-binding)
+  preTradeChecklist String?   // JSON: {timeAgreed, locationAgreed, conditionAgreed}
+  
+  buyerConfirmed  Boolean     @default(false)
+  sellerConfirmed Boolean     @default(false)
+
+  expiresAt       DateTime?   // Auto-refund if not confirmed by this time
+
+  listing         Listing  @relation(fields: [listingId], references: [id])
+  buyer           User     @relation("BuyerTrades", fields: [buyerId], references: [id])
+  seller          User     @relation("SellerTrades", fields: [sellerId], references: [id])
+  category        Category @relation(fields: [categoryId], references: [id])
+  
+  timeline        TradeTimeline[]
+  operationCosts  TradeOperationCost[]
+  transactions    Transaction[]
+
+  messages        Message[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Immutable record of cost allocations
+model TradeOperationCost {
+  id              String   @id @default(uuid())
+  tradeId         String
+  bucket          String   // MODERATION, VERIFICATION, DISPUTE, LOGISTICS, FRAUD
+  amountVP        Int
+  justification   String
+  adminId         String
+  timestamp       DateTime @default(now())
+
+  trade           Trade    @relation(fields: [tradeId], references: [id])
+}
+
+// APPEND-ONLY LEDGER
+model Transaction {
+  id              String   @id @default(uuid())
+  tradeId         String
+  fromUserId      String?  // Null for system minting
+  toUserId        String?  // Null for system burn
+  amountVP        Int
+  
+  type            String   // TRANSFER, OPERATIONAL_ESCROW, PENALTY, REWARD, ESCROW_REFUND
+  timestamp       DateTime @default(now())
+
+  trade           Trade    @relation(fields: [tradeId], references: [id])
+  fromUser        User?    @relation("Sender", fields: [fromUserId], references: [id])
+  toUser          User?    @relation("Receiver", fields: [toUserId], references: [id])
+}
+
+model SystemConfig {
+  id        Int      @id @default(1)
+  isFrozen  Boolean  @default(false) // Global Kill Switch
+  
+  alphaCode       String   @default("2abwal2ibin")
+  betaCode        String   @default("love one another")
+  fingerprintCode String   @default("FINGERPRINT")
+
+  // Phase 4: Dynamic Fees
+  feePercentage   Int      @default(15)
+  laborBaseline   Int      @default(6)
+
+  // Gardener's Insurance Protocol
+  emergencyFundVP Int      @default(0)
+  ambassadorFundVP Int     @default(0) // 1% of Trade Value
+
+  // AI Market Pulse & Crisis Awareness
+  marketSentimentIndex Float   @default(0.7) // 0.0 (Crash) - 1.0 (Boom)
+  isCrisisActive       Boolean @default(true) // Default to true for Lebanon context
+  lastMarketCheck      DateTime @default(now())
+  
+  // v1.2: Feature Flags for safe rollout
+  featureFlags    String?  // JSON: {timeline, activityIndicators, reverseListings, etc.}
+  
+  // Succession & Continuity
+  heir1           String   @default("Siham Hareb")
+  heir1Key        String   @default("be")
+  heir2           String   @default("Sandra Azzi Alkorem")
+  heir2Key        String   @default("happy")
+  heir3           String   @default("Lara Azzi")
+  heir3Key        String   @default("i")
+  heir4           String   @default("Joseph Chidiac")
+  heir4Key        String   @default("love")
+  heir5           String   @default("Alexander Chidiac")
+  heir5Key        String   @default("you")
+  
+  // Advanced Death Verification Protocol
+  lastAdminActivity DateTime @default(now())
+  deathCertificateVerified Boolean @default(false)
+  deathDate       String?
+  deathPlace      String?
+  mokhtarName     String?
+  mokhtarLicense  String?
+  
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id              String   @id @default(uuid())
+  adminId         String?  // Optional if system action
+  action          String   // e.g., "FREEZE_SYSTEM", "GRANT_VP", "BAN_USER"
+  details         String   // JSON string details
+  ipAddress       String?
+  
+  createdAt       DateTime @default(now())
+}
+
+model Message {
+  id              String   @id @default(uuid())
+  listingId       String
+  senderId        String
+  receiverId      String
+  templateKey     String   // e.g., "AVAILABILITY", "CONDITION", "PICKUP_COORD"
+  content         String   // The actual formatted message
+  isRead          Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  listing         Listing  @relation(fields: [listingId], references: [id])
+  sender          User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver        User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  tradeId         String?
+  trade           Trade?   @relation(fields: [tradeId], references: [id])
+}
+
+model CommunityGrant {
+  id              String   @id @default(uuid())
+  recipientId     String
+  amountVP        Int
+  reason          String
+  adminId         String?
+  
+  recipient       User     @relation(fields: [recipientId], references: [id])
+  
+  createdAt       DateTime @default(now())
+}
+
+model ContentModerationFlag {
+  id              String   @id @default(uuid())
+  listingId       String
+  reportedByUserId String?
+  
+  reason          String   // Matched prohibited keyword or user report reason
+  category        String   // DRUGS, WEAPONS, STOLEN, COUNTERFEIT, etc.
+  severity        String   // AUTO_REJECT, HIGH_RISK, MEDIUM_RISK, LOW_RISK
+  matchedKeywords String?  // JSON array of keywords that triggered flag
+  
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  reviewedBy      String?
+  reviewNotes     String?
+  reviewedAt      DateTime?
+  
+  listing         Listing  @relation(fields: [listingId], references: [id])
+  reportedBy      User?    @relation(fields: [reportedByUserId], references: [id])
+  
+  createdAt       DateTime @default(now())
+}
+
+// ========================================
+// v1.2 NON-MONETARY FEATURES
+// ========================================
+
+// 1. Trade Timeline - Immutable state progression tracking
+model TradeTimeline {
+  id              String   @id @default(uuid())
+  tradeId         String
+  state           String   // OFFER_SENT, OFFER_ACCEPTED, ITEMS_LOCKED, MEETUP_AGREED, TRADE_COMPLETED, TRADE_VERIFIED
+  timestamp       DateTime @default(now())
+  metadata        String?  // JSON for additional context
+  
+  trade           Trade    @relation(fields: [tradeId], references: [id])
+  
+  @@index([tradeId])
+}
+
+// 6. Trade Circles - Community-based trade groups
+model TradeCircle {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  isPublic        Boolean  @default(true)
+  creatorId       String
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  memberships     CircleMembership[]
+  listings        Listing[]
+}
+
+model CircleMembership {
+  id              String   @id @default(uuid())
+  userId          String
+  circleId        String
+  joinedAt        DateTime @default(now())
+  
+  circle          TradeCircle @relation(fields: [circleId], references: [id])
+  
+  @@unique([userId, circleId])
+  @@index([circleId])
+}
+
+// 2. User Activity Metrics - Passive trust signals
+model UserActivityMetric {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+  lastSeenAt      DateTime @default(now())
+  averageReplyHours Float? // Calculated from last 20 interactions
+  calculatedAt    DateTime @default(now())
+  
+  updatedAt       DateTime @updatedAt
+}
+
+// 5. City Pulse - Cached city-level statistics
+model CityPulseCache {
+  id              String   @id @default(uuid())
+  city            String
+  country         String
+  topCategories   String   // JSON array of {categoryId, name, count}
+  newListingsToday Int     @default(0)
+  activeTraders   Int      @default(0)
+  lastUpdated     DateTime @default(now())
+  
+  @@unique([city, country])
+  @@index([country])
+}
+
+// 7. Community Bounties - "Builders' Hub"
+model Bounty {
+  id              String   @id @default(uuid())
+  title           String
+  description     String
+  rewardVP        Int
+  status          String   @default("OPEN") // OPEN, CLAIMED, SUBMITTED, COMPLETED
+  
+  assigneeId      String?
+  assignee        User?    @relation(fields: [assigneeId], references: [id])
+  
+  submissionEvidence String? // Link to PR or Doc
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Successor {
+  id              String   @id @default(uuid())
+  fullName        String   // e.g. Gia Alkoroum
+  dateOfBirth     DateTime 
+  parentId        String
+  
+  parent          User     @relation(fields: [parentId], references: [id])
+  
+  // Locking Mechanism
+  unlockDate      DateTime // DOB + 21 Years
+  isUnlocked      Boolean  @default(false)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

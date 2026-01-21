@@ -1,0 +1,234 @@
+.city-pulse-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #111827;
+}
+
+.pulse-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.pulse-header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0;
+    background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.pulse-header p {
+    color: #6b7280;
+    margin-top: 5px;
+    font-size: 1.1rem;
+}
+
+.city-selector {
+    display: flex;
+    gap: 10px;
+    background: #f3f4f6;
+    padding: 5px;
+    border-radius: 12px;
+    overflow-x: auto;
+}
+
+.city-pill {
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-weight: 600;
+    color: #4b5563;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.city-pill:hover {
+    background: #e5e7eb;
+}
+
+.city-pill.active {
+    background: white;
+    color: #10b981;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.pulse-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    color: #6b7280;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #10b981;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.metric-card {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: transform 0.2s;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.metric-card .icon {
+    font-size: 2.5rem;
+    background: #f0fdf4;
+    padding: 15px;
+    border-radius: 12px;
+}
+
+.metric-content h3 {
+    margin: 0;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: #6b7280;
+    letter-spacing: 0.5px;
+}
+
+.metric-content .value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #111827;
+    line-height: 1.2;
+}
+
+.metric-content .label {
+    font-size: 0.85rem;
+    color: #10b981;
+    font-weight: 500;
+}
+
+.categories-section {
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 40px;
+}
+
+.categories-section h2 {
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 1.5rem;
+}
+
+.category-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px 0;
+}
+
+.category-row .rank {
+    width: 40px;
+    font-weight: 700;
+    color: #9ca3af;
+}
+
+.category-row .cat-name {
+    width: 200px;
+    font-weight: 600;
+}
+
+.category-row .cat-count {
+    width: 100px;
+    color: #6b7280;
+    text-align: right;
+    margin-right: 20px;
+}
+
+.category-row .cat-bar {
+    flex: 1;
+    height: 12px;
+    background: #f3f4f6;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.category-row .fill {
+    height: 100%;
+    background: #3b82f6;
+    border-radius: 6px;
+    transition: width 1s ease-out;
+}
+
+.live-feed-section {
+    background: #111827;
+    color: white;
+    padding: 30px;
+    border-radius: 16px;
+}
+
+.live-feed-section h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.25rem;
+}
+
+.feed-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px 0;
+    border-bottom: 1px solid #374151;
+}
+
+.feed-item:last-child {
+    border-bottom: none;
+}
+
+.feed-time {
+    color: #9ca3af;
+    font-size: 0.9rem;
+    min-width: 80px;
+}
+
+.feed-text {
+    font-size: 1rem;
+}
+
+.feed-text strong {
+    color: #34d399;
+}

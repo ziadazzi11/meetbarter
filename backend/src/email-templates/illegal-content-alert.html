@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚠️ Illegal Content Alert - Dekish</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style="padding: 30px; background-color: #dc2626; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 24px;">
+                                ⚠️ ILLEGAL CONTENT DETECTED
+                            </h1>
+                        </td>
+                    </tr>
+
+                    <!-- Alert Details -->
+                    <tr>
+                        <td style="padding: 30px;">
+                            <p style="margin: 0 0 20px 0; font-size: 16px; color: #374151;">
+                                A listing has been automatically flagged for containing <strong>prohibited keywords</strong>. 
+                                Immediate review required.
+                            </p>
+
+                            <!-- Severity Box -->
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                                <tr>
+                                    <td style="padding: 15px; background-color: #fee2e2; border-left: 4px solid #dc2626;">
+                                        <p style="margin: 0; font-size: 14px; color: #7f1d1d;">
+                                            <strong>Severity:</strong> {{SEVERITY}}<br>
+                                            <strong>Category:</strong> {{CATEGORY}}<br>
+                                            <strong>Matched Keywords:</strong> {{MATCHED_KEYWORDS}}
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Listing Details -->
+                            <h2 style="font-size: 18px; color: #111827; margin: 20px 0 10px 0;">
+                                Listing Details
+                            </h2>
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e5e7eb;">
+                                <tr>
+                                    <td style="padding: 10px; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb; font-weight: bold; width: 150px;">
+                                        Listing ID:
+                                    </td>
+                                    <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">
+                                        {{LISTING_ID}}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb; font-weight: bold;">
+                                        Title:
+                                    </td>
+                                    <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">
+                                        {{LISTING_TITLE}}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb; font-weight: bold;">
+                                        Description:
+                                    </td>
+                                    <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">
+                                        {{LISTING_DESCRIPTION}}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; background-color: #f9fafb; font-weight: bold;">
+                                        Country:
+                                    </td>
+                                    <td style="padding: 10px;">
+                                        {{COUNTRY}}
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Seller Info -->
+                            <h2 style="font-size: 18px; color: #111827; margin: 20px 0 10px 0;">
+                                Seller Information
+                            </h2>
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e5e7eb;">
+                                <tr>
+                                    <td style="padding: 10px; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb; font-weight: bold; width: 150px;">
+                                        User ID:
+                                    </td>
+                                    <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">
+                                        {{SELLER_ID}}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb; font-weight: bold;">
+                                        Email:
+                                    </td>
+                                    <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">
+                                        {{SELLER_EMAIL}}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb; font-weight: bold;">
+                                        Name:
+                                    </td>
+                                    <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">
+                                        {{SELLER_NAME}}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; background-color: #f9fafb; font-weight: bold;">
+                                        Previous Violations:
+                                    </td>
+                                    <td style="padding: 10px; color: #dc2626; font-weight: bold;">
+                                        {{VIOLATION_COUNT}}
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Action Required -->
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                                <tr>
+                                    <td style="padding: 15px; background-color: #fef3c7; border-left: 4px solid #f59e0b;">
+                                        <p style="margin: 0; font-size: 14px; color: #78350f;">
+                                            <strong>⚠️ Action Required:</strong><br>
+                                            This listing has been automatically deactivated and is pending your review. 
+                                            Log in to the admin panel to approve or reject this flag.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- CTA Button -->
+                            <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td align="center" style="padding: 20px 0;">
+                                        <a href="{{ADMIN_URL}}/moderation" 
+                                           style="display: inline-block; padding: 15px 30px; background-color: #dc2626; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+                                            Review in Moderation Queue
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 20px; background-color: #f9fafb; text-align: center; border-top: 1px solid #e5e7eb;">
+                            <p style="margin: 0; font-size: 12px; color: #6b7280;">
+                                This is an automated alert from Dekish Content Moderation System.<br>
+                                Timestamp: {{TIMESTAMP}}<br>
+                                IP Address: {{IP_ADDRESS}}
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

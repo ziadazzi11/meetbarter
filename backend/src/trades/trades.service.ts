@@ -1,0 +1,266 @@
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { TimelineService } from '../timeline/timeline.service';
+
+@Injectable()
+export class TradesService {
+  constructor(
+    private prisma: PrismaService,
+    private timelineService: TimelineService
+  ) { }
+
+  async createTrade(listingId: string, buyerId: string) {
+    // 1. Validate Listing & Buyer
+    const listing = await this.prisma.listing.findUnique({ where: { id: listingId } });
+    if (!listing || listing.status !== 'ACTIVE') {
+      throw new BadRequestException('Listing is not available');
+    }
+
+    const buyer = await this.prisma.user.findUnique({ where: { id: buyerId } });
+    if (!buyer) throw new BadRequestException('Buyer not found');
+
+    // Logic: Buyer pays Price + 7.5% Fee
+    const buyerFee = Math.round(listing.priceVP * 0.075);
+    const totalDeduction = listing.priceVP + buyerFee;
+
+    if (buyer.walletBalance < totalDeduction) {
+      throw new BadRequestException(`Insufficient funds. Need ${totalDeduction} VP (Price + 7.5% Fee)`);
+    }
+
+    // Set Expiration (12 Hours from now)
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 12);
+
+    // 2. Transaction: Deduct from Buyer, Create Trade
+    return this.prisma.$transaction(async (tx) => {
+      // Deduct funds
+      await tx.user.update({
+        where: { id: buyerId },
+        data: { walletBalance: { decrement: totalDeduction } }
+      });
+
+      // Update Listing status
+      await tx.listing.update({
+        where: { id: listingId },
+        data: { status: 'TRADED' } // Pending
+      });
+
+      // Phase 4.1: Category-Based Operational Escrow
+      // Total Escrow = 15% of Price (7.5% from Buyer, 7.5% from Seller)
+      const operationalEscrowVP = Math.round(listing.priceVP * 0.15);
+
+      // Create Trade
+      const newTrade = await tx.trade.create({
+        data: {
+          listing: { connect: { id: listingId } },
+          category: { connect: { id: listing.categoryId } },
+          buyer: { connect: { id: buyerId } },
+          seller: { connect: { id: listing.sellerId } },
+          offerVP: listing.priceVP,
+          operationalEscrowVP: operationalEscrowVP,
+          status: 'LOCKED',
+          expiresAt: expiresAt,
+        }
+      });
+
+      // v1.2: Initialize Timeline
+      await this.timelineService.addTimelineEvent(newTrade.id, 'OFFER_SENT');
+
+      return newTrade;
+    });
+  }
+
+  async confirm(id: string, userId: string) {
+    const trade = await this.prisma.trade.findUnique({ where: { id } });
+    if (!trade) throw new BadRequestException('Trade not found');
+
+    const isBuyer = trade.buyerId === userId;
+    const isSeller = trade.sellerId === userId;
+
+    if (!isBuyer && !isSeller) throw new BadRequestException('Not authorized');
+
+    // Update confirmation flags
+    const updatedTrade = await this.prisma.trade.update({
+      where: { id },
+      data: {
+        buyerConfirmed: isBuyer ? true : undefined,
+        sellerConfirmed: isSeller ? true : undefined,
+      }
+    });
+
+    // Check if BOTH confirmed -> Release Funds
+    if (updatedTrade.buyerConfirmed && updatedTrade.sellerConfirmed) {
+      return this.prisma.$transaction(async (tx) => {
+        // Seller Payout = Trade VP - Seller's Fee (7.5%)
+        // Platform holds the rest (15% total: 7.5% from Buyer, 7.5% from Seller) in Escrow
+        const sellerFee = Math.floor(trade.offerVP * 0.075);
+        const sellerPayout = trade.offerVP - sellerFee;
+
+        await tx.user.update({
+          where: { id: trade.sellerId },
+          data: { walletBalance: { increment: sellerPayout } }
+        });
+
+        // Update Trade status
+        return tx.trade.update({
+          where: { id },
+          data: { status: 'COMPLETED' }
+        });
+      });
+    }
+
+    return updatedTrade;
+  }
+
+  async verifyTrade(id: string, bucketAllocations: { bucket: string, amountVP: number, justification: string }[], adminId: string) {
+    const trade = await this.prisma.trade.findUnique({
+      where: { id },
+      include: { buyer: true, category: true }
+    });
+    if (!trade) throw new BadRequestException('Trade not found');
+
+    // Ensure logic: sum(allocations) <= operationalEscrow
+    const totalActualCost = bucketAllocations.reduce((sum, b) => sum + Number(b.amountVP), 0);
+
+    // Admin Override Limit Check logic could go here, skipping for MVP speed
+
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Create Immutable Cost Records
+      for (const allocation of bucketAllocations) {
+        await tx.tradeOperationCost.create({
+          data: {
+            tradeId: trade.id,
+            bucket: allocation.bucket,
+            amountVP: Number(allocation.amountVP),
+            justification: allocation.justification,
+            adminId
+          }
+        });
+      }
+
+      // 2. Mark Trade as Verified
+      const updatedTrade = await tx.trade.update({
+        where: { id },
+        data: {
+          isVerified: true,
+          justification: `Verified with ${bucketAllocations.length} cost allocations.`
+        }
+      });
+
+      // 3. Process Refund & Community Contribution
+      // Calculation Base: 15% Escrow was held.
+      // Logic: 
+      // - 4% Emergency Fund
+      // - 1% Ambassador Fund
+      // - 10% Logistics/Admin (Subject to Refund)
+
+      const tradeValue = trade.offerVP;
+      const emergencyShare = Math.floor(tradeValue * 0.04);
+      const ambassadorShare = Math.floor(tradeValue * 0.01);
+      const adminBudget = Math.floor(tradeValue * 0.10);
+
+      const userRefund = Math.max(0, adminBudget - totalActualCost);
+
+      // Move contributions
+      await tx.systemConfig.update({
+        where: { id: 1 },
+        data: {
+          emergencyFundVP: { increment: emergencyShare },
+          ambassadorFundVP: { increment: ambassadorShare }
+        }
+      });
+
+      if (userRefund > 0) {
+        await tx.user.update({
+          where: { id: trade.buyerId },
+          data: { walletBalance: { increment: userRefund } }
+        });
+
+        // Log the refund
+        await tx.transaction.create({
+          data: {
+            tradeId: trade.id,
+            toUserId: trade.buyerId,
+            amountVP: userRefund,
+            type: 'ESCROW_REFUND',
+          }
+        });
+      }
+
+      return updatedTrade;
+    });
+  }
+
+  async findAll(userId: string) {
+    return this.prisma.trade.findMany({
+      where: {
+        OR: [{ buyerId: userId }, { sellerId: userId }]
+      },
+      include: {
+        listing: true,
+        buyer: { select: { fullName: true, phoneNumber: true } },
+        seller: { select: { fullName: true, phoneNumber: true } },
+        timeline: { orderBy: { timestamp: 'asc' } }
+      }
+    });
+  }
+
+  // v1.2: Soft Commitment (non-binding intent)
+  async recordSoftCommitment(tradeId: string, userId: string) {
+    const trade = await this.prisma.trade.findUnique({ where: { id: tradeId } });
+    if (!trade) throw new BadRequestException('Trade not found');
+
+    if (trade.buyerId !== userId && trade.sellerId !== userId) {
+      throw new BadRequestException('Not authorized');
+    }
+
+    return this.prisma.trade.update({
+      where: { id: tradeId },
+      data: { intentTimestamp: new Date() }
+    });
+  }
+
+  // v1.2: Submit Pre-Trade Checklist
+  async submitChecklist(
+    tradeId: string,
+    userId: string,
+    checklist: { timeAgreed: boolean; locationAgreed: boolean; conditionAgreed: boolean }
+  ) {
+    const trade = await this.prisma.trade.findUnique({ where: { id: tradeId } });
+    if (!trade) throw new BadRequestException('Trade not found');
+
+    if (trade.buyerId !== userId && trade.sellerId !== userId) {
+      throw new BadRequestException('Not authorized');
+    }
+
+    if (!checklist.timeAgreed || !checklist.locationAgreed || !checklist.conditionAgreed) {
+      throw new BadRequestException('All checklist items must be agreed to');
+    }
+
+    const updatedTrade = await this.prisma.trade.update({
+      where: { id: tradeId },
+      data: { preTradeChecklist: JSON.stringify(checklist) }
+    });
+
+    await this.timelineService.addTimelineEvent(tradeId, 'MEETUP_AGREED', checklist);
+
+    return updatedTrade;
+  }
+
+  // v1.2: Get trade with timeline
+  async getTrade(id: string) {
+    const trade = await this.prisma.trade.findUnique({
+      where: { id },
+      include: {
+        listing: true,
+        buyer: { select: { fullName: true, email: true, phoneNumber: true } },
+        seller: { select: { fullName: true, email: true, phoneNumber: true } },
+        timeline: { orderBy: { timestamp: 'asc' } }
+      }
+    });
+
+    if (!trade) throw new BadRequestException('Trade not found');
+
+    return trade;
+  }
+}

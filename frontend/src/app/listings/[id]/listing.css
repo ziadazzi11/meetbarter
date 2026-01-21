@@ -1,0 +1,147 @@
+.listing-detail-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 1rem;
+}
+
+.listing-main-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: white;
+}
+
+.listing-hero-image {
+    height: 300px;
+    background-color: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #9ca3af;
+}
+
+.listing-content {
+    padding: 30px;
+}
+
+.listing-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.listing-title-row h1 {
+    margin: 0;
+    font-size: 2rem;
+}
+
+.listing-price-info {
+    text-align: right;
+}
+
+.listing-current-vp {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #2563eb;
+}
+
+.listing-was-vp {
+    font-size: 0.9rem;
+    color: #6b7280;
+    text-decoration: line-through;
+}
+
+.escrow-disclaimer {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.condition-badge {
+    margin-top: 10px;
+}
+
+.ai-pricing-box {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f0f9ff;
+    border-left: 4px solid #0ea5e9;
+    border-radius: 4px 8px 8px 4px;
+}
+
+.ai-pricing-title {
+    font-size: 0.9rem;
+    color: #0369a1;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.ai-pricing-desc {
+    font-size: 0.85rem;
+    color: #0c4a6e;
+    line-height: 1.4;
+}
+
+.listing-desc {
+    font-size: 1.1rem;
+    color: #4b5563;
+    line-height: 1.6;
+    margin: 20px 0;
+}
+
+.seller-sidebar {
+    padding: 15px;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.seller-info-label {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-bottom: 5px;
+}
+
+.seller-sidebar-trust {
+    font-size: 0.9rem;
+}
+
+.escrow-refund-note {
+    font-weight: bold;
+    color: #166534;
+}
+
+.badge-pill {
+    padding: 4px 12px;
+    font-size: 0.9rem;
+}
+
+.btn-purchase {
+    width: 100%;
+    padding: 15px;
+    background-color: #16a34a;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.purchase-footer-text {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 0.8rem;
+    color: #666;
+}
