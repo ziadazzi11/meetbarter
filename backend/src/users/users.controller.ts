@@ -10,6 +10,11 @@ export class UsersController {
         return this.usersService.findMe();
     }
 
+    @Put(':id/profile')
+    updateProfile(@Param('id') id: string, @Body() body: { bannerUrl?: string; themePreferences?: string; fullName?: string; avatarUrl?: string }) {
+        return this.usersService.updateProfile(id, body);
+    }
+
     @Post(':id/request-business')
     requestBusiness(@Param('id') id: string, @Body() body: { businessName: string; referralCode?: string }) {
         return this.usersService.requestBusinessVerification(id, body.businessName, body.referralCode);
@@ -58,7 +63,7 @@ export class UsersController {
     @Put(':id/upgrade')
     upgradeSubscription(@Param('id') id: string) {
         // Mock Payment: Just upgrade to PREMIUM
-        return this.usersService.upgradeSubscription(id);
+        return this.usersService.upgradeSubscription(id, 'PREMIUM');
     }
 
     @Post('social-login')

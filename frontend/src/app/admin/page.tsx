@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import "./admin.css";
 
@@ -203,10 +203,48 @@ export default function AdminPage() {
         risk: { maxConcentration: number; topPartner: string | null };
     }
 
+    interface Bounty {
+        id: string;
+        title: string;
+        description: string;
+        rewardVP: number;
+        status: string;
+        assignee?: { fullName: string };
+        submissionEvidence?: string;
+    }
+
+    interface ModerationFlag {
+        id: string;
+        reason: string;
+        category: string;
+        severity: string;
+        matchedKeywords: string;
+        listing: {
+            title: string;
+            seller: { fullName: string; email: string; reportCount: number };
+        };
+    }
+
     // ... inside AdminPage component ...
     const [pendingBusinesses, setPendingBusinesses] = useState<BusinessRequest[]>([]);
     const [pendingCommunity, setPendingCommunity] = useState<CommunityRequest[]>([]);
     const [pendingAmbassadors, setPendingAmbassadors] = useState<AmbassadorRequest[]>([]);
+    const [submittedBounties, setSubmittedBounties] = useState<Bounty[]>([]);
+    const [moderationFlags, setModerationFlags] = useState<ModerationFlag[]>([]);
+
+    const fetchBounties = useCallback(() => {
+        fetch("http://localhost:3001/bounties")
+            .then(res => res.json())
+            .then(data => {
+                setSubmittedBounties(data.filter((b: Bounty) => b.status === 'SUBMITTED'));
+            });
+    }, []);
+
+    const fetchModerationFlags = useCallback(() => {
+        fetch("http://localhost:3001/admin/moderation/flags")
+            .then(res => res.json())
+            .then(setModerationFlags);
+    }, []);
 
     useEffect(() => {
         fetchAuditLogs();
@@ -217,7 +255,34 @@ export default function AdminPage() {
         fetchPendingBusinesses();
         fetchPendingCommunity();
         fetchPendingAmbassadors();
-    }, []);
+        fetchBounties();
+        fetchModerationFlags();
+    }, [fetchBounties, fetchModerationFlags]);
+
+    const handleApproveBounty = async (bountyId: string) => {
+        if (!confirm("Approve completion and release VP?")) return;
+        try {
+            await fetch(`http://localhost:3001/bounties/${bountyId}/complete`, { method: 'PUT' });
+            alert("Bounty Completed & Paid!");
+            fetchBounties();
+        } catch (e) { alert("Error"); }
+    };
+
+    const handleFlagAction = async (flagId: string, action: 'approve' | 'reject') => {
+        if (!code1 || !fingerprintCode) {
+            alert("Security Codes Required");
+            return;
+        }
+        try {
+            await fetch(`http://localhost:3001/admin/moderation/flags/${flagId}/${action}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code1, fingerprintCode })
+            });
+            alert(`Flag ${action}d!`);
+            fetchModerationFlags();
+        } catch (e) { alert("Error processing flag"); }
+    };
 
     const fetchPendingAmbassadors = () => {
         fetch("http://localhost:3001/admin/pending-ambassadors")
@@ -432,6 +497,94 @@ export default function AdminPage() {
                                     style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none' }}
                                 >
                                     ✅ Grant Status
+                                </button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        )}
+    </section>
+
+    {/* BOUNTY MANAGEMENT SECTION */ }
+    <section className="admin-section" style={{ borderColor: '#f59e0b', backgroundColor: '#fffbeb' }}>
+        <h2>🏆 Bounty Review</h2>
+        {submittedBounties.length === 0 ? (
+            <p className="no-data">No submitted bounties pending review.</p>
+        ) : (
+            <table className="admin-table">
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Assignee</th>
+                        <th>Evidence</th>
+                        <th>Reward</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {submittedBounties.map((b) => (
+                        <tr key={b.id}>
+                            <td>{b.title}</td>
+                            <td>{b.assignee?.fullName}</td>
+                            <td style={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.submissionEvidence}</td>
+                            <td className="font-bold text-green-600">{b.rewardVP} VP</td>
+                            <td>
+                                <button
+                                    onClick={() => handleApproveBounty(b.id)}
+                                    className="admin-button-small"
+                                    style={{ backgroundColor: '#16a34a' }}
+                                >
+                                    Approve & Pay
+                                </button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        )}
+    </section>
+
+    {/* MODERATION QUEUE */ }
+    <section className="admin-section" style={{ borderColor: '#ef4444', backgroundColor: '#fef2f2' }}>
+        <h2>🛡️ Content Moderation Queue</h2>
+        {moderationFlags.length === 0 ? (
+            <p className="no-data">No flagged content.</p>
+        ) : (
+            <table className="admin-table">
+                <thead>
+                    <tr>
+                        <th>Listing</th>
+                        <th>Violation</th>
+                        <th>Seller Risk</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {moderationFlags.map((flag) => (
+                        <tr key={flag.id}>
+                            <td><strong>{flag.listing.title}</strong></td>
+                            <td>
+                                <span className="badge badge-danger">{flag.category}</span>
+                                <div className="text-xs mt-1 text-gray-500">{flag.reason}</div>
+                            </td>
+                            <td>
+                                {flag.listing.seller.reportCount} Reports
+                            </td>
+                            <td className="flex gap-2">
+                                <button
+                                    onClick={() => handleFlagAction(flag.id, 'approve')}
+                                    className="admin-button-small"
+                                    style={{ backgroundColor: '#16a34a' }}
+                                >
+                                    Allow
+                                </button>
+                                <button
+                                    onClick={() => handleFlagAction(flag.id, 'reject')}
+                                    className="admin-button-small"
+                                    style={{ backgroundColor: '#dc2626' }}
+                                >
+                                    Remove
                                 </button>
                             </td>
                         </tr>

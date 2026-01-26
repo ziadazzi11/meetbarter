@@ -2,11 +2,14 @@ import { Controller, Post, Body, Get, UnauthorizedException, Param } from '@nest
 import { PrismaService } from '../prisma/prisma.service';
 import { TradesService } from '../trades/trades.service';
 
+import { ContentModerationService } from '../moderation/content-moderation.service';
+
 @Controller('admin')
 export class AdminController {
     constructor(
         private readonly prisma: PrismaService,
-        private readonly tradesService: TradesService
+        private readonly tradesService: TradesService,
+        private readonly moderationService: ContentModerationService
     ) { }
 
     @Post('freeze')
@@ -245,6 +248,35 @@ export class AdminController {
                 businessVerificationStatus: true
             }
         });
+    }
+
+    @Get('moderation/flags')
+    async getPendingFlags() {
+        return this.moderationService.getPendingFlags();
+    }
+
+    @Post('moderation/flags/:id/approve')
+    async approveFlag(
+        @Param('id') id: string,
+        @Body('code1') code1: string,
+        @Body('fingerprintCode') fingerprintCode: string,
+        @Body('notes') notes?: string,
+    ) {
+        await this.validateAdmin(code1, fingerprintCode);
+        await this.trackActivity();
+        return this.moderationService.approveFlag(id, 'SYSTEM_ADMIN', notes);
+    }
+
+    @Post('moderation/flags/:id/reject')
+    async rejectFlag(
+        @Param('id') id: string,
+        @Body('code1') code1: string,
+        @Body('fingerprintCode') fingerprintCode: string,
+        @Body('notes') notes?: string,
+    ) {
+        await this.validateAdmin(code1, fingerprintCode);
+        await this.trackActivity();
+        return this.moderationService.rejectFlag(id, 'SYSTEM_ADMIN', notes);
     }
 
     @Post('emergency-unlock')

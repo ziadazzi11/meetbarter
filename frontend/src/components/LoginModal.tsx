@@ -57,7 +57,7 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
             <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl animate-fade-in text-center">
-                <img src="/assets/logo-full.png" alt="MeetBarter" className="h-12 mx-auto mb-6" />
+                {/* Logo removed to prevent duplication */}
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome Back</h2>
                 <p className="text-gray-500 mb-8">Sign in to continue your compassionate trading journey.</p>
 

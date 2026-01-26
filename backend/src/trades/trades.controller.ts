@@ -9,7 +9,7 @@ export class TradesController {
   @Post()
   @UseGuards(SystemFreezeGuard)
   create(@Body() createTradeDto: any) {
-    return this.tradesService.create(createTradeDto);
+    return this.tradesService.createTrade(createTradeDto.listingId, createTradeDto.buyerId);
   }
 
   @Post(':id/confirm')

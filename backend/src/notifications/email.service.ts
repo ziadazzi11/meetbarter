@@ -6,9 +6,18 @@ export class EmailService {
     private transporter: nodemailer.Transporter;
 
     constructor() {
-        // TODO: Replace with real SMTP credentials before production
-        // For development, you can use Gmail with app-specific password
-        // or a service like SendGrid, Mailgun, etc.
+        // Safe Initialization: Check for SMTP config
+        if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
+            console.warn('⚠️ SMTP Configuration Missing. EmailService running in LOG_ONLY mode.');
+            this.transporter = {
+                sendMail: async (options) => {
+                    console.log(`[LOG_ONLY_EMAIL] To: ${options.to}, Subject: ${options.subject}`);
+                    return { messageId: 'LOGGED_ONLY' };
+                }
+            } as any;
+            return;
+        }
+
         this.transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST || 'smtp.gmail.com',
             port: parseInt(process.env.SMTP_PORT || '587'),

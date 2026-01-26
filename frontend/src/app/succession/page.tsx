@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import "../home.css";
 
 export default function SuccessionPage() {
     const [email, setEmail] = useState("demo@securebarter.com"); // Emulated identity

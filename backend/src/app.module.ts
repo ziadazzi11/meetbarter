@@ -24,10 +24,18 @@ import { CirclesModule } from './circles/circles.module';
 import { CityPulseModule } from './city-pulse/city-pulse.module';
 import { BountyModule } from './bounty/bounty.module';
 import { SuccessionModule } from './succession/succession.module';
+import { SecurityModule } from './security/security.module';
+import { AuthModule } from './auth/auth.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
 @Module({
     imports: [
         ScheduleModule.forRoot(), // Enable cron jobs
+        // 🛡️ Security: Rate Limiting (Anti-DDoS)
+        ThrottlerModule.forRoot([{
+            ttl: 60000, // 60 seconds
+            limit: 100, // Max 100 requests per minute per IP
+        }]),
         CategoriesModule,
         UsersModule,
         PrismaModule,
@@ -39,16 +47,22 @@ import { SuccessionModule } from './succession/succession.module';
         TimelineModule,
         ActivityModule,
         CirclesModule,
-        CirclesModule,
         CityPulseModule,
         BountyModule,
-        SuccessionModule
+        SuccessionModule,
+        SecurityModule,
+        AuthModule
     ],
     controllers: [AppController, AdminController],
     providers: [
         {
             provide: APP_GUARD,
             useClass: SystemFreezeGuard,
+        },
+        // 🛡️ Security: Apply Rate Limiter Globally
+        {
+            provide: APP_GUARD,
+            useClass: ThrottlerGuard,
         },
         {
             provide: APP_INTERCEPTOR,

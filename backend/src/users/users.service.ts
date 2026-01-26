@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { SecurityService } from '../security/security.service';
 
 @Injectable()
 export class UsersService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private security: SecurityService
+    ) { }
 
     // Hardcoded to fetch the 'Demo' user for now
     async findMe() {
@@ -13,6 +17,13 @@ export class UsersService {
     }
 
     async requestBusinessVerification(userId: string, businessName: string, referralCode?: string) {
+        // 🛡️ Security Hook: Business Verification Request
+        await this.security.assessAndLog(userId, {
+            action: 'BUSINESS_VERIFY_REQUEST',
+            userId,
+            details: { businessName, referralCode }
+        });
+
         return this.prisma.user.update({
             where: { id: userId },
             data: {
@@ -48,6 +59,13 @@ export class UsersService {
             throw new Error(`Not eligible yet. You need 100 completed trades. Current: ${tradeCount}`);
         }
 
+        // 🛡️ Security Hook: Ambassador Application
+        await this.security.assessAndLog(userId, {
+            action: 'AMBASSADOR_APPLY',
+            userId,
+            details: { tradeCount }
+        });
+
         // AUTO-DENY if Collusion Risk is extreme (e.g. >90% trades with same person)
         const risk = await this.calculateCollusionRisk(userId);
         if (risk.maxConcentration > 0.9 && tradeCount > 10) {
@@ -58,7 +76,23 @@ export class UsersService {
             where: { id: userId },
             data: {
                 ambassadorStatus: 'PENDING', // Always manual review
-                ambassadorScore: Math.floor(rankRisk(risk)) // Store risk inversely or just log it? Let's treat ambassadorScore as Risk Score for now? No, let's keep it 0.
+                ambassadorScore: 0 // Default to 0 as per protocols
+            }
+        });
+    }
+
+    async updateProfile(userId: string, data: { bannerUrl?: string; themePreferences?: string; fullName?: string; avatarUrl?: string }) {
+        // 🛡️ Security Hook: Assess Risk
+        await this.security.assessAndLog(userId, {
+            action: 'UPDATE_PROFILE',
+            userId,
+            details: data
+        });
+
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                ...data
             }
         });
     }
@@ -94,6 +128,19 @@ export class UsersService {
             maxConcentration: max / trades.length,
             topPartner
         };
+    }
+
+    async findPendingBusinesses() {
+        return this.prisma.user.findMany({
+            where: { businessVerificationStatus: 'PENDING' },
+            select: {
+                id: true,
+                fullName: true,
+                email: true,
+                businessName: true,
+                businessVerificationStatus: true
+            }
+        });
     }
 
     async findPendingCommunityVerifications() {
@@ -167,6 +214,14 @@ export class UsersService {
                 });
             }
         }
+
+        // 🛡️ Security Hook: Assess Login Risk
+        await this.security.assessAndLog(user.id, {
+            action: 'LOGIN_SOCIAL',
+            userId: user.id,
+            details: { provider: data.provider }
+        });
+
         return user;
     }
 

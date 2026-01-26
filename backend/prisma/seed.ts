@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -74,13 +75,16 @@ async function main() {
         },
     });
 
+    // Standard Password
+    const passwordHash = await bcrypt.hash('password123', 10);
+
     // Create a Demo User
     const demoUser = await prisma.user.upsert({
         where: { email: 'demo@meetbarter.com' },
-        update: {},
+        update: { passwordHash },
         create: {
             email: 'demo@meetbarter.com',
-            passwordHash: 'hashed_secret', // Placeholder
+            passwordHash,
             fullName: 'Demo Trader',
             role: 'USER',
             globalTrustScore: 1.5,
@@ -92,10 +96,10 @@ async function main() {
     // Create a Demo Seller
     const sellerUser = await prisma.user.upsert({
         where: { email: 'seller@meetbarter.com' },
-        update: {},
+        update: { passwordHash },
         create: {
             email: 'seller@meetbarter.com',
-            passwordHash: 'hashed_secret',
+            passwordHash,
             fullName: 'Local Farmer',
             role: 'USER',
             walletBalance: 50,

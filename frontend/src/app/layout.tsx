@@ -8,6 +8,7 @@ import "./globals.css";
 
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import ThemeManager from "@/components/ThemeManager";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,9 +31,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning={true}>
       <body className={`${geistSans.variable} ${geistMono.variable} flex flex-col min-h-screen`} suppressHydrationWarning={true}>
         <Header />
+        <ThemeManager />
         <div className="flex-grow">
           {children}
         </div>

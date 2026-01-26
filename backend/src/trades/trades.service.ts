@@ -1,12 +1,14 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TimelineService } from '../timeline/timeline.service';
+import { SecurityService } from '../security/security.service';
 
 @Injectable()
 export class TradesService {
   constructor(
     private prisma: PrismaService,
-    private timelineService: TimelineService
+    private timelineService: TimelineService,
+    private security: SecurityService
   ) { }
 
   async createTrade(listingId: string, buyerId: string) {
@@ -16,28 +18,27 @@ export class TradesService {
       throw new BadRequestException('Listing is not available');
     }
 
+    // 🛡️ Security Hook: Fraud Check
+    await this.security.assessAndLog(buyerId, {
+      action: 'TRADE_INIT',
+      userId: buyerId,
+      details: { listingId, counterpartyId: listing.sellerId, price: listing.priceVP }
+    });
+
     const buyer = await this.prisma.user.findUnique({ where: { id: buyerId } });
     if (!buyer) throw new BadRequestException('Buyer not found');
 
     // Logic: Buyer pays Price + 7.5% Fee
-    const buyerFee = Math.round(listing.priceVP * 0.075);
-    const totalDeduction = listing.priceVP + buyerFee;
-
-    if (buyer.walletBalance < totalDeduction) {
-      throw new BadRequestException(`Insufficient funds. Need ${totalDeduction} VP (Price + 7.5% Fee)`);
-    }
+    // REFUSE_MINT_MODEL: No upfront deduction. Value is minted to Seller upon verification.
+    // However, we still check if Buyer is "Good Standing" (e.g. Trust Score)
 
     // Set Expiration (12 Hours from now)
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 12);
 
-    // 2. Transaction: Deduct from Buyer, Create Trade
+    // 2. Transaction: Create Trade (No Deduction)
     return this.prisma.$transaction(async (tx) => {
-      // Deduct funds
-      await tx.user.update({
-        where: { id: buyerId },
-        data: { walletBalance: { decrement: totalDeduction } }
-      });
+      // NOTE: We do NOT deduct funds here. Funds are minted to Seller on completion.
 
       // Update Listing status
       await tx.listing.update({
@@ -58,7 +59,7 @@ export class TradesService {
           seller: { connect: { id: listing.sellerId } },
           offerVP: listing.priceVP,
           operationalEscrowVP: operationalEscrowVP,
-          status: 'LOCKED',
+          status: 'LOCKED', // Zero-Pre-Mint: Value exists only as Locked Escrow
           expiresAt: expiresAt,
         }
       });
@@ -78,6 +79,13 @@ export class TradesService {
     const isSeller = trade.sellerId === userId;
 
     if (!isBuyer && !isSeller) throw new BadRequestException('Not authorized');
+
+    // 🛡️ Security Hook: Trade Confirmation
+    await this.security.assessAndLog(userId, {
+      action: 'TRADE_CONFIRM',
+      userId,
+      details: { tradeId: id, role: isBuyer ? 'BUYER' : 'SELLER' }
+    });
 
     // Update confirmation flags
     const updatedTrade = await this.prisma.trade.update({
@@ -147,45 +155,30 @@ export class TradesService {
         }
       });
 
-      // 3. Process Refund & Community Contribution
-      // Calculation Base: 15% Escrow was held.
-      // Logic: 
-      // - 4% Emergency Fund
-      // - 1% Ambassador Fund
-      // - 10% Logistics/Admin (Subject to Refund)
+      // 3. Process System Contributions (Minted for Protocol Health)
+      // Calculation Base: 15% Reference Value (Virtual Escrow)
+      // We only MINT what is allocated to these funds. Unused "Virtual Escrow" is simply never minted.
 
       const tradeValue = trade.offerVP;
       const emergencyShare = Math.floor(tradeValue * 0.04);
       const ambassadorShare = Math.floor(tradeValue * 0.01);
+      // 10% Admin/Logistics Fee Minting (Operational)
       const adminBudget = Math.floor(tradeValue * 0.10);
 
-      const userRefund = Math.max(0, adminBudget - totalActualCost);
-
-      // Move contributions
+      // Mint to System Funds
       await tx.systemConfig.update({
         where: { id: 1 },
         data: {
           emergencyFundVP: { increment: emergencyShare },
-          ambassadorFundVP: { increment: ambassadorShare }
+          ambassadorFundVP: { increment: ambassadorShare },
+          adminFundVP: { increment: adminBudget }
         }
       });
 
-      if (userRefund > 0) {
-        await tx.user.update({
-          where: { id: trade.buyerId },
-          data: { walletBalance: { increment: userRefund } }
-        });
+      // MINT_MODEL: No refund to buyer because they never paid upfront.
+      // Unused allocations simply evaporate (are never minted).
 
-        // Log the refund
-        await tx.transaction.create({
-          data: {
-            tradeId: trade.id,
-            toUserId: trade.buyerId,
-            amountVP: userRefund,
-            type: 'ESCROW_REFUND',
-          }
-        });
-      }
+      return updatedTrade;
 
       return updatedTrade;
     });
