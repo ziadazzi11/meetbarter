@@ -10,13 +10,13 @@ Current implementation status of the System Intelligence Protection Layer.
 | :--- | :--- | :--- | :--- |
 | **1. TLS Hardening** | 1 | 🟢 ACTIVE | TLS 1.3 enforced, HSTS active. |
 | **2. Payload Encryption** | 1 | 🟢 ACTIVE | `PayloadEncryptionMiddleware` operational. |
-| **3. API Obfuscation** | 2 | � ACTIVE | Deceptive paths (`/v1/auth-sync`) implemented. |
+| **3. API Obfuscation** | 2 | 🟢 ACTIVE | Deceptive paths (`/v1/auth-sync`) implemented. |
 | **4. Semantic Noise** | 2 | 🟢 ACTIVE | `SemanticNoiseInterceptor` injecting fake fields. |
 | **5. Protocol Shaping** | 1 | 🟢 ACTIVE | Handshake flow (INIT→VERIFY→TOKEN) enforced. |
 | **6. Behavior Detection** | 1 | 🟢 ACTIVE | `RiskEngine` + `BehaviorAnalyzer` operational. |
 | **7. Canary Endpoints** | 2 | 🟢 ACTIVE | `CanaryInterceptor` traps active. |
 | **8. Deceptive Infra** | 3 | 🟢 ACTIVE | `HeaderDeceptionMiddleware` (Apache/PHP masks). |
-| **9. Frontend Obfuscation**| 3 | � ACTIVE | Source maps disabled, poweredByHeader removed. |
+| **9. Frontend Obfuscation**| 3 | 🟢 ACTIVE | Source maps disabled, poweredByHeader removed. |
 | **10. Server-side VP** | 1 | 🟢 ACTIVE | All VP minting/validation occurs in backend. |
 
 ---
