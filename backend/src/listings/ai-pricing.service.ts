@@ -105,9 +105,9 @@ export class AiPricingService {
 
     /**
      * Calculates coefficient using cached, asynchronous market data.
-     * Does NOT block the user request.
+     * Exported for use in ValuationService.
      */
-    private calculateScarcityCoefficient(country: string, categoryName: string): number {
+    calculateScarcityCoefficient(country: string, categoryName: string): number {
         const { sentiment, isCrisis } = this.currentMarketState;
 
         // 1. COUNTRY PROFILES

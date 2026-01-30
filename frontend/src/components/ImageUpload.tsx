@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { API_BASE_URL } from '@/config/api';
 
 interface ImageUploadProps {
     onUpload: (urls: string[]) => void;
@@ -31,53 +32,28 @@ export default function ImageUpload({ onUpload, maxImages = 5, initialImages = [
 
         try {
             const uploadPromises = Array.from(files).map(async (file) => {
-                // Resize and Convert to base64
-                // We use a simple resizing to avoid huge payloads for SQLite/Base64
-                return new Promise<string>((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const img = new Image();
-                        img.onload = () => {
-                            const canvas = document.createElement('canvas');
-                            const MAX_WIDTH = 800; // Limit width
-                            const MAX_HEIGHT = 800;
-                            let width = img.width;
-                            let height = img.height;
+                const formData = new FormData();
+                formData.append('file', file);
 
-                            if (width > height) {
-                                if (width > MAX_WIDTH) {
-                                    height *= MAX_WIDTH / width;
-                                    width = MAX_WIDTH;
-                                }
-                            } else {
-                                if (height > MAX_HEIGHT) {
-                                    width *= MAX_HEIGHT / height;
-                                    height = MAX_HEIGHT;
-                                }
-                            }
-
-                            canvas.width = width;
-                            canvas.height = height;
-                            const ctx = canvas.getContext('2d');
-                            ctx?.drawImage(img, 0, 0, width, height);
-
-                            // Compress
-                            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                            resolve(dataUrl);
-                        };
-                        img.src = event.target?.result as string;
-                    };
-                    reader.onerror = reject;
-                    reader.readAsDataURL(file);
+                const response = await fetch(`${API_BASE_URL}/upload/secure`, {
+                    method: 'POST',
+                    body: formData,
                 });
+
+                if (!response.ok) {
+                    throw new Error('Upload failed');
+                }
+
+                const data = await response.json();
+                return data.url;
             });
 
-            const newBase64Images = await Promise.all(uploadPromises);
+            const newImageUrls = await Promise.all(uploadPromises);
 
             // Pass ALL images (old + new) to parent
-            onUpload([...initialImages, ...newBase64Images]);
+            onUpload([...initialImages, ...newImageUrls]);
         } catch (err) {
-            setError('Failed to process images. Please try again.');
+            setError('Failed to upload images. Please try again.');
             console.error('Upload error:', err);
         } finally {
             setUploading(false);

@@ -10,7 +10,10 @@ export default function PrivacyPolicy() {
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-6">Privacy Policy</h1>
-                <p className="text-sm text-gray-600 mb-8">Last Updated: January 18, 2026</p>
+                <p className="text-sm text-gray-600 mb-4">Last Updated: January 27, 2026</p>
+                <div className="bg-gray-100 p-3 rounded text-xs text-gray-500 mb-8 border border-gray-200">
+                    This policy is issued by MeetBarter Foundation (NGO Registration: [PENDING_REGISTRATION_NUMBER]).
+                </div>
 
                 <div className="space-y-6 text-gray-700">
                     <section>
@@ -144,6 +147,11 @@ export default function PrivacyPolicy() {
                             <a href="mailto:privacy@meetbarter.com" className="text-blue-600 hover:underline">
                                 privacy@meetbarter.com
                             </a>
+                        </p>
+                        <p className="mt-4 text-sm">
+                            MeetBarter Foundation<br />
+                            [PHYSICAL_ADDRESS_IF_APPLICABLE]<br />
+                            Beirut, Lebanon
                         </p>
                     </section>
                 </div>

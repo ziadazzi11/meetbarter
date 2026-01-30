@@ -130,34 +130,59 @@ export class ContentModerationService {
     }
 
     /**
-     * Increment user report count and check for ban
+     * Increment user violation count and handle "Insistence" (Weaponry/Military)
      */
-    async handleUserViolation(userId: string) {
+    async handleUserViolation(userId: string, category?: string) {
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
-            select: { reportCount: true },
+            select: { reportCount: true, isBanned: true },
         });
+
+        if (!user || user.isBanned) return;
 
         const newReportCount = (user?.reportCount || 0) + 1;
 
-        if (newReportCount >= VIOLATION_THRESHOLDS.PERMANENT_BAN) {
-            // Permanent ban
-            await this.banUser(userId, 'Repeated violations (3+ confirmed)');
-        } else if (newReportCount === VIOLATION_THRESHOLDS.TEMPORARY_BAN) {
-            // TODO: Implement 7-day temporary ban
-            await this.prisma.user.update({
-                where: { id: userId },
-                data: { reportCount: newReportCount },
-            });
-        } else {
-            // Warning
-            await this.prisma.user.update({
-                where: { id: userId },
-                data: { reportCount: newReportCount },
-            });
+        // If it's a weapon/military violation, we are stricter
+        const isCriticalZone = category === 'weapons' || category === 'military' || category === 'robotics';
+
+        if (isCriticalZone && newReportCount >= 2) {
+            // "Insistence Check": Two attempts at weapons/military leads to permanent ban
+            await this.banUser(userId, `Permanent ban for persistent weaponry/military violations: ${category}`);
+            return 'PERMANENT_BAN';
         }
 
-        return newReportCount;
+        if (newReportCount >= VIOLATION_THRESHOLDS.PERMANENT_BAN) {
+            await this.banUser(userId, 'Repeated institutional violations (3+ confirmed)');
+            return 'PERMANENT_BAN';
+        } else if (newReportCount === VIOLATION_THRESHOLDS.TEMPORARY_BAN) {
+            // Flag for temporary restriction
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: { reportCount: newReportCount },
+            });
+            return 'WARNING';
+        }
+
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { reportCount: newReportCount },
+        });
+        return 'WARNING';
+    }
+
+    /**
+     * Record a prohibited upload attempt (Insistence logic)
+     */
+    async recordProhibitedAttempt(userId: string, category: string, reason: string) {
+        await this.prisma.auditLog.create({
+            data: {
+                action: 'PROHIBITED_UPLOAD_ATTEMPT',
+                userId,
+                details: JSON.stringify({ category, reason }),
+            }
+        });
+
+        return this.handleUserViolation(userId, category);
     }
 
     /**

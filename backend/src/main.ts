@@ -6,16 +6,33 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
+import { SemanticNoiseInterceptor } from './ads/recon/semantic-noise.interceptor';
+import { HeaderDeceptionMiddleware } from './ads/recon/header-deception.middleware';
+import { ShadowbanFilter } from './common/filters/shadowban.filter';
+// Note: ShadowbanGuard cannot be global here because it needs DI (Prisma). 
+// We will register it in AppModule or use a global module with APP_GUARD.
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
     // 🛡️ Security: Helmet for HTTP Headers (Anti-XSS, Anti-Sniffing)
-    app.use(helmet());
+    app.use(helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                imgSrc: ["'self'", "data:", "https:"],
+                connectSrc: ["'self'"],
+            },
+        },
+        crossOriginEmbedderPolicy: false,
+    }));
 
     // 🛡️ Security: Strict CORS
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     app.enableCors({
-        origin: ['http://localhost:3000'], // Only allow our frontend
+        origin: [frontendUrl, 'https://meetbarter.com', 'http://localhost:3000'],
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         credentials: true,
     });
@@ -26,6 +43,16 @@ async function bootstrap() {
         forbidNonWhitelisted: true, // Throw error if extra properties sent
         transform: true, // Auto-convert types
     }));
+
+    // 🛡️ ADS Phase II: Anti-Reconnaissance Layer
+    app.useGlobalInterceptors(new SemanticNoiseInterceptor());
+
+    // 🛡️ ADS Phase III: Shadowban Protocol
+    app.useGlobalFilters(new ShadowbanFilter());
+
+    // Header Deception (Functional Wrapper for Middleware)
+    const deceptionMiddleware = new HeaderDeceptionMiddleware();
+    app.use((req, res, next) => deceptionMiddleware.use(req, res, next));
 
     await app.listen(3001);
 }

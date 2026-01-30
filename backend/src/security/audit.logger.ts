@@ -2,11 +2,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SecurityEvent } from './security.types';
+import { LedgerService } from './ledger.service';
 import * as crypto from 'crypto';
 
 @Injectable()
 export class AuditLogger {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private ledger: LedgerService
+    ) { }
 
     /**
      * The "Black Box" Recorder.
@@ -29,11 +33,12 @@ export class AuditLogger {
                 timestamp: new Date().toISOString()
             };
 
-            // 3. Calculate Integrity Hash (SHA-256)
-            const hash = crypto
-                .createHash('sha256')
-                .update(JSON.stringify(dataToHash))
-                .digest('hex');
+            // 3. Calculate Integrity Hash via Ledger Service
+            const hash = this.ledger.calculateHash(prevHash, {
+                action: event.action,
+                userId: event.userId,
+                details: JSON.stringify(event.details)
+            });
 
             // 4. Write to DB
             await this.prisma.auditLog.create({

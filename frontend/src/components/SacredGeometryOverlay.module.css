@@ -1,0 +1,46 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    overflow: hidden;
+    perspective: 1000px;
+}
+
+.svg {
+    width: 100%;
+    height: 100%;
+    /* Default 2D animation */
+    animation: rotate 60s linear infinite;
+}
+
+.svg3d {
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    animation: rotate3d 40s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes rotate3d {
+    0% {
+        transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(0.8);
+    }
+
+    50% {
+        transform: rotateX(180deg) rotateY(180deg) rotateZ(180deg) scale(1.1);
+    }
+
+    100% {
+        transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg) scale(0.8);
+    }
+}

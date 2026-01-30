@@ -3,13 +3,18 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { SecurityService } from '../security/security.service';
+import { AnomalyDetectionService } from '../security/anomaly-detection.service';
+import { SignalIngestionService } from '../ads/signal-ingestion.service';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
     constructor(
         private prisma: PrismaService,
         private jwtService: JwtService,
-        private security: SecurityService
+        private security: SecurityService,
+        private anomalyDetection: AnomalyDetectionService,
+        private ads: SignalIngestionService, // Replaces AutomationService
     ) { }
 
     async validateUser(email: string, pass: string): Promise<any> {
@@ -18,20 +23,31 @@ export class AuthService {
             const { passwordHash, ...result } = user;
             return result;
         }
-        return null; // Don't log failure here to avoid spamming logs on brute force, handled by assessAndLog in login/controller if needed, or rely on successful login logs + velocity checks.
+        return null;
     }
 
-    async login(user: any) {
-        // 🛡️ Security Hook: Login Risk Assessment
+    async login(user: any, ip?: string) {
+        const riskScore = ip ? await this.anomalyDetection.evaluateRisk(user.id, ip) : 0;
+
         await this.security.assessAndLog(user.id, {
             action: 'LOGIN_ATTEMPT',
             userId: user.id,
-            details: { email: user.email, role: user.role }
+            details: { email: user.email, role: user.role, ip, riskScore }
         });
 
         const payload = { email: user.email, sub: user.id, role: user.role };
+        const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+        const refreshToken = crypto.randomUUID();
+
+        const refreshTokenHash = await bcrypt.hash(refreshToken, 10);
+        await (this.prisma.user as any).update({
+            where: { id: user.id },
+            data: { refreshTokenHash }
+        });
+
         return {
-            access_token: this.jwtService.sign(payload),
+            access_token: accessToken,
+            refresh_token: refreshToken,
             user: {
                 id: user.id,
                 email: user.email,
@@ -41,10 +57,44 @@ export class AuthService {
         };
     }
 
+    async refresh(userId: string, refreshToken: string) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } }) as any;
+        if (!user || !user.refreshTokenHash) throw new UnauthorizedException('Invalid Session');
+
+        const isMatch = await bcrypt.compare(refreshToken, user.refreshTokenHash);
+        if (!isMatch) {
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: { refreshTokenHash: null }
+            });
+            throw new UnauthorizedException('Session Compromised: Rotation Failure detected.');
+        }
+
+        return this.login(user);
+    }
+
+    async updateMfa(userId: string, data: { mfaSecret?: string, mfaEnabled?: boolean }) {
+        return this.prisma.user.update({
+            where: { id: userId },
+            data
+        });
+    }
+
     async register(data: any) {
-        // Check for existing user first to avoid error spam? (Optional, let Prisma handle uniquness)
+        // 📡 ADS SIGNAL: Signup Attempt
+        this.ads.emitSignal({
+            type: 'AUTH_ATTEMPT',
+            source: data.email, // Or request IP if available
+            timestamp: Date.now(),
+            metadata: {
+                success: true, // Optimistic, failure handled by exception
+                isNewDevice: true // Simplification
+            }
+        });
 
         const hashedPassword = await bcrypt.hash(data.password, 10);
+
+        // ... existing code ...
 
         // 🛡️ Security Hook: Pre-Signup Risk Check (e.g. limit signups from same IP)
         // We don't have a userId yet, so we might pass a temporary identifier or IP if available in context.

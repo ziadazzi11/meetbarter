@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { API_BASE_URL } from "@/config/api";
 import Link from "next/link";
 import "../circles.css"; // Reuse styles
 
@@ -14,40 +15,40 @@ export default function CircleDetails() {
 
     const DEMO_USER_ID = "9d2c7649-9cf0-48fb-889a-1369e20615a6";
 
+    const fetchCircleData = async () => {
+        try {
+            // Fetch Details
+            const circleRes = await fetch(`${API_BASE_URL}/circles/${id}?userId=${DEMO_USER_ID}`);
+            const circleData = await circleRes.json();
+            setCircle(circleData);
+
+            // Fetch Listings
+            const listingsRes = await fetch(`${API_BASE_URL}/circles/${id}/listings?userId=${DEMO_USER_ID}`);
+            const listingsData = await listingsRes.json();
+            setListings(listingsData);
+
+            setLoading(false);
+        } catch (error) {
+            console.error(error);
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (!id) return;
         fetchCircleData();
     }, [id]);
 
-    const fetchCircleData = async () => {
-        try {
-            // Fetch Details
-            const circleRes = await fetch(`http://localhost:3001/circles/${id}?userId=${DEMO_USER_ID}`);
-            const circleData = await circleRes.json();
-            setCircle(circleData);
-
-            // Fetch Listings
-            const listingsRes = await fetch(`http://localhost:3001/circles/${id}/listings?userId=${DEMO_USER_ID}`);
-            const listingsData = await listingsRes.json();
-            setListings(listingsData);
-
-            setLoading(false);
-        } catch (err) {
-            console.error(err);
-            setLoading(false);
-        }
-    };
-
     const handleJoin = async () => {
         try {
-            await fetch(`http://localhost:3001/circles/${id}/join`, {
+            await fetch(`${API_BASE_URL}/circles/${id}/join`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId: DEMO_USER_ID })
             });
             fetchCircleData(); // Refresh to update membership status
             alert("Joined Circle!");
-        } catch (err) {
+        } catch (error) {
             alert("Error joining circle");
         }
     };
@@ -55,14 +56,14 @@ export default function CircleDetails() {
     const handleLeave = async () => {
         if (!confirm("Are you sure you want to leave this circle?")) return;
         try {
-            await fetch(`http://localhost:3001/circles/${id}/leave`, {
+            await fetch(`${API_BASE_URL}/circles/${id}/leave`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId: DEMO_USER_ID })
             });
             fetchCircleData();
             alert("Left Circle");
-        } catch (err) {
+        } catch (error) {
             alert("Error leaving circle");
         }
     };

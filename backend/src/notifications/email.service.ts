@@ -45,7 +45,7 @@ export class EmailService {
       <p>Hi ${sellerName},</p>
       <p><strong>${buyerName}</strong> has made an offer for your listing: <strong>${listingTitle}</strong></p>
       <p><strong>Offer:</strong> ${offerVP} Value Points</p>
-      <p>Log in to your Dekish dashboard to review and respond to this offer.</p>
+      <p>Log in to your MeetBarter dashboard to review and respond to this offer.</p>
       <a href="${process.env.FRONTEND_URL}/dashboard" style="display: inline-block; padding: 10px 20px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 5px;">View Dashboard</a>
       <p style="margin-top: 20px; color: #666; font-size: 12px;">This is an automated notification from Meetbarter.</p>
     `;

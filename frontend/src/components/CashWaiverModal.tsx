@@ -4,10 +4,12 @@ import React from 'react';
 interface CashWaiverModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (amount: number) => void;
+    onConfirm: (amount: number, currency: string) => void;
 }
 
 export default function CashWaiverModal({ isOpen, onClose, onConfirm }: CashWaiverModalProps) {
+    const [currency, setCurrency] = React.useState("USD");
+
     if (!isOpen) return null;
 
     return (
@@ -22,21 +24,38 @@ export default function CashWaiverModal({ isOpen, onClose, onConfirm }: CashWaiv
                 <div className="space-y-4 text-sm text-gray-700 bg-gray-50 p-4 rounded border border-gray-200">
                     <p>
                         You are about to propose a private cash transaction.
-                        <strong> Dekish is NOT a party to this agreement.</strong>
+                        <strong> MeetBarter is NOT a party to this agreement.</strong>
                     </p>
 
                     {/* Amount Input */}
-                    <div className="my-4">
-                        <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
-                            Proposed Cash Amount (USD)
-                        </label>
-                        <input
-                            type="number"
-                            className="w-full border border-gray-300 rounded p-2 text-lg font-mono focus:ring-2 focus:ring-yellow-500 outline-none"
-                            placeholder="e.g. 50"
-                            id="cashAmount"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">This amount will be logged for valuation transparency.</p>
+                    <div className="my-4 grid grid-cols-3 gap-2">
+                        <div className="col-span-2">
+                            <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
+                                Proposed Cash Amount
+                            </label>
+                            <input
+                                type="number"
+                                className="w-full border border-gray-300 rounded p-2 text-lg font-mono focus:ring-2 focus:ring-yellow-500 outline-none"
+                                placeholder="Amount"
+                                id="cashAmount"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
+                                Currency
+                            </label>
+                            <select
+                                title="Currency Selector"
+                                value={currency}
+                                onChange={(e) => setCurrency(e.target.value)}
+                                className="w-full border border-gray-300 rounded p-2 text-lg font-mono focus:ring-2 focus:ring-yellow-500 outline-none"
+                            >
+                                <option value="USD">USD ($)</option>
+                                <option value="LBP">LBP (LL)</option>
+                                <option value="EUR">EUR (€)</option>
+                            </select>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 col-span-3">This amount will be logged for valuation transparency.</p>
                     </div>
 
                     <ul className="list-disc pl-5 space-y-2">
@@ -59,7 +78,7 @@ export default function CashWaiverModal({ isOpen, onClose, onConfirm }: CashWaiv
                     <button
                         onClick={() => {
                             const val = (document.getElementById('cashAmount') as HTMLInputElement).value;
-                            onConfirm(val ? Number(val) : 0);
+                            onConfirm(val ? Number(val) : 0, currency);
                         }}
                         className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 font-bold"
                     >

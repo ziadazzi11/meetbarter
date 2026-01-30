@@ -1,18 +1,59 @@
-import { Controller, Post, Body, Get, UnauthorizedException, Param } from '@nestjs/common';
+// FORCE_REBUILD
+import { Controller, Post, Body, Get, UnauthorizedException, Param, UseGuards } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TradesService } from '../trades/trades.service';
-
+import { UsersService } from '../users/users.service';
 import { ContentModerationService } from '../moderation/content-moderation.service';
+import { IntelligenceService } from '../intelligence/intelligence.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PermissionGuard } from '../common/guards/permission.guard';
+import { Permissions } from '../common/decorators/permissions.decorator';
+import { Permission } from '../security/security.types';
+import { VaultStorageService } from '../security/vault-storage.service';
+import { MfaGuard } from '../common/guards/mfa.guard';
+import * as path from 'path';
 
 @Controller('admin')
 export class AdminController {
     constructor(
         private readonly prisma: PrismaService,
         private readonly tradesService: TradesService,
-        private readonly moderationService: ContentModerationService
+        private readonly moderationService: ContentModerationService,
+        private readonly usersService: UsersService,
+        private readonly vaultStorage: VaultStorageService,
+        private readonly intelligence: IntelligenceService
     ) { }
 
+    @Get('intelligence')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.MONITOR_HEARTBEAT) // Using HEARTBEAT as a proxy for strategic monitoring
+    async getIntelligence() {
+        return this.intelligence.getMarketInsights();
+    }
+
+    @Post('intelligence/snapshot')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.MANAGE_KEYS)
+    async triggerSnapshot() {
+        await this.intelligence.generateMarketSnapshot();
+        return { success: true };
+    }
+
+    @Get('intelligence/forensic/:userId')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.ACCESS_INTEL)
+    async performForensicScan(@Param('userId') userId: string) {
+        return this.intelligence.performForensicScan(userId);
+    }
+
+    @Get('business-registry')
+    async getBusinessRegistry() {
+        return this.intelligence.getVerifiedBusinessRegistry();
+    }
+
     @Post('freeze')
+    @UseGuards(JwtAuthGuard, PermissionGuard, MfaGuard)
+    @Permissions(Permission.SYSTEM_FREEZE)
     async setFreeze(
         @Body('frozen') frozen: boolean,
         @Body('code1') code1: string,
@@ -47,6 +88,8 @@ export class AdminController {
     }
 
     @Post('grant')
+    @UseGuards(JwtAuthGuard, PermissionGuard, MfaGuard)
+    @Permissions(Permission.GRANT_VP)
     async grantVP(
         @Body('email') email: string,
         @Body('amount') amount: number,
@@ -88,6 +131,8 @@ export class AdminController {
     }
 
     @Post('trades/:id/verify')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.RESOLVE_DISPUTE_FULL)
     async verifyTrade(
         @Param('id') id: string,
         @Body('bucketAllocations') bucketAllocations: { bucket: string, amountVP: number, justification: string }[],
@@ -112,12 +157,29 @@ export class AdminController {
         return result;
     }
 
+    @Post('users/:id/verify-level')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.VERIFY_INSTITUTION)
+    async verifyUserLevel(
+        @Param('id') id: string,
+        @Body('level') level: number,
+        @Body('reason') reason: string, // Enforce 'reason'
+        @Body('code1') code1: string,
+        @Body('fingerprintCode') fingerprintCode: string,
+    ) {
+        if (!reason) throw new Error("Mandatory reason required for level verification.");
+        await this.validateAdmin(code1, fingerprintCode);
+        return this.usersService.verifyUserLevel(id, level, reason, 'SYSTEM_ADMIN');
+    }
+
     @Get('categories')
     async getCategories() {
         return this.prisma.category.findMany();
     }
 
     @Post('categories/:id')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.MANAGE_KEYS)
     async updateCategoryConfig(
         @Param('id') id: string,
         @Body('escrowPercentage') escrowPercentage: number,
@@ -151,16 +213,20 @@ export class AdminController {
         let config = await this.prisma.systemConfig.findUnique({ where: { id: 1 } });
         if (!config) {
             config = await this.prisma.systemConfig.create({
-                data: { id: 1, isFrozen: false, feePercentage: 15, laborBaseline: 6 }
+                data: { id: 1, isFrozen: false, baseEscrowRate: 15, laborBaseline: 6 }
             });
         }
         // EXCLUDE Heir data from public config fetch for discretion
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { heir1, heir1Key, heir2, heir2Key, heir3, heir3Key, heir4, heir4Key, heir5, heir5Key, ...publicConfig } = config as any;
         return publicConfig;
     }
 
     @Post('config/heirs')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.MONITOR_HEARTBEAT)
     async getHeirConfig(@Body('code1') code1: string, @Body('fingerprintCode') fingerprintCode: string) {
+        await this.validateAdmin(code1, fingerprintCode);
         const config = await this.prisma.systemConfig.findUnique({ where: { id: 1 } });
         const c: any = config || {};
         if (!config) return {};
@@ -179,6 +245,8 @@ export class AdminController {
     }
 
     @Post('config')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.MANAGE_KEYS)
     async updateConfig(
         @Body('feePercentage') feePercentage: number,
         @Body('laborBaseline') laborBaseline: number,
@@ -202,7 +270,7 @@ export class AdminController {
         return this.prisma.systemConfig.update({
             where: { id: 1 },
             data: {
-                feePercentage,
+                baseEscrowRate: feePercentage, // Map frontend 'feePercentage' to DB 'baseEscrowRate'
                 laborBaseline,
                 heir1, heir1Key,
                 heir2, heir2Key,
@@ -228,7 +296,38 @@ export class AdminController {
         });
     }
 
+    @Get('disputes')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.RESOLVE_DISPUTE)
+    async getDisputes() {
+        return this.prisma.trade.findMany({
+            where: { status: 'DISPUTED' },
+            include: {
+                listing: true,
+                buyer: { select: { fullName: true, email: true } },
+                seller: { select: { fullName: true, email: true } }
+            }
+        });
+    }
+
+    @Post('trades/:id/resolve-dispute')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.RESOLVE_DISPUTE)
+    async resolveDispute(
+        @Param('id') id: string,
+        @Body('action') action: 'RELEASE' | 'REFUND',
+        @Body('reason') reason: string, // Renamed from notes to reflect governance
+        @Body('code1') code1: string,
+        @Body('fingerprintCode') fingerprintCode: string,
+    ) {
+        if (!reason) throw new Error("Mandatory reason required for dispute resolution.");
+        await this.validateAdmin(code1, fingerprintCode);
+        return this.tradesService.resolveDispute(id, action, reason, 'SYSTEM_ADMIN');
+    }
+
     @Get('audit-logs')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.EXPORT_AUDIT)
     async getAuditLogs() {
         return this.prisma.auditLog.findMany({
             orderBy: { createdAt: 'desc' },
@@ -237,49 +336,199 @@ export class AdminController {
     }
 
     @Get('pending-businesses')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.APPROVE_BUSINESS)
     async getPendingBusinesses() {
-        return this.prisma.user.findMany({
-            where: { businessVerificationStatus: 'PENDING' },
-            select: {
-                id: true,
-                fullName: true,
-                email: true,
-                businessName: true,
-                businessVerificationStatus: true
-            }
-        });
+        return this.usersService.findPendingBusinesses();
+    }
+
+
+
+    @Get('pending-licenses')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.APPROVE_BUSINESS)
+    async getPendingLicenses() {
+        return this.usersService.findPendingLicenses();
+    }
+
+    @Post('licenses/:id/verify')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.APPROVE_BUSINESS)
+    async verifyLicense(
+        @Param('id') id: string,
+        @Body('status') status: 'VERIFIED' | 'REJECTED' | 'REVOKED',
+        @Body('reason') reason: string,
+        @Body('code1') code1: string,
+        @Body('fingerprintCode') fingerprintCode: string,
+    ) {
+        if (!reason) throw new Error("Mandatory reason required for license verification.");
+        await this.validateAdmin(code1, fingerprintCode);
+        return this.usersService.verifyBusinessLicense(id, 'SYSTEM_ADMIN', status, reason);
+    }
+
+    @Get('pending-ambassadors')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.APPROVE_AMBASSADOR)
+    async getPendingAmbassadors() {
+        return this.usersService.findPendingAmbassadors();
+    }
+
+    @Post('users/:id/approve-ambassador')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.APPROVE_AMBASSADOR)
+    async approveAmbassador(
+        @Param('id') id: string,
+        @Body('code1') code1: string,
+        @Body('fingerprintCode') fingerprintCode: string,
+    ) {
+        await this.validateAdmin(code1, fingerprintCode);
+        return this.usersService.approveAmbassador(id);
     }
 
     @Get('moderation/flags')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.FLAG_CONTENT)
     async getPendingFlags() {
         return this.moderationService.getPendingFlags();
     }
 
     @Post('moderation/flags/:id/approve')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.FLAG_CONTENT)
     async approveFlag(
         @Param('id') id: string,
         @Body('code1') code1: string,
         @Body('fingerprintCode') fingerprintCode: string,
-        @Body('notes') notes?: string,
+        @Body('reason') reason: string, // Enforced
     ) {
+        if (!reason) throw new Error("Mandatory reason required for content approval.");
         await this.validateAdmin(code1, fingerprintCode);
         await this.trackActivity();
-        return this.moderationService.approveFlag(id, 'SYSTEM_ADMIN', notes);
+        return this.moderationService.approveFlag(id, 'SYSTEM_ADMIN', reason);
     }
 
     @Post('moderation/flags/:id/reject')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.FLAG_CONTENT)
     async rejectFlag(
         @Param('id') id: string,
         @Body('code1') code1: string,
         @Body('fingerprintCode') fingerprintCode: string,
-        @Body('notes') notes?: string,
+        @Body('reason') reason: string, // Enforced
+    ) {
+        if (!reason) throw new Error("Mandatory reason required for content removal.");
+        await this.validateAdmin(code1, fingerprintCode);
+        await this.trackActivity();
+        return this.moderationService.rejectFlag(id, 'SYSTEM_ADMIN', reason);
+    }
+
+    @Post('vault/export')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.MANAGE_KEYS)
+    async exportVault(
+        @Body('code1') code1: string,
+        @Body('fingerprintCode') fingerprintCode: string,
     ) {
         await this.validateAdmin(code1, fingerprintCode);
         await this.trackActivity();
-        return this.moderationService.rejectFlag(id, 'SYSTEM_ADMIN', notes);
+
+        const files = await this.vaultStorage.listAllDocuments();
+        const exportData = [];
+
+        for (const file of files) {
+            const buffer = await this.vaultStorage.getDocument(file);
+            exportData.push({
+                name: path.basename(file),
+                content: buffer.toString('base64')
+            });
+        }
+
+        return {
+            timestamp: new Date().toISOString(),
+            files: exportData
+        };
+    }
+
+    @Post('config/rotate-codes')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.MANAGE_KEYS)
+    async rotateCodes(
+        @Body('code1') code1: string,
+        @Body('fingerprintCode') fingerprintCode: string,
+        @Body('newAlpha') newAlpha: string,
+        @Body('newBeta') newBeta: string,
+        @Body('newFingerprint') newFingerprint: string,
+    ) {
+        await this.validateAdmin(code1, fingerprintCode);
+        await this.trackActivity();
+
+        await this.prisma.systemConfig.update({
+            where: { id: 1 },
+            data: {
+                alphaCode: newAlpha,
+                betaCode: newBeta,
+                fingerprintCode: newFingerprint,
+            }
+        });
+
+        // Log the rotation (but NOT the new codes)
+        await this.prisma.auditLog.create({
+            data: {
+                action: 'ROTATE_ADMIN_CODES',
+                details: JSON.stringify({ timestamp: new Date().toISOString() }),
+                adminId: 'SYSTEM_ADMIN'
+            }
+        });
+
+        return { success: true, message: 'Master Codes Rotated Successfully' };
+    }
+
+    @Post('config/crisis-override')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.MONITOR_HEARTBEAT)
+    async overrideCrisis(
+        @Body('city') city: string,
+        @Body('country') country: string,
+        @Body('active') active: boolean,
+        @Body('reason') reason: string, // Enforced
+        @Body('code1') code1: string,
+        @Body('fingerprintCode') fingerprintCode: string,
+    ) {
+        if (!reason) throw new Error("Mandatory reason required for crisis override.");
+        await this.validateAdmin(code1, fingerprintCode);
+        await this.trackActivity();
+
+        // Manual Override: Force Crisis State
+        await this.prisma.cityPulseCache.upsert({
+            where: { city_country: { city, country } },
+            update: { isCrisisActive: active, sentimentScore: active ? 0 : 50 },
+            create: {
+                city,
+                country,
+                isCrisisActive: active,
+                sentimentScore: active ? 0 : 50,
+                activeTraders: 0,
+                newListingsToday: 0,
+                lastUpdated: new Date(),
+                topCategories: '[]'
+            }
+        });
+
+        // Audit Log
+        await this.prisma.auditLog.create({
+            data: {
+                action: 'CRISIS_OVERRIDE',
+                details: JSON.stringify({ city, country, active, reason }),
+                adminId: 'SYSTEM_ADMIN'
+            }
+        });
+
+        return { success: true, message: `Crisis Mode ${active ? 'ACTIVATED' : 'DEACTIVATED'} for ${city}` };
     }
 
     @Post('emergency-unlock')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.EMERGENCY_UNLOCK)
     async emergencyUnlock(
         @Body('key1') key1: string,
         @Body('key2') key2: string,
@@ -296,12 +545,12 @@ export class AdminController {
 
         const configAny: any = config;
 
-        // Condition 1: One Year Inactivity
-        const oneYearAgo = new Date();
-        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+        // Condition 1: Six-Year Inactivity
+        const sixYearsAgo = new Date();
+        sixYearsAgo.setFullYear(sixYearsAgo.getFullYear() - 6);
 
-        if (configAny.lastAdminActivity > oneYearAgo) {
-            throw new UnauthorizedException('Access Denied. Owner was active within the last year. Survival Protocol Suspended.');
+        if (configAny.lastAdminActivity > sixYearsAgo) {
+            throw new UnauthorizedException('Access Denied. Owner was active within the last 6 years (2190 days). Survival Protocol Suspended.');
         }
 
         // Condition 2: Certificate Metadata Presence

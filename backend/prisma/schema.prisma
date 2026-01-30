@@ -46,14 +46,29 @@ model User {
   // Standard ID or simple work proof is sufficient if user is shy.
   communityEvidence        String? // JSON: { idPhotoUrl, certUrl, optionalTreeSelfieUrl }
   
+  // v1.2: Multi-Tier Verification & Compliance
+  verificationLevel        Int      @default(1) // 1: Community, 2: Professional, 3: Institutional
+  complianceMetadata       String?  // JSON: Encrypted compliance history
+  
   // Content Moderation
   reportCount     Int      @default(0)
   isBanned        Boolean  @default(false)
   banReason       String?
   bannedAt        DateTime?
+  
+  // ADS: Shadowban Protocol
+  isShadowbanned  Boolean  @default(false)
+  shadowbanReason String?
 
   // Terms of Service Acceptance
   termsAcceptedAt DateTime?
+
+  // 🛡️ Cybersecurity Protocol Stack: Layer I & II
+  refreshTokenHash  String?   // Hashed for rotation safety
+  mfaSecret         String?   // Encrypted TOTP secret
+  mfaEnabled        Boolean   @default(false)
+  lastIp            String?   // Behavioral profiling
+  riskScore         Int       @default(0) // 0-100 dynamic risk assessment
   termsVersion    String?  // e.g., "1.0", tracks which version user agreed to
 
   sentMessages     Message[] @relation("SentMessages")
@@ -98,6 +113,10 @@ model User {
   mokhtarName      String?
   mokhtarLicense   String?
   activityMetric   UserActivityMetric?
+  businessLicense  BusinessLicense?
+
+  governanceRequests GovernanceRequest[] @relation("GovernanceRequester")
+  governanceApprovals GovernanceRequest[] @relation("GovernanceApprover")
 
   @@index([email])
   @@index([role])
@@ -126,6 +145,7 @@ model Category {
   listings        Listing[]
   userTrusts      UserCategoryTrust[]
   trades          Trade[]
+  marketSnapshots MarketSnapshot[]
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -149,7 +169,10 @@ model Listing {
   description     String
   priceVP         Int
   originalPrice   Int?     // Market price in Value Points
-  condition       String?  // NEW, USED_GOOD, USED_FAIR
+  condition       String?  // NEW, LIKE_NEW, USED_GOOD, USED_FAIR, POOR
+  originType      String   @default("PERSONAL_GIFT") // PERSONAL_GIFT, HANDMADE, etc.
+  authenticityStatus String @default("UNVERIFIED") // VERIFIED_ORIGINAL, REPLICA_DECLARED, UNVERIFIED
+  isRefurbished   Boolean  @default(false)
   images          String // Stored as JSON string locally
   location        String   @default("Beirut") // Item Location
   country         String   @default("Lebanon") // Worldwide accessibility
@@ -199,10 +222,16 @@ model Trade {
   offerVP         Int
   status          String      @default("OFFER_MADE") // Was TradeStatus (OFFER_MADE)
   
-  // Phase 4: Dynamic Operational Escrow
-  operationalEscrowVP Int     @default(0)   // Calculated at creation
+  // Phase 4: Dynamic Operational Escrow (Coordination & Verification)
+  coordinationEscrowVP Int     @default(0)   // Calculated at creation
+  operationalEscrowVP  Int     @default(0)   // For operational costs like verification/logistics
   isVerified      Boolean     @default(false)
   justification   String?     // Overall verification note
+
+  // Feature: Cash Sweetener (Top-Up)
+  cashOffer       Float?      // Optional cash amount
+  cashCurrency    String?     @default("USD") // USD, LBP, EUR
+
   
   // v1.2: Trade enhancements
   intentTimestamp DateTime?   // Soft commitment timestamp (non-binding)
@@ -270,9 +299,9 @@ model SystemConfig {
   betaCode        String   @default("love one another")
   fingerprintCode String   @default("FINGERPRINT")
 
-  // Phase 4: Dynamic Fees
-  feePercentage   Int      @default(15)
-  laborBaseline   Int      @default(6)
+  // Phase 4: Dynamic Operational Escrow (Coordination)
+  baseEscrowRate   Int      @default(15)
+  laborBaseline    Int      @default(6)
 
   // Gardener's Insurance Protocol
   emergencyFundVP Int      @default(0)
@@ -445,9 +474,14 @@ model CityPulseCache {
   topCategories   String   // JSON array of {categoryId, name, count}
   newListingsToday Int     @default(0)
   activeTraders   Int      @default(0)
+  
+  // Phase 5: Market Sentiment
+  sentimentScore   Int      @default(50) // 0-100
+  isCrisisActive   Boolean  @default(false)
+
   lastUpdated     DateTime @default(now())
   
-  @@unique([city, country])
+  @@unique([city, country], name: "city_country")
   @@index([country])
 }
 
@@ -482,4 +516,91 @@ model Successor {
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+// MeetPorter — Intelligence & Analytics Engine
+model SearchLog {
+  id           String   @id @default(uuid())
+  queryHash    String   // sha256 of normalized query
+  sessionHash  String?  // sha256 of session identifier
+  intentVector String?  // Stringified intent classification
+  locationHash String?  // sha256 of zone_id/region
+  country      String?
+  createdAt    DateTime @default(now())
+
+  @@index([queryHash])
+  @@index([locationHash])
+}
+
+model InteractionLog {
+  id           String   @id @default(uuid())
+  sessionHash  String?  // sha256 of session
+  type         String   // VIEW_LISTING, CLICK_CATEGORY, VISIT_PROFILE, BOOKMARK
+  targetId     String   // ID of the listing, profile, or category
+  intensity    Int      @default(1)
+  intentVector String?  // Stringified intent tags
+  createdAt    DateTime @default(now())
+
+  @@index([type])
+  @@index([targetId])
+}
+
+model MarketSnapshot {
+  id              String   @id @default(uuid())
+  date            DateTime @default(now())
+  categoryId      String
+  category        Category @relation(fields: [categoryId], references: [id])
+  supplyCount     Int      // Active listings
+  demandScore     Float    // Based on search/interaction logs
+  opportunityIndex Float   // Scarcity indicator
+  tradeVelocity   Float    // Completion rate
+  
+  
+  @@unique([date, categoryId])
+}
+
+// 🏛️ Phase 8: Institutional Business Verification & Licensing
+model BusinessLicense {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id])
+  
+  registrationNumber String  // Commercial Register / Tax ID
+  permitType        String   // e.g. "Physical Goods", "Logistics", "Food/Health"
+  issuingAuthority  String   // e.g. "Ministry of Industry"
+  evidence          String   // JSON: { links: string[], photos: string[] }
+  
+  status            String   @default("PENDING") // PENDING, VERIFIED, EXPIRED, REVOKED
+  issuedAt          DateTime
+  expiresAt         DateTime
+  lastVerifiedAt    DateTime @default(now())
+  adminNotes        String?  // Internal institutional audit notes
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+// 🏛️ Phase 9: Governance Security (Dual Control)
+model GovernanceRequest {
+  id              String   @id @default(uuid())
+  requesterId     String   // Admin who initiated the action
+  actionType      String   // e.g., "FREEZE_SYSTEM", "WIPE_VAULT", "GRANT_ADMIN"
+  payload         String   // JSON: Arguments for the action
+  
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED, EXECUTED
+  
+  approverId      String?  // Admin who approved (must be != requesterId)
+  approvalNote    String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  executedAt      DateTime?
+
+  requester       User     @relation("GovernanceRequester", fields: [requesterId], references: [id])
+  approver        User?    @relation("GovernanceApprover", fields: [approverId], references: [id])
+
+  @@index([status])
 }

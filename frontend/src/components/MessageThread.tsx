@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import SafetyNotice from "./SafetyNotice";
+import { API_BASE_URL } from "@/config/api";
+import { useSocket } from "@/hooks/useSocket";
 
 interface Message {
     id: string;
@@ -28,25 +30,60 @@ export default function MessageThread({ tradeId, currentUserId, otherUserId, lis
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const [otherUserTyping, setOtherUserTyping] = useState(false);
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    useEffect(() => {
-        const fetchMessages = async () => {
-            try {
-                const res = await fetch(`http://localhost:3001/messages/trade/${tradeId}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setMessages(data);
-                    setLoading(false);
-                }
-            } catch (error) {
-                console.error("Failed to fetch messages", error);
+    const { socket, isConnected } = useSocket(tradeId);
+
+    const fetchMessages = useCallback(async () => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/messages/trade/${tradeId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setMessages(data);
+                setLoading(false);
             }
-        };
-
-        fetchMessages();
-        const interval = setInterval(fetchMessages, 3000); // Poll every 3 seconds for new chats
-        return () => clearInterval(interval);
+        } catch (error) {
+            console.error("Failed to fetch messages", error);
+        }
     }, [tradeId]);
+
+    // Initial Fetch
+    useEffect(() => {
+        fetchMessages();
+    }, [fetchMessages]);
+
+    // Socket Listeners
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on('receive_message', (msg: Message) => {
+            setMessages(prev => [...prev, msg]);
+        });
+
+        socket.on('user_typing', (payload: { userId: string; isTyping: boolean }) => {
+            if (payload.userId !== currentUserId) {
+                setOtherUserTyping(payload.isTyping);
+            }
+        });
+
+        return () => {
+            socket.off('receive_message');
+            socket.off('user_typing');
+        };
+    }, [socket, currentUserId]);
+
+    const handleTyping = () => {
+        if (!socket || !isConnected) return;
+
+        socket.emit('typing', { tradeId, isTyping: true, userId: currentUserId });
+
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+        typingTimeoutRef.current = setTimeout(() => {
+            socket.emit('typing', { tradeId, isTyping: false, userId: currentUserId });
+        }, 3000);
+    };
 
     // Auto-scroll to bottom
     useEffect(() => {
@@ -61,23 +98,22 @@ export default function MessageThread({ tradeId, currentUserId, otherUserId, lis
 
         setSending(true);
         try {
-            const res = await fetch("http://localhost:3001/messages", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
+            // Socket Emission
+            if (socket && isConnected) {
+                socket.emit('send_message', {
                     senderId: currentUserId,
                     receiverId: otherUserId,
                     tradeId,
                     listingId,
                     content: newMessage
-                })
-            });
-
-            if (res.ok) {
+                });
+                // Optimistic Update (optional, but socket is fast enough usually)
+                // We'll rely on the 'receive_message' event which comes back from server
                 setNewMessage("");
-                fetchMessages(); // Instant refresh
             } else {
-                alert("Failed to send message");
+                // Fallback to HTTP if socket fails?
+                // For Phase 11, let's stick to Socket primary
+                alert("Connection lost. Reconnecting...");
             }
         } catch (error) {
             console.error("Error sending message", error);
@@ -92,8 +128,8 @@ export default function MessageThread({ tradeId, currentUserId, otherUserId, lis
             <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                 <h2 className="text-lg font-bold text-gray-900">Chat with {otherUserName}</h2>
                 <div className="text-xs text-gray-500 flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                    Live Connection
+                    <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
+                    {isConnected ? 'Real-Time' : 'Connecting...'}
                 </div>
             </div>
 
@@ -127,6 +163,18 @@ export default function MessageThread({ tradeId, currentUserId, otherUserId, lis
                         );
                     })
                 )}
+                {otherUserTyping && (
+                    <div className="flex justify-start">
+                        <div className="bg-gray-100 text-gray-500 rounded-2xl px-4 py-2 rounded-bl-none text-xs flex items-center gap-1 italic">
+                            {otherUserName} is typing
+                            <span className="flex gap-0.5">
+                                <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"></span>
+                            </span>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Input Area */}
@@ -136,7 +184,10 @@ export default function MessageThread({ tradeId, currentUserId, otherUserId, lis
                     <input
                         type="text"
                         value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
+                        onChange={(e) => {
+                            setNewMessage(e.target.value);
+                            handleTyping();
+                        }}
                         placeholder="Type a message..."
                         className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                     />

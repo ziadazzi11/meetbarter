@@ -1,27 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "@/config/api";
 import "./city-pulse.css";
 
+const CITIES = ["Beirut", "Jounieh", "Tripoli", "Sidon", "Byblos"];
+
 export default function CityPulse() {
-    const [cities, setCities] = useState<string[]>([]);
+    const [cities, setCities] = useState<string[]>(CITIES);
     const [selectedCity, setSelectedCity] = useState("Beirut");
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        // Mock cities for now or fetch if endpoint returns list
-        setCities(["Beirut", "Jounieh", "Tripoli", "Sidon", "Byblos"]);
-
-        // Fetch stats for selected city
-        fetchStats("Beirut");
-    }, []);
 
     const fetchStats = (city: string) => {
         setLoading(true);
         setSelectedCity(city);
 
-        fetch(`http://localhost:3001/city-pulse/${city}`)
+        fetch(`${API_BASE_URL}/city-pulse/${city}`)
             .then(res => res.json())
             .then(data => {
                 setStats(data);
@@ -32,6 +27,11 @@ export default function CityPulse() {
                 setLoading(false);
             });
     };
+
+    useEffect(() => {
+        // Fetch stats for selected city
+        fetchStats("Beirut");
+    }, []);
 
     return (
         <div className="city-pulse-container">

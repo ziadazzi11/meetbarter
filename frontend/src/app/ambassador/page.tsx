@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "@/config/api";
 import { useRouter } from "next/navigation";
 
 export default function AmbassadorPortal() {
@@ -25,12 +26,12 @@ export default function AmbassadorPortal() {
         const fetchData = async () => {
             try {
                 // 1. Fetch Current Ambassador Stats (Me)
-                const meRes = await fetch('http://localhost:3001/users/me');
+                const meRes = await fetch(`${API_BASE_URL}/users/me`);
                 const meData = await meRes.json();
                 setCurrentUserId(meData.id);
 
                 // 2. Fetch Pending Businesses
-                const pendingRes = await fetch('http://localhost:3001/users/pending-businesses');
+                const pendingRes = await fetch(`${API_BASE_URL}/users/pending-businesses`);
                 const pendingData = await pendingRes.json();
 
                 setStats({
@@ -62,7 +63,7 @@ export default function AmbassadorPortal() {
         if (!confirm("Verify this business? You will accept liability for their initial trust score.")) return;
 
         try {
-            await fetch(`http://localhost:3001/users/${businessId}/approve-business`, {
+            await fetch(`${API_BASE_URL}/users/${businessId}/approve-business`, {
                 method: 'PUT', // Changed to PUT to match controller
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ verifierId: currentUserId, notes: "Verified via Ambassador Portal" })

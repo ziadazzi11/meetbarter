@@ -24,7 +24,7 @@ export default function ShareButtons({ listingTitle, listingId }: ShareButtonsPr
     };
 
     const handleShare = (platform: string) => {
-        const text = `Check out this item on Dekish: ${listingTitle}`;
+        const text = `Check out this item on MeetBarter: ${listingTitle}`;
         let url = '';
 
         switch (platform) {

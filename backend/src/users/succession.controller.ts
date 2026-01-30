@@ -8,7 +8,10 @@ export class SuccessionController {
     @Get('me')
     async getMyHeirs(@Headers('x-user-email') email: string) {
         if (!email) throw new UnauthorizedException();
-        const user = await this.prisma.user.findUnique({ where: { email } });
+        const user = await this.prisma.user.findUnique({
+            where: { email },
+            include: { successors: true }
+        });
         if (!user) throw new NotFoundException('User not found');
 
         return {
@@ -23,6 +26,7 @@ export class SuccessionController {
             heir5Name: user.heir5Name,
             heir5Key: user.heir5Key,
             lastActivity: user.lastActivity,
+            successors: user.successors
         };
     }
 
@@ -61,11 +65,11 @@ export class SuccessionController {
         const user = await this.prisma.user.findUnique({ where: { email: targetEmail } });
         if (!user) throw new NotFoundException('Target account not found');
 
-        // 1. One Year Inactivity Check
-        const oneYearAgo = new Date();
-        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-        if (user.lastActivity > oneYearAgo) {
-            throw new UnauthorizedException('Survival Protocol Blocked: Account active within the last 365 days.');
+        // 1. Six-Year Inactivity Check
+        const sixYearsAgo = new Date();
+        sixYearsAgo.setFullYear(sixYearsAgo.getFullYear() - 6);
+        if (user.lastActivity > sixYearsAgo) {
+            throw new UnauthorizedException('Survival Protocol Blocked: Account active within the last 6 years (2190 days).');
         }
 
         // 2. Mokhtar Certificate Check

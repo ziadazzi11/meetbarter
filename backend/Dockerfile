@@ -1,6 +1,5 @@
-# Dekish Backend Dockerfile
-
-FROM node:18-alpine AS builder
+# MeetBarter Backend Dockerfile
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -18,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
@@ -39,4 +38,7 @@ RUN npx prisma generate
 EXPOSE 3001
 
 # Start the application
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+# Note: In production we use prisma migrate deploy, but for local dev with docker-compose
+# we might want to use db push if iterating fast, or migrate deploy for strictness.
+CMD ["sh", "-c", "npx prisma generate && node dist/main"]
+

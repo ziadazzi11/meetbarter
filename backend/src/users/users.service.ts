@@ -1,12 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SecurityService } from '../security/security.service';
+import { EncryptionService } from '../security/encryption.service';
+import { VaultStorageService } from '../security/vault-storage.service';
 
 @Injectable()
 export class UsersService {
     constructor(
         private prisma: PrismaService,
-        private security: SecurityService
+        private security: SecurityService,
+        private encryption: EncryptionService,
+        private vault: VaultStorageService
     ) { }
 
     // Hardcoded to fetch the 'Demo' user for now
@@ -16,7 +20,7 @@ export class UsersService {
         });
     }
 
-    async requestBusinessVerification(userId: string, businessName: string, referralCode?: string) {
+    async requestBusinessVerification(userId: string, businessName: string, evidence: any, referralCode?: string) {
         // 🛡️ Security Hook: Business Verification Request
         await this.security.assessAndLog(userId, {
             action: 'BUSINESS_VERIFY_REQUEST',
@@ -24,23 +28,164 @@ export class UsersService {
             details: { businessName, referralCode }
         });
 
+        const encryptedData = this.encryption.encrypt(JSON.stringify({ businessName, referralCode, evidence }));
+
         return this.prisma.user.update({
             where: { id: userId },
             data: {
                 businessName,
                 businessVerificationStatus: 'PENDING',
+                businessVerificationData: encryptedData,
                 referredByUserId: referralCode || undefined
             }
         });
     }
 
+    async submitBusinessLicense(userId: string, data: {
+        businessName?: string;
+        registrationNumber: string;
+        permitType: string;
+        issuingAuthority: string;
+        evidence: any; // { links: string[], photos: string[] }
+        issuedAt: Date;
+        expiresAt: Date;
+    }) {
+        // 🛡️ Security Hook: Institutional Onboarding
+        await this.security.assessAndLog(userId, {
+            action: 'BUSINESS_LICENSE_SUBMIT',
+            userId,
+            details: { registrationNumber: data.registrationNumber, permitType: data.permitType }
+        });
+
+        if (data.businessName) {
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: { businessName: data.businessName }
+            });
+        }
+
+        const { businessName, ...licenseData } = data; // Exclude businessName from license data logic below if needed, though spreading is fine if model ignores it
+
+        return this.prisma.businessLicense.upsert({
+            where: { userId },
+            update: {
+                ...licenseData,
+                evidence: JSON.stringify(licenseData.evidence),
+                status: 'PENDING',
+                updatedAt: new Date()
+            },
+            create: {
+                ...licenseData,
+                userId,
+                evidence: JSON.stringify(licenseData.evidence),
+                status: 'PENDING'
+            }
+        });
+    }
+
+    async findPendingLicenses() {
+        return this.prisma.businessLicense.findMany({
+            where: { status: 'PENDING' },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        email: true,
+                        businessName: true
+                    }
+                }
+            }
+        });
+    }
+
+    async verifyBusinessLicense(licenseId: string, adminId: string, status: 'VERIFIED' | 'REJECTED' | 'REVOKED', adminNotes?: string) {
+        // 🛡️ Security Hook: Administrative Verification
+        await this.security.assessAndLog(adminId, {
+            action: 'BUSINESS_LICENSE_VERIFY',
+            userId: adminId,
+            details: { licenseId, status, adminNotes }
+        });
+
+        return this.prisma.$transaction(async (tx) => {
+            const license = await tx.businessLicense.update({
+                where: { id: licenseId },
+                data: {
+                    status,
+                    adminNotes,
+                    lastVerifiedAt: new Date()
+                }
+            });
+
+            if (status === 'VERIFIED') {
+                await tx.user.update({
+                    where: { id: license.userId },
+                    data: {
+                        businessVerificationStatus: 'VERIFIED',
+                        isBusiness: true
+                    }
+                });
+            } else if (status === 'REVOKED' || status === 'REJECTED') {
+                await tx.user.update({
+                    where: { id: license.userId },
+                    data: {
+                        businessVerificationStatus: status === 'REVOKED' ? 'REVOKED' : 'REJECTED'
+                    }
+                });
+            }
+
+            return license;
+        });
+    }
+
     async requestCommunityVerification(userId: string, role: string, evidence: any) {
+        const encryptedEvidence = this.encryption.encrypt(JSON.stringify(evidence));
+
         return this.prisma.user.update({
             where: { id: userId },
             data: {
                 communityRole: role,
                 communityVerificationStatus: 'PENDING_REVIEW', // Matches "Pending Businesses"
-                communityEvidence: JSON.stringify(evidence)
+                communityEvidence: encryptedEvidence
+            }
+        });
+    }
+
+    // Phase 2: Multi-Tier Verification logic
+    async verifyUserLevel(userId: string, targetLevel: number, complianceNotes: string, adminId: string) {
+        // 🛡️ Security Hook: Compliance Action
+        await this.security.assessAndLog(adminId, {
+            action: 'USER_LEVEL_UPGRADE',
+            userId: adminId,
+            details: { targetUserId: userId, targetLevel, complianceNotes }
+        });
+
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) throw new BadRequestException('User not found');
+
+        // Decode existing compliance history
+        let complianceHistory: any = { tiers: {} };
+        if (user.complianceMetadata) {
+            try {
+                complianceHistory = JSON.parse(this.encryption.decrypt(user.complianceMetadata));
+            } catch (e) {
+                // If decryption fails (e.g. key rotation or corruption), start fresh
+            }
+        }
+
+        complianceHistory.tiers[`L${targetLevel}`] = {
+            verifiedAt: new Date(),
+            verifiedBy: adminId,
+            notes: complianceNotes
+        };
+
+        const encryptedMetadata = this.encryption.encrypt(JSON.stringify(complianceHistory));
+
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                verificationLevel: targetLevel,
+                complianceMetadata: encryptedMetadata
             }
         });
     }

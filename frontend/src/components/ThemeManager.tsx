@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
+import { API_BASE_URL } from "@/config/api";
 
 export default function ThemeManager() {
     useEffect(() => {
         const uid = localStorage.getItem("meetbarter_uid");
         if (!uid) return;
 
-        fetch(`http://localhost:3001/users/me`)
+        fetch(`${API_BASE_URL}/users/me`)
             .then(res => res.json())
             .then(data => {
                 if (data && data.themePreferences) {

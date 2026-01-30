@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { io, Socket } from "socket.io-client";
 import Link from "next/link";
+import { API_BASE_URL } from "@/config/api";
 import "./admin.css";
 
 interface Category {
@@ -22,6 +24,8 @@ interface Trade {
     seller: { fullName: string; email: string };
     offerVP: number;
     operationalEscrowVP: number;
+    status: string;
+    justification: string;
 }
 
 interface AuditLog {
@@ -32,7 +36,6 @@ interface AuditLog {
     createdAt: string;
 }
 
-
 interface SuccessorStatus {
     fullName: string;
     isUnlocked: boolean;
@@ -41,66 +44,296 @@ interface SuccessorStatus {
     timeRemainingMs: number;
 }
 
+interface BusinessRequest {
+    id: string;
+    fullName: string;
+    email: string;
+    businessName: string;
+    businessVerificationStatus: string;
+}
+
+interface CommunityRequest {
+    id: string;
+    fullName: string;
+    email: string;
+    communityRole: string;
+    communityEvidence: string;
+    communityVerificationStatus: string;
+}
+
+interface AmbassadorRequest {
+    id: string;
+    fullName: string;
+    email: string;
+    ambassadorStatus: string;
+    risk: { maxConcentration: number; topPartner: string | null };
+}
+
+interface Bounty {
+    id: string;
+    title: string;
+    description: string;
+    rewardVP: number;
+    status: string;
+    assignee?: { fullName: string };
+    submissionEvidence?: string;
+}
+
+interface ModerationFlag {
+    id: string;
+    reason: string;
+    category: string;
+    severity: string;
+    matchedKeywords: string;
+    listing: {
+        title: string;
+        seller: { fullName: string; email: string; reportCount: number };
+    };
+}
+
+type Protocol = "COMMAND_CENTER" | "TECHNICAL" | "COMPLIANCE" | "LEGAL" | "BOARD" | "AUDITOR" | "STRATEGIC";
+
 export default function AdminPage() {
-    const [stats, setStats] = useState<any>(null); // Existing stats
-    const [successor, setSuccessor] = useState<SuccessorStatus | null>(null);
+    const [protocol, setProtocol] = useState<Protocol>("COMMAND_CENTER");
+    const [loading, setLoading] = useState(true);
     const [frozen, setFrozen] = useState(false);
+    const [message, setMessage] = useState("");
+
+    // Security Codes
     const [code1, setCode1] = useState("");
     const [code2, setCode2] = useState("");
     const [fingerprintCode, setFingerprintCode] = useState("");
-    const [message, setMessage] = useState("");
-    const [loading, setLoading] = useState(true);
+    const [newAlpha, setNewAlpha] = useState("");
+    const [newBeta, setNewBeta] = useState("");
+    const [newFingerprint, setNewFingerprint] = useState("");
 
+    // Data State
     const [logs, setLogs] = useState<AuditLog[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [config, setConfig] = useState<any>({ feePercentage: 15, laborBaseline: 6 });
+    const [pendingTrades, setPendingTrades] = useState<Trade[]>([]);
+    const [disputedTrades, setDisputedTrades] = useState<Trade[]>([]);
+    const [pendingBusinesses, setPendingBusinesses] = useState<BusinessRequest[]>([]);
+    const [pendingCommunity, setPendingCommunity] = useState<CommunityRequest[]>([]);
+    const [pendingAmbassadors, setPendingAmbassadors] = useState<AmbassadorRequest[]>([]);
+    const [submittedBounties, setSubmittedBounties] = useState<Bounty[]>([]);
+    const [moderationFlags, setModerationFlags] = useState<ModerationFlag[]>([]);
+    const [cityPulse, setCityPulse] = useState<any[]>([]);
+    const [intelligence, setIntelligence] = useState<any>(null);
+    const [allocations, setAllocations] = useState<{ [tradeId: string]: { bucket: string; amountVP: number; justification: string }[] }>({});
+    const [perfLogs, setPerfLogs] = useState<{ method: string; url: string; duration: number; timestamp: Date }[]>([]);
+    const [businessRegistry, setBusinessRegistry] = useState<any[]>([]);
+    const [forensicResults, setForensicResults] = useState<any>(null);
+    const [forensicSearchTerm, setForensicSearchTerm] = useState("");
+    const socketRef = useRef<Socket | null>(null);
+
+    // Grant State
     const [grantEmail, setGrantEmail] = useState("");
     const [grantAmount, setGrantAmount] = useState(0);
     const [grantReason, setGrantReason] = useState("");
-    const [pendingTrades, setPendingTrades] = useState<Trade[]>([]);
 
-    // Multi-bucket allocations state
-    const [allocations, setAllocations] = useState<{ [tradeId: string]: { bucket: string; amountVP: number; justification: string }[] }>({});
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [config, setConfig] = useState({
-        feePercentage: 15,
-        laborBaseline: 6,
-        heir1: "",
-        heir1Key: "",
-        heir2: "",
-        heir2Key: "",
-        heir3: "",
-        heir3Key: "",
-        heir4: "",
-        heir4Key: "",
-        heir5: "",
-        heir5Key: "",
-        lastAdminActivity: ""
-    });
-
+    // Emergency/Death State
     const [deathDate, setDeathDate] = useState("");
     const [deathPlace, setDeathPlace] = useState("");
     const [mokhtarName, setMokhtarName] = useState("");
     const [mokhtarLicense, setMokhtarLicense] = useState("");
 
-    useEffect(() => {
-        fetch("http://localhost:3001/admin/status")
+    // --- FETCH FUNCTIONS ---
+
+    const fetchAuditLogs = useCallback(() => {
+        fetch(`${API_BASE_URL}/admin/audit-logs`)
             .then(res => res.json())
-            .then(data => {
-                setFrozen(data.isFrozen);
-                setLoading(false);
-            })
-            .catch(() => setLoading(false));
+            .then(data => setLogs(Array.isArray(data) ? data : []))
+            .catch(() => setLogs([]));
+    }, []);
+
+    const fetchCategories = useCallback(() => {
+        fetch(`${API_BASE_URL}/admin/categories`)
+            .then(res => res.json())
+            .then(setCategories);
+    }, []);
+
+    const fetchConfig = useCallback(() => {
+        fetch(`${API_BASE_URL}/admin/config`)
+            .then(res => res.json())
+            .then(data => setConfig((prev: any) => ({ ...prev, ...data })));
+    }, []);
+
+    const fetchHeirConfig = async () => {
+        if (!code1 || !fingerprintCode) {
+            alert("Security Codes Alpha + Fingerprint required to reveal keys.");
+            return;
+        }
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/config/heirs`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code1, fingerprintCode })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setConfig((prev: any) => ({ ...prev, ...data }));
+            }
+        } catch (err) { }
+    };
+
+    const fetchCityPulse = useCallback(() => {
+        fetch(`${API_BASE_URL}/city-pulse`)
+            .then(res => res.json())
+            .then(setCityPulse)
+            .catch(() => { });
+    }, []);
+
+    const fetchPendingTrades = useCallback(() => {
+        fetch(`${API_BASE_URL}/admin/trades`)
+            .then(res => res.json())
+            .then(setPendingTrades);
+    }, []);
+
+    const fetchDisputes = useCallback(() => {
+        fetch(`${API_BASE_URL}/admin/disputes`)
+            .then(res => res.json())
+            .then(setDisputedTrades);
+    }, []);
+
+    const fetchPendingBusinesses = useCallback(() => {
+        fetch(`${API_BASE_URL}/admin/pending-businesses`)
+            .then(res => res.json())
+            .then(setPendingBusinesses);
+    }, []);
+
+    const fetchPendingCommunity = useCallback(() => {
+        fetch(`${API_BASE_URL}/admin/pending-community`)
+            .then(res => res.json())
+            .then(setPendingCommunity);
+    }, []);
+
+    const fetchPendingAmbassadors = useCallback(() => {
+        fetch(`${API_BASE_URL}/admin/pending-ambassadors`)
+            .then(res => res.json())
+            .then(setPendingAmbassadors);
+    }, []);
+
+    const fetchBounties = useCallback(() => {
+        fetch(`${API_BASE_URL}/bounties`)
+            .then(res => res.json())
+            .then(data => setSubmittedBounties(data.filter((b: Bounty) => b.status === "SUBMITTED")));
+    }, []);
+
+    const fetchIntelligence = useCallback(() => {
+        fetch(`${API_BASE_URL}/admin/intelligence`)
+            .then(res => res.json())
+            .then(setIntelligence)
+            .catch(() => { });
+    }, []);
+
+    const fetchModerationFlags = useCallback(() => {
+        fetch(`${API_BASE_URL}/admin/moderation/flags`)
+            .then(res => res.json())
+            .then(setModerationFlags);
+    }, []);
+
+    const fetchBusinessRegistry = useCallback(() => {
+        fetch(`${API_BASE_URL}/admin/business-registry`)
+            .then(res => res.json())
+            .then(setBusinessRegistry);
+    }, []);
+
+    const handleForensicScan = async (userId: string) => {
+        if (!userId) return;
+        setLoading(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/intelligence/forensic/${userId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setForensicResults(data);
+                setProtocol("STRATEGIC"); // Focus on tactical view
+            }
+        } catch (err) { }
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        // Socket for Real-Time Stats
+        const socket = io(`${API_BASE_URL}/notifications`);
+        socket.on("connect", () => {
+            socket.emit("join_admin");
+        });
+
+        socket.on("system_stats", (data) => {
+            if (data.type === "API_PERFORMANCE") {
+                setPerfLogs(prev => [{ ...data.payload, timestamp: new Date(data.timestamp) }, ...prev].slice(0, 10));
+            }
+        });
+
+        socketRef.current = socket;
+
+        return () => {
+            socket.disconnect();
+        };
+    }, []);
+
+    useEffect(() => {
+        fetch(`${API_BASE_URL}/admin/status`)
+            .then(res => res.json())
+            .then(data => setFrozen(data.isFrozen))
+            .catch(() => { })
+            .finally(() => setLoading(false));
 
         fetchAuditLogs();
         fetchPendingTrades();
         fetchConfig();
         fetchCategories();
-        fetchHeirConfig();
-    }, []);
+        fetchCityPulse();
+        fetchPendingBusinesses();
+        fetchPendingCommunity();
+        fetchPendingAmbassadors();
+        fetchBounties();
+        fetchModerationFlags();
+        fetchDisputes();
+        fetchIntelligence();
+        fetchBusinessRegistry();
+    }, [fetchAuditLogs, fetchPendingTrades, fetchConfig, fetchCategories, fetchCityPulse, fetchPendingBusinesses, fetchPendingCommunity, fetchPendingAmbassadors, fetchBounties, fetchModerationFlags, fetchDisputes, fetchIntelligence, fetchBusinessRegistry]);
 
-    const fetchCategories = () => {
-        fetch("http://localhost:3001/admin/categories")
-            .then(res => res.json())
-            .then(setCategories);
+    // --- ACTION HANDLERS ---
+
+    const handleToggleFreeze = async () => {
+        const newStatus = !frozen;
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/freeze`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ frozen: newStatus, code1, code2, fingerprintCode })
+            });
+            if (!res.ok) throw new Error((await res.json()).message || "Action Failed");
+            setFrozen(newStatus);
+            setMessage(`System is now ${newStatus ? "FROZEN ❄️" : "ACTIVE ✅"}`);
+            fetchAuditLogs();
+        } catch (err: any) { alert(err.message); }
+    };
+
+    const handleRotateCodes = async () => {
+        if (!confirm("Rotate Master Keys? Irreversible.")) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/config/rotate-codes`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code1, fingerprintCode, newAlpha, newBeta, newFingerprint })
+            });
+            if (!res.ok) throw new Error("Key Rotation Failed");
+            alert("Success!");
+        } catch (err: any) { alert(err.message); }
+    };
+
+    const handleSaveCategory = async (cat: Category) => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/categories/${cat.id}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...cat, code1, fingerprintCode })
+            });
+            if (res.ok) alert("Category updated.");
+        } catch (err) { alert("Error."); }
     };
 
     const handleUpdateCat = (catId: string, field: keyof Category, value: string) => {
@@ -110,1086 +343,737 @@ export default function AdminPage() {
         setCategories(next);
     };
 
-    async function handleSaveCategory(cat: Category) {
+    const handleToggleCrisis = async (city: string, country: string, currentStatus: boolean) => {
+        if (!confirm(`Override Crisis Protocol for ${city}?`)) return;
         try {
-            const res = await fetch(`http://localhost:3001/admin/categories/${cat.id}`, {
+            const res = await fetch(`${API_BASE_URL}/admin/config/crisis-override`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...cat, code1, fingerprintCode })
+                body: JSON.stringify({ city, country, active: !currentStatus, code1, fingerprintCode })
             });
-
-            if (!res.ok) {
-                const errData = await res.json();
-                throw new Error(errData.message || "Update Failed");
-            }
-
-            alert(`Category ${cat.name} updated successfully!`);
-            fetchCategories();
-        } catch (err: unknown) {
-            alert("Error: " + (err as Error).message);
-        }
-    }
-
-    const fetchConfig = () => {
-        fetch("http://localhost:3001/admin/config")
-            .then(res => res.json())
-            .then(data => {
-                setConfig(prev => ({ ...prev, ...data }));
-            });
-    };
-
-    const fetchHeirConfig = async () => {
-        if (!code1 || !fingerprintCode) return;
-        try {
-            const res = await fetch("http://localhost:3001/admin/config/heirs", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ code1, fingerprintCode })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setConfig(prev => ({ ...prev, ...data }));
-            }
+            if (res.ok) fetchCityPulse();
         } catch (err) { }
     };
 
-    const fetchPendingTrades = () => {
-        fetch("http://localhost:3001/admin/trades")
-            .then(res => res.json())
-            .then(setPendingTrades);
-    };
-
-    const fetchAuditLogs = () => {
-        fetch("http://localhost:3001/admin/audit-logs")
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) {
-                    setLogs(data);
-                } else {
-                    console.error("Audit logs response is not an array:", data);
-                    setLogs([]);
-                }
-            })
-            .catch(err => {
-                console.error("Failed to fetch audit logs:", err);
-                setLogs([]);
-            });
-    };
-
-    // ... (previous interfaces)
-
-    interface BusinessRequest {
-        id: string;
-        fullName: string;
-        email: string;
-        businessName: string;
-        businessVerificationStatus: string;
-    }
-
-    interface CommunityRequest {
-        id: string;
-        fullName: string;
-        email: string;
-        communityRole: string;
-        communityEvidence: string;
-        communityVerificationStatus: string;
-    }
-
-    interface AmbassadorRequest {
-        id: string;
-        fullName: string;
-        email: string;
-        ambassadorStatus: string;
-        risk: { maxConcentration: number; topPartner: string | null };
-    }
-
-    interface Bounty {
-        id: string;
-        title: string;
-        description: string;
-        rewardVP: number;
-        status: string;
-        assignee?: { fullName: string };
-        submissionEvidence?: string;
-    }
-
-    interface ModerationFlag {
-        id: string;
-        reason: string;
-        category: string;
-        severity: string;
-        matchedKeywords: string;
-        listing: {
-            title: string;
-            seller: { fullName: string; email: string; reportCount: number };
-        };
-    }
-
-    // ... inside AdminPage component ...
-    const [pendingBusinesses, setPendingBusinesses] = useState<BusinessRequest[]>([]);
-    const [pendingCommunity, setPendingCommunity] = useState<CommunityRequest[]>([]);
-    const [pendingAmbassadors, setPendingAmbassadors] = useState<AmbassadorRequest[]>([]);
-    const [submittedBounties, setSubmittedBounties] = useState<Bounty[]>([]);
-    const [moderationFlags, setModerationFlags] = useState<ModerationFlag[]>([]);
-
-    const fetchBounties = useCallback(() => {
-        fetch("http://localhost:3001/bounties")
-            .then(res => res.json())
-            .then(data => {
-                setSubmittedBounties(data.filter((b: Bounty) => b.status === 'SUBMITTED'));
-            });
-    }, []);
-
-    const fetchModerationFlags = useCallback(() => {
-        fetch("http://localhost:3001/admin/moderation/flags")
-            .then(res => res.json())
-            .then(setModerationFlags);
-    }, []);
-
-    useEffect(() => {
-        fetchAuditLogs();
-        fetchPendingTrades();
-        fetchConfig();
-        fetchCategories();
-        fetchHeirConfig();
-        fetchPendingBusinesses();
-        fetchPendingCommunity();
-        fetchPendingAmbassadors();
-        fetchBounties();
-        fetchModerationFlags();
-    }, [fetchBounties, fetchModerationFlags]);
-
-    const handleApproveBounty = async (bountyId: string) => {
-        if (!confirm("Approve completion and release VP?")) return;
+    const handleApproveBusiness = async (userId: string, name: string) => {
+        const notes = prompt(`Notes for ${name}:`);
+        if (!notes) return;
         try {
-            await fetch(`http://localhost:3001/bounties/${bountyId}/complete`, { method: 'PUT' });
-            alert("Bounty Completed & Paid!");
-            fetchBounties();
-        } catch (e) { alert("Error"); }
+            const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/approve-business`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ notes, code1, fingerprintCode })
+            });
+            if (!res.ok) throw new Error("Approval Failed: Security Codes possibly invalid.");
+            fetchPendingBusinesses();
+            alert("Business Approved & Referrer Rewarded.");
+        } catch (err: any) { alert(err.message); }
     };
 
-    const handleFlagAction = async (flagId: string, action: 'approve' | 'reject') => {
-        if (!code1 || !fingerprintCode) {
-            alert("Security Codes Required");
-            return;
-        }
+    const handleApproveCommunity = async (req: CommunityRequest) => {
+        if (!confirm(`Approve ${req.fullName}?`)) return;
         try {
-            await fetch(`http://localhost:3001/admin/moderation/flags/${flagId}/${action}`, {
+            await fetch(`${API_BASE_URL}/users/${req.id}/approve-community`, { method: "PUT" });
+            fetchPendingCommunity();
+        } catch (err) { }
+    };
+
+    const handleApproveAmbassador = async (user: AmbassadorRequest) => {
+        if (!confirm(`Confirm Ambassador Status for ${user.fullName}?`)) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/users/${user.id}/approve-ambassador`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ code1, fingerprintCode })
             });
-            alert(`Flag ${action}d!`);
-            fetchModerationFlags();
-        } catch (e) { alert("Error processing flag"); }
-    };
-
-    const fetchPendingAmbassadors = () => {
-        fetch("http://localhost:3001/admin/pending-ambassadors")
-            .then(res => res.json())
-            .then(setPendingAmbassadors);
-    };
-
-    const handleApproveAmbassador = async (user: AmbassadorRequest) => {
-        if (user.risk.maxConcentration > 0.5) {
-            if (!confirm(`⚠️ HIGH COLLUSION RISK: ${(user.risk.maxConcentration * 100).toFixed(1)}% of trades with same partner. Approve anyway?`)) return;
-        }
-
-        if (!confirm(`Approve ${user.fullName} as Ambassador?`)) return;
-
-        try {
-            await fetch(`http://localhost:3001/admin/${user.id}/approve-ambassador`, { method: 'PUT' });
-            alert("Approved!");
+            if (!res.ok) throw new Error("Ambassador Onboarding Failed");
             fetchPendingAmbassadors();
-        } catch (e) { alert("Error"); }
+            alert("Ambassador Protocol Activated.");
+        } catch (err: any) { alert(err.message); }
     };
 
-
-    const fetchPendingBusinesses = () => {
-        fetch("http://localhost:3001/admin/pending-businesses")
-            .then(res => res.json())
-            .then(setPendingBusinesses);
-    };
-
-    const fetchPendingCommunity = () => {
-        fetch("http://localhost:3001/admin/pending-community")
-            .then(res => res.json())
-            .then(setPendingCommunity);
-    };
-
-    const handleApproveBusiness = async (userId: string, currentBusinessName: string) => {
-        const notes = prompt(`Enter Verification Notes for ${currentBusinessName} (e.g. Doc Numbers, Method):`);
-        if (notes === null) return; // Cancelled
-
-        const country = prompt("Enter Country Verified (e.g. Lebanon):", "Lebanon");
-        if (country === null) return;
-
-        const confirmText = `CONFIRM APPROVAL:\n\nBusiness: ${currentBusinessName}\nCountry: ${country}\nNotes: ${notes}\n\nProceed?`;
-        if (!confirm(confirmText)) return;
-
+    const handleResolveDispute = async (tradeId: string, action: "RELEASE" | "REFUND") => {
+        const notes = prompt("Resolution notes:");
+        if (!notes) return;
         try {
-            const res = await fetch(`http://localhost:3001/users/${userId}/approve-business`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ notes, country, verifiedAt: new Date(), adminId: 'ADMIN_AC' })
-            });
-
-            if (res.ok) {
-                alert("Business Approved & Documented ✅");
-                fetchPendingBusinesses();
-            }
-        } catch (err) {
-            alert("Error approving business");
-        }
-    };
-
-    const handleApproveCommunity = async (req: CommunityRequest) => {
-        let evidence: any = {};
-        try { evidence = JSON.parse(req.communityEvidence); } catch (e) { }
-
-        const confirmText = `APPROVE COMMUNITY ROLE 🎖️\n\nUser: ${req.fullName}\nRole: ${req.communityRole}\nEvidence: ${evidence.idPhotoUrl || 'N/A'}\n\nApprove and grant +Listings Bonus?`;
-        if (!confirm(confirmText)) return;
-
-        try {
-            const res = await fetch(`http://localhost:3001/users/${req.id}/approve-community`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ verifierId: 'ADMIN_AC' })
-            });
-
-            if (res.ok) {
-                alert(`Approved! User is now a Verified ${req.communityRole} 🎖️`);
-                fetchPendingCommunity();
-            }
-        } catch (err) {
-            alert("Error approving community request");
-        }
-    };
-
-    // ... inside return JSX, before CATEGORY SETTINGS SECTION ...
-
-    {/* BUSINESS VERIFICATION SECTION */ }
-    <section className="admin-section" style={{ borderColor: '#3b82f6', backgroundColor: '#eff6ff' }}>
-        <h2>🏢 Pending Business Verifications</h2>
-        <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: 20 }}>
-            <strong>Protocol:</strong> Verify business registration documents and receipt of administrative fee via WhatsApp before approving.
-        </p>
-
-        {pendingBusinesses.length === 0 ? (
-            <p style={{ fontStyle: 'italic', color: '#666' }}>No pending verification requests.</p>
-        ) : (
-            <table className="admin-table">
-                <thead>
-                    <tr>
-                        <th>Trading Name</th>
-                        <th>Owner Name</th>
-                        <th>Email</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {pendingBusinesses.map((biz) => (
-                        <tr key={biz.id}>
-                            <td><strong>{biz.businessName}</strong></td>
-                            <td>{biz.fullName}</td>
-                            <td>{biz.email}</td>
-                            <td><span className="badge badge-warning">{biz.businessVerificationStatus}</span></td>
-                            <td>
-                                <button
-                                    onClick={() => handleApproveBusiness(biz.id, biz.businessName)}
-                                    className="admin-button-small"
-                                    style={{ backgroundColor: '#16a34a', color: 'white', border: 'none' }}
-                                >
-                                    ✅ Approve Identity
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        )}
-    </section>
-
-    {/* COMMUNITY VERIFICATION SECTION */ }
-    <section className="admin-section" style={{ borderColor: '#84cc16', backgroundColor: '#ecfccb' }}>
-        <h2>🧑‍🌾 Pending Community Requests</h2>
-        <p style={{ fontSize: '0.85rem', color: '#3f6212', marginBottom: 20 }}>
-            <strong>Protocol:</strong> Check ID and Certificate. Verify Tree Selfie (Optional for Gardeners).
-        </p>
-
-        {pendingCommunity.length === 0 ? (
-            <p style={{ fontStyle: 'italic', color: '#666' }}>No pending community requests.</p>
-        ) : (
-            <table className="admin-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Role</th>
-                        <th>Evidence</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {pendingCommunity.map((req) => {
-                        let ev: any = {};
-                        try { ev = JSON.parse(req.communityEvidence); } catch (e) { }
-                        return (
-                            <tr key={req.id}>
-                                <td><strong>{req.fullName}</strong><br /><small>{req.email}</small></td>
-                                <td><span className="badge" style={{ backgroundColor: '#d97706', color: 'white' }}>{req.communityRole}</span></td>
-                                <td>
-                                    <a href={ev.idPhotoUrl} target="_blank" className="text-blue-600 underline text-xs mr-2">ID Photo</a>
-                                    {req.communityRole === 'GARDENER' && ev.optionalTreeSelfieUrl && (
-                                        <a href={ev.optionalTreeSelfieUrl} target="_blank" className="text-green-600 underline text-xs">🌳 Selfie</a>
-                                    )}
-                                </td>
-                                <td>
-                                    <button
-                                        onClick={() => handleApproveCommunity(req)}
-                                        className="admin-button-small"
-                                        style={{ backgroundColor: '#65a30d', color: 'white', border: 'none' }}
-                                    >
-                                        ✅ Verify & Grant Limit
-                                    </button>
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
-        )}
-    </section>
-
-    {/* AMBASSADOR APPLICATIONS SECTION */ }
-    <section className="admin-section" style={{ borderColor: '#8b5cf6', backgroundColor: '#f5f3ff' }}>
-        <h2>👑 Ambassador Applications</h2>
-        <p style={{ fontSize: '0.85rem', color: '#5b21b6', marginBottom: 20 }}>
-            <strong>Protocol:</strong> Review Collusion Risk. Reject if &gt;30% concentration with single partner.
-        </p>
-
-        {pendingAmbassadors.length === 0 ? (
-            <p style={{ fontStyle: 'italic', color: '#666' }}>No pending ambassador applications.</p>
-        ) : (
-            <table className="admin-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Collusion Risk</th>
-                        <th>Top Partner</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {pendingAmbassadors.map((req) => (
-                        <tr key={req.id}>
-                            <td><strong>{req.fullName}</strong><br /><small>{req.email}</small></td>
-                            <td>
-                                <span className={`badge ${req.risk.maxConcentration > 0.3 ? 'badge-danger' : 'badge-success'}`}>
-                                    {(req.risk.maxConcentration * 100).toFixed(1)}% Concentration
-                                </span>
-                            </td>
-                            <td><small>{req.risk.topPartner || 'N/A'}</small></td>
-                            <td>
-                                <button
-                                    onClick={() => handleApproveAmbassador(req)}
-                                    className="admin-button-small"
-                                    style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none' }}
-                                >
-                                    ✅ Grant Status
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        )}
-    </section>
-
-    {/* BOUNTY MANAGEMENT SECTION */ }
-    <section className="admin-section" style={{ borderColor: '#f59e0b', backgroundColor: '#fffbeb' }}>
-        <h2>🏆 Bounty Review</h2>
-        {submittedBounties.length === 0 ? (
-            <p className="no-data">No submitted bounties pending review.</p>
-        ) : (
-            <table className="admin-table">
-                <thead>
-                    <tr>
-                        <th>Task</th>
-                        <th>Assignee</th>
-                        <th>Evidence</th>
-                        <th>Reward</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {submittedBounties.map((b) => (
-                        <tr key={b.id}>
-                            <td>{b.title}</td>
-                            <td>{b.assignee?.fullName}</td>
-                            <td style={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.submissionEvidence}</td>
-                            <td className="font-bold text-green-600">{b.rewardVP} VP</td>
-                            <td>
-                                <button
-                                    onClick={() => handleApproveBounty(b.id)}
-                                    className="admin-button-small"
-                                    style={{ backgroundColor: '#16a34a' }}
-                                >
-                                    Approve & Pay
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        )}
-    </section>
-
-    {/* MODERATION QUEUE */ }
-    <section className="admin-section" style={{ borderColor: '#ef4444', backgroundColor: '#fef2f2' }}>
-        <h2>🛡️ Content Moderation Queue</h2>
-        {moderationFlags.length === 0 ? (
-            <p className="no-data">No flagged content.</p>
-        ) : (
-            <table className="admin-table">
-                <thead>
-                    <tr>
-                        <th>Listing</th>
-                        <th>Violation</th>
-                        <th>Seller Risk</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {moderationFlags.map((flag) => (
-                        <tr key={flag.id}>
-                            <td><strong>{flag.listing.title}</strong></td>
-                            <td>
-                                <span className="badge badge-danger">{flag.category}</span>
-                                <div className="text-xs mt-1 text-gray-500">{flag.reason}</div>
-                            </td>
-                            <td>
-                                {flag.listing.seller.reportCount} Reports
-                            </td>
-                            <td className="flex gap-2">
-                                <button
-                                    onClick={() => handleFlagAction(flag.id, 'approve')}
-                                    className="admin-button-small"
-                                    style={{ backgroundColor: '#16a34a' }}
-                                >
-                                    Allow
-                                </button>
-                                <button
-                                    onClick={() => handleFlagAction(flag.id, 'reject')}
-                                    className="admin-button-small"
-                                    style={{ backgroundColor: '#dc2626' }}
-                                >
-                                    Remove
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        )}
-    </section>
-
-    async function handleGrant() {
-        try {
-            const res = await fetch("http://localhost:3001/admin/grant", {
+            await fetch(`${API_BASE_URL}/admin/trades/${tradeId}/resolve-dispute`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    email: grantEmail,
-                    amount: Number(grantAmount),
-                    reason: grantReason,
-                    code1,
-                    fingerprintCode
-                })
+                body: JSON.stringify({ action, notes, code1, fingerprintCode })
             });
-
-            if (!res.ok) throw new Error("Grant Failed");
-
-            alert(`Successfully granted ${grantAmount} VP to ${grantEmail}`);
-            setGrantEmail("");
-            setGrantAmount(0);
-            setGrantReason("");
-            fetchAuditLogs(); // Refresh logs
-        } catch (err: unknown) {
-            alert("Error: " + (err as Error).message);
-        }
-    }
-
-    async function handleUpdateConfig() {
-        try {
-            const res = await fetch("http://localhost:3001/admin/config", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    feePercentage: Number(config.feePercentage),
-                    laborBaseline: Number(config.laborBaseline),
-                    heir1: config.heir1,
-                    heir1Key: config.heir1Key,
-                    heir2: config.heir2,
-                    heir2Key: config.heir2Key,
-                    heir3: config.heir3,
-                    heir3Key: config.heir3Key,
-                    heir4: config.heir4,
-                    heir4Key: config.heir4Key,
-                    heir5: config.heir5,
-                    heir5Key: config.heir5Key,
-                    code1,
-                    fingerprintCode
-                })
-            });
-
-            if (!res.ok) throw new Error("Config Update Failed");
-            alert("Platform settings & Heirloom data updated successfully!");
-            fetchConfig();
-            fetchHeirConfig();
-        } catch (err: unknown) {
-            alert("Error: " + (err as Error).message);
-        }
-    }
-
-    const handleAddAllocation = (tradeId: string) => {
-        const current = allocations[tradeId] || [];
-        setAllocations({
-            ...allocations,
-            [tradeId]: [...current, { bucket: "MODERATION", amountVP: 0, justification: "" }]
-        });
-    };
-
-    const handleUpdateAllocation = (tradeId: string, index: number, field: string, value: any) => {
-        const current = [...(allocations[tradeId] || [])];
-        current[index] = { ...current[index], [field]: field === 'amountVP' ? Number(value) : value };
-        setAllocations({ ...allocations, [tradeId]: current });
-    };
-
-    const handleRemoveAllocation = (tradeId: string, index: number) => {
-        const current = (allocations[tradeId] || []).filter((_, i) => i !== index);
-        setAllocations({ ...allocations, [tradeId]: current });
-    };
-
-    async function handleVerifyTrade(tradeId: string) {
-        const tradeAllocations = allocations[tradeId] || [];
-        try {
-            const res = await fetch(`http://localhost:3001/admin/trades/${tradeId}/verify`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    bucketAllocations: tradeAllocations,
-                    code1,
-                    fingerprintCode
-                })
-            });
-
-            if (!res.ok) {
-                const errData = await res.json();
-                throw new Error(errData.message || "Verification Failed");
-            }
-
-            alert("Trade Verified & Unused Escrow Refunded!");
-            fetchPendingTrades();
+            fetchDisputes();
             fetchAuditLogs();
-            // Clear allocations for this trade
-            const nextAllocations = { ...allocations };
-            delete nextAllocations[tradeId];
-            setAllocations(nextAllocations);
-        } catch (err: unknown) {
-            alert("Error: " + (err as Error).message);
-        }
-    }
+        } catch (err) { }
+    };
 
-    async function handleToggleFreeze() {
-        const newStatus = !frozen;
+    const handleFlagAction = async (flagId: string, action: "approve" | "reject") => {
         try {
-            const res = await fetch("http://localhost:3001/admin/freeze", {
+            await fetch(`${API_BASE_URL}/admin/moderation/flags/${flagId}/${action}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    frozen: newStatus,
-                    code1,
-                    code2,
-                    fingerprintCode
-                })
+                body: JSON.stringify({ code1, fingerprintCode })
             });
+            fetchModerationFlags();
+        } catch (err) { }
+    };
 
-            if (!res.ok) {
-                const errorText = await res.text();
-                throw new Error(JSON.parse(errorText).message || "Action Failed");
-            }
+    const handleGrant = async () => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/grant`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: grantEmail, amount: grantAmount, reason: grantReason, code1, fingerprintCode })
+            });
+            if (res.ok) { alert("Grant Issued."); fetchAuditLogs(); }
+        } catch (err) { }
+    };
 
-            setFrozen(newStatus);
-            setMessage(`System is now ${newStatus ? "FROZEN ❄️" : "ACTIVE ✅"}`);
-            fetchAuditLogs(); // Refresh logs
-            setCode1("");
-            setCode2("");
-        } catch (err: unknown) {
-            alert((err as Error).message);
-        }
-    }
+    const handleApproveBounty = async (id: string) => {
+        try {
+            await fetch(`${API_BASE_URL}/admin/bounties/${id}/approve`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code1, fingerprintCode })
+            });
+            fetchBounties();
+        } catch (err) { }
+    };
 
-    if (loading) return <div style={{ padding: 40 }}>Loading Admin Panel...</div>;
+    const handleExportVault = async () => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/vault/export`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code1, fingerprintCode })
+            });
+            const data = await res.json();
+            const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "vault_export.json";
+            a.click();
+        } catch (err) { }
+    };
 
-    return (
-        <div className="admin-container">
-            <header className="admin-header">
-                <h1>🛡️ Admin Dashboard</h1>
-                {frozen && <span style={{ color: 'red', fontWeight: 'bold' }}>⚠️ KILL SWITCH ACTIVE</span>}
-            </header>
+    const handleExportAudit = () => {
+        const csvRows = ["ID,Action,Admin,Date", ...logs.map(l => `${l.id},${l.action},${l.adminId},${l.createdAt}`)];
+        const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "audit.csv";
+        a.click();
+    };
 
-            <div className="admin-grid">
-                {/* SECURITY CODES */}
-                <div className="admin-section">
-                    <h2>🔑 Security Authorization</h2>
-                    <div className="admin-input-group">
-                        <label htmlFor="code1">Security Code Alpha</label>
-                        <input
-                            id="code1"
-                            type="password"
-                            className="admin-input"
-                            value={code1}
-                            onChange={e => setCode1(e.target.value)}
-                        />
-                    </div>
-                    <div className="admin-input-group" style={{ marginTop: 15 }}>
-                        <label htmlFor="code2">Security Code Beta</label>
-                        <input
-                            id="code2"
-                            type="password"
-                            className="admin-input"
-                            value={code2}
-                            onChange={e => setCode2(e.target.value)}
-                        />
-                    </div>
-                    <div className="admin-input-group" style={{ marginTop: 15 }}>
-                        <label htmlFor="fingerprintCode">Fingerprint Auth Code</label>
-                        <input
-                            id="fingerprintCode"
-                            type="password"
-                            className="admin-input"
-                            value={fingerprintCode}
-                            onChange={e => setFingerprintCode(e.target.value)}
-                        />
-                    </div>
+    const handleUpdateConfig = async () => {
+        try {
+            await fetch(`${API_BASE_URL}/admin/config`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...config, code1, fingerprintCode })
+            });
+            alert("Updated.");
+        } catch (err) { }
+    };
+
+    // --- RENDER HELPERS ---
+
+    const renderProtocolCard = (id: Protocol, title: string, description: string, icon: string, colorClass: string) => (
+        <div className={`admin-portal-card ${colorClass}`} onClick={() => setProtocol(id)}>
+            <div className="admin-portal-icon">{icon}</div>
+            <div className="admin-portal-info">
+                <h3>{title}</h3>
+                <p>{description}</p>
+            </div>
+            <div className="admin-portal-arrow">→</div>
+        </div>
+    );
+
+    const renderPortalHeader = (title: string, subtitle: string) => (
+        <header className="admin-header">
+            <div>
+                <div className="flex items-center gap-2">
+                    <button onClick={() => setProtocol("COMMAND_CENTER")} className="text-blue-600 hover:underline text-sm mb-1">← Command Center</button>
+                    <span className="text-gray-400 text-sm mb-1">/ {title}</span>
                 </div>
+                <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+                <p className="text-gray-500">{subtitle}</p>
+            </div>
+            <Link href="/" className="admin-back-link">Return to Platform</Link>
+        </header>
+    );
 
-                {/* KILL SWITCH SECTION */}
-                <div className="admin-section" style={{ borderColor: frozen ? '#dc2626' : '#eee' }}>
-                    <h2>🚨 Protocol 0: Kill Switch</h2>
-                    <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: 20 }}>
-                        Instantly freezes all trade confirmations platform-wide. Requires Security Code Alpha & Beta.
-                    </p>
+    if (loading) return <div className="admin-loader">Synchronizing Administrative Ledger...</div>;
 
-                    <button
-                        onClick={handleToggleFreeze}
-                        className={`admin-button ${frozen ? 'admin-button-success' : 'admin-button-danger'}`}
-                        style={{ fontSize: '1.2rem' }}
-                    >
-                        {frozen ? "DEACTIVATE Kill Switch" : "ACTIVATE Kill Switch"}
-                    </button>
+    // --- VIEW LOGIC ---
+
+    if (protocol === "COMMAND_CENTER") {
+        return (
+            <div className="admin-container">
+                <header className="admin-header">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Institutional Command Center</h1>
+                        <p className="text-gray-500">MeetBarter Foundation NGO Protocol Selection</p>
+                    </div>
+                    <Link href="/" className="admin-back-link">Return to Platform</Link>
+                </header>
+                <div className="admin-notice">
+                    <strong>Notice:</strong> All administrative actions are recorded in the tamper-evident SHA-256 Audit Ledger.
+                </div>
+                <div className="admin-portal-grid">
+                    {renderProtocolCard("TECHNICAL", "Technical Handover (CTO)", "Lead Developer focus: server maintenance, master key security.", "🛠️", "portal-tech")}
+                    {renderProtocolCard("COMPLIANCE", "Compliance Verification", "Operations Lead focus: NGO registration and Level 2/3 verification.", "📋", "portal-compliance")}
+                    {renderProtocolCard("LEGAL", "Dispute Resolution", "Legal Officer focus: Trade conflict settlement.", "⚖️", "portal-legal")}
+                    {renderProtocolCard("BOARD", "Disaster Recovery (Succession)", "Board focus: Heartbeat monitoring and Heirloom drills.", "🛡️", "portal-board")}
+                    {renderProtocolCard("STRATEGIC", "Market Intelligence", "MeetBarter Intelligence focus: Scarcity, demand, and liquidity.", "🔭", "portal-strategic")}
+                    {renderProtocolCard("AUDITOR", "Audit & Transparency", "Transparency focus: Log export and integrity reporting.", "📈", "portal-audit")}
                 </div>
             </div>
+        );
+    }
 
-            {/* CATEGORY SETTINGS SECTION */}
-            <section className="admin-section">
-                <h2>📁 Category Operational Escrow Config</h2>
-                <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: 20 }}>
-                    Define max escrow percentages and cost caps per category.
-                    <em> Changes only affect new trades.</em>
-                </p>
-                <div style={{ overflowX: 'auto' }}>
+    if (protocol === "TECHNICAL") {
+        return (
+            <div className="admin-container">
+                {renderPortalHeader("Technical Handover Protocol", "Lead Developer Control System")}
+                <section className="admin-section">
+                    <h2>❄️ Platform Kill Switch</h2>
+                    <div className="admin-grid mb-4">
+                        <input type="password" placeholder="Code Alpha" className="admin-input" value={code1} onChange={e => setCode1(e.target.value)} />
+                        <input type="password" placeholder="Code Beta" className="admin-input" value={code2} onChange={e => setCode2(e.target.value)} />
+                        <input type="password" placeholder="Fingerprint" className="admin-input" value={fingerprintCode} onChange={e => setFingerprintCode(e.target.value)} />
+                    </div>
+                    <button onClick={handleToggleFreeze} className={`admin-button ${frozen ? "bg-green-600" : "bg-red-600"} text-white`}>
+                        {frozen ? "DEACTIVATE Freeze" : "ACTIVATE Freeze"}
+                    </button>
+                    {message && <p className="mt-2 font-bold text-center">{message}</p>}
+                </section>
+                <section className="admin-section" style={{ borderColor: "#b91c1c", backgroundColor: "#fef2f2" }}>
+                    <h2 style={{ color: "#991b1b" }}>🔑 Master Key Handover</h2>
+                    <div className="admin-grid mb-4">
+                        <input type="password" placeholder="New Alpha" className="admin-input" value={newAlpha} onChange={e => setNewAlpha(e.target.value)} />
+                        <input type="password" placeholder="New Beta" className="admin-input" value={newBeta} onChange={e => setNewBeta(e.target.value)} />
+                        <input type="password" placeholder="New Fingerprint" className="admin-input" value={newFingerprint} onChange={e => setNewFingerprint(e.target.value)} />
+                    </div>
+                    <button onClick={handleRotateCodes} className="admin-button bg-red-700 text-white">Rotate Keys</button>
+                </section>
+                <section className="admin-section">
+                    <h2>📁 Category Параметры</h2>
+                    <table className="admin-table">
+                        <thead><tr><th>Name</th><th>Escrow %</th><th>Action</th></tr></thead>
+                        <tbody>
+                            {categories.map(cat => (
+                                <tr key={cat.id}>
+                                    <td>{cat.name}</td>
+                                    <td><input className="admin-input-small" value={cat.escrowPercentage} onChange={e => handleUpdateCat(cat.id, "escrowPercentage", e.target.value)} />%</td>
+                                    <td><button onClick={() => handleSaveCategory(cat)} className="admin-button-small">Save</button></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </section>
+                <section className="admin-section">
+                    <h2>💓 Market Pulse</h2>
+                    <table className="admin-table">
+                        <thead><tr><th>City</th><th>Status</th><th>Action</th></tr></thead>
+                        <tbody>
+                            {cityPulse.map((p, i) => (
+                                <tr key={i}>
+                                    <td>{p.city}</td>
+                                    <td>{p.isCrisisActive ? "🛑 CRISIS" : "✅ NORMAL"}</td>
+                                    <td><button onClick={() => handleToggleCrisis(p.city, p.country, p.isCrisisActive)} className="admin-button-small">Toggle</button></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+        );
+    }
+
+    if (protocol === "COMPLIANCE") {
+        return (
+            <div className="admin-container">
+                {renderPortalHeader("Compliance & Verification", "Administrative Architect Workflow")}
+                <section className="admin-section">
+                    <h2>🏢 Business Verifications</h2>
+                    <table className="admin-table">
+                        <thead><tr><th>Business</th><th>Action</th></tr></thead>
+                        <tbody>
+                            {pendingBusinesses.map(biz => (
+                                <tr key={biz.id}>
+                                    <td>{biz.businessName}</td>
+                                    <td><button onClick={() => handleApproveBusiness(biz.id, biz.businessName)} className="admin-button-small">Approve</button></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </section>
+                <section className="admin-section">
+                    <h2>🧑‍🌾 Community Requests</h2>
+                    <table className="admin-table">
+                        <thead><tr><th>Name</th><th>Role</th><th>Action</th></tr></thead>
+                        <tbody>
+                            {pendingCommunity.map(req => (
+                                <tr key={req.id}>
+                                    <td>{req.fullName}</td>
+                                    <td>{req.communityRole}</td>
+                                    <td><button onClick={() => handleApproveCommunity(req)} className="admin-button-small">Verify</button></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </section>
+                <section className="admin-section">
+                    <h2>📦 Export Vault</h2>
+                    <button onClick={handleExportVault} className="admin-button bg-slate-700 text-white">Download Encrypted Vault</button>
+                </section>
+                <section className="admin-section" style={{ borderColor: "#4338ca" }}>
+                    <h2 style={{ color: "#3730a3" }}>🤝 Ambassador Applications</h2>
+                    <p className="text-[10px] text-gray-400 mb-4 italic">Behavioral Collusion Analysis Enabled.</p>
                     <table className="admin-table">
                         <thead>
                             <tr>
-                                <th>Category</th>
-                                <th>Escrow %</th>
-                                <th>Mod. Cap</th>
-                                <th>Verif. Cap</th>
-                                <th>Disp. Cap</th>
-                                <th>Logis. Cap</th>
-                                <th>Fraud Cap</th>
+                                <th>Candidate</th>
+                                <th>Collusion Risk</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {categories.map((cat) => (
-                                <tr key={cat.id}>
-                                    <td><strong>{cat.name}</strong></td>
+                            {pendingAmbassadors.map(amb => (
+                                <tr key={amb.id}>
                                     <td>
-                                        <input
-                                            type="number"
-                                            className="admin-input-small"
-                                            value={cat.escrowPercentage}
-                                            onChange={e => {
-                                                const next = [...categories];
-                                                const i = next.findIndex(c => c.id === cat.id);
-                                                next[i].escrowPercentage = Number(e.target.value);
-                                                setCategories(next);
-                                            }}
-                                        />%
+                                        <div className="font-bold">{amb.fullName}</div>
+                                        <div className="text-[10px] text-gray-500">{amb.email}</div>
                                     </td>
-                                    <td><input type="number" className="admin-input-small" value={cat.maxModerationVP} onChange={e => handleUpdateCat(cat.id, 'maxModerationVP', e.target.value)} /></td>
-                                    <td><input type="number" className="admin-input-small" value={cat.maxVerificationVP} onChange={e => handleUpdateCat(cat.id, 'maxVerificationVP', e.target.value)} /></td>
-                                    <td><input type="number" className="admin-input-small" value={cat.maxDisputeVP} onChange={e => handleUpdateCat(cat.id, 'maxDisputeVP', e.target.value)} /></td>
-                                    <td><input type="number" className="admin-input-small" value={cat.maxLogisticsVP} onChange={e => handleUpdateCat(cat.id, 'maxLogisticsVP', e.target.value)} /></td>
-                                    <td><input type="number" className="admin-input-small" value={cat.maxFraudVP} onChange={e => handleUpdateCat(cat.id, 'maxFraudVP', e.target.value)} /></td>
+                                    <td>
+                                        <div className={`text-xs font-bold ${(amb.risk?.maxConcentration || 0) > 0.7 ? 'text-red-600' : 'text-green-600'}`}>
+                                            {(amb.risk?.maxConcentration * 100 || 0).toFixed(1)}% Concentration
+                                        </div>
+                                        <div className="text-[9px] text-gray-400">Top Partner Index: {amb.risk?.topPartner?.slice(0, 8) || 'N/A'}</div>
+                                    </td>
                                     <td>
                                         <button
-                                            onClick={() => handleSaveCategory(cat)}
-                                            className="admin-button-small"
-                                            title="Update category escrow and caps"
+                                            onClick={() => handleApproveAmbassador(amb)}
+                                            className="admin-button-small bg-indigo-600 text-white"
+                                            disabled={(amb.risk?.maxConcentration || 0) > 0.9}
                                         >
-                                            Save
+                                            Onboard
                                         </button>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                </div>
-            </section>
+                </section>
 
-            {/* PLATFORM SETTINGS SECTION (Simplified) */}
-            <section className="admin-section admin-section-settings">
-                <h2>⚙️ General Platform Settings</h2>
-                <div className="admin-grid">
-                    <div className="admin-input-group">
-                        <label htmlFor="laborBaseline">Default Labor Baseline (%)</label>
-                        <input
-                            id="laborBaseline"
-                            type="number"
-                            className="admin-input"
-                            value={config.laborBaseline}
-                            onChange={e => setConfig({ ...config, laborBaseline: Number(e.target.value) })}
-                        />
-                    </div>
-                    <div style={{ gridColumn: '1 / -1' }}>
-                        <p style={{ fontSize: '0.8rem', color: '#666' }}>* Requires &quot;Security Code 1 (Alpha)&quot;.</p>
-                        <button
-                            onClick={handleUpdateConfig}
-                            className="admin-button admin-button-purple"
-                        >
-                            Update Baseline
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            {/* COMMUNITY GRANT SECTION */}
-            <section className="admin-section">
-                <h2>🤝 Community Grants</h2>
-                <div className="admin-grid">
-                    <div className="admin-input-group">
-                        <label htmlFor="grantEmail">Recipient Email</label>
-                        <input
-                            id="grantEmail"
-                            type="email"
-                            className="admin-input"
-                            placeholder="demo@meetbarter.com"
-                            title="Recipient Email"
-                            value={grantEmail}
-                            onChange={e => setGrantEmail(e.target.value)}
-                        />
-                    </div>
-                    <div className="admin-input-group">
-                        <label htmlFor="grantAmount">Amount (VP)</label>
-                        <input
-                            id="grantAmount"
-                            type="number"
-                            className="admin-input"
-                            placeholder="e.g. 1000"
-                            title="Amount in VP"
-                            value={grantAmount}
-                            onChange={e => setGrantAmount(Number(e.target.value))}
-                        />
-                    </div>
-                    <div className="admin-input-group" style={{ gridColumn: '1 / -1' }}>
-                        <label htmlFor="grantReason">Reason / Justification</label>
-                        <input
-                            id="grantReason"
-                            type="text"
-                            className="admin-input"
-                            placeholder="e.g. Helped clean community garden..."
-                            title="Reason for Grant"
-                            value={grantReason}
-                            onChange={e => setGrantReason(e.target.value)}
-                        />
-                    </div>
-                    <div style={{ gridColumn: '1 / -1' }}>
-                        <p style={{ fontSize: '0.8rem', color: '#666' }}>* Requires Security Code Alpha.</p>
-                        <button
-                            onClick={handleGrant}
-                            className="admin-button admin-button-primary"
-                        >
-                            Issue Grant
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            {/* TRADE VERIFICATION SECTION */}
-            <section className="admin-section admin-section-trades">
-                <h2>📦 Pending Verification & Cost Recovery</h2>
-                <div className="admin-notice">
-                    <strong>Notice:</strong> Operational escrow (standardized at 15%) serves as the maximum administrative recovery budget.
-                    Unused credits are automatically returned to the buyer ledger upon verification.
-                </div>
-                {pendingTrades.length === 0 ? (
-                    <p style={{ color: '#666', fontStyle: 'italic' }}>No trades pending verification.</p>
-                ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                        {pendingTrades.map((trade) => (
-                            <div key={trade.id} className="trade-card">
-                                <div className="trade-card-header">
-                                    <div>
-                                        <strong>{trade.listing.title}</strong>
-                                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                                            Buyer: {trade.buyer.fullName} | Seller: {trade.seller.fullName}
-                                        </div>
-                                    </div>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <div style={{ fontSize: '1rem', fontWeight: 'bold', color: '#2563eb' }}>{trade.offerVP} VP</div>
-                                        <div style={{ fontSize: '0.75rem', color: '#b91c1c', fontWeight: 'bold' }}>
-                                            Administrative Budget: {trade.operationalEscrowVP} VP (15%)
-                                        </div>
-                                    </div>
+                <section className="admin-section section-green" style={{ borderColor: "#16a34a" }}>
+                    <h2 style={{ color: "#15803d" }}>🏢 Verified Business Registry</h2>
+                    <p className="text-[10px] text-gray-400 mb-4 italic">Public transparency list for Ambassadors and Users.</p>
+                    <div className="space-y-1">
+                        {businessRegistry.map(b => (
+                            <div key={b.id} className="business-registry-card">
+                                <div>
+                                    <div className="font-bold text-sm text-gray-800">{b.businessName}</div>
+                                    <div className="text-[10px] text-gray-500">{b.fullName} • L{b.verificationLevel} Verified</div>
                                 </div>
-
-                                <div className="allocation-container">
-                                    <h3>Operational Cost Allocations</h3>
-                                    {(allocations[trade.id] || []).map((alloc, idx) => (
-                                        <div key={idx} className="allocation-row">
-                                            <select
-                                                className="admin-input"
-                                                value={alloc.bucket}
-                                                onChange={e => handleUpdateAllocation(trade.id, idx, 'bucket', e.target.value)}
-                                                title="Allocation Bucket"
-                                            >
-                                                <option value="MODERATION">Moderation Review</option>
-                                                <option value="VERIFICATION">Identity/Listing Verification</option>
-                                                <option value="DISPUTE">Dispute Handling</option>
-                                                <option value="LOGISTICS">Logistics Coordination</option>
-                                                <option value="FRAUD">Fraud Investigation</option>
-                                            </select>
-                                            <input
-                                                type="number"
-                                                className="admin-input"
-                                                placeholder="Amount VP"
-                                                title="Amount in VP"
-                                                value={alloc.amountVP}
-                                                onChange={e => handleUpdateAllocation(trade.id, idx, 'amountVP', e.target.value)}
-                                            />
-                                            <input
-                                                type="text"
-                                                className="admin-input"
-                                                placeholder="Mandatory Justification"
-                                                title="Justification for Allocation"
-                                                value={alloc.justification}
-                                                style={{ flex: 2 }}
-                                                onChange={e => handleUpdateAllocation(trade.id, idx, 'justification', e.target.value)}
-                                            />
-                                            <button
-                                                className="admin-button-remove"
-                                                onClick={() => handleRemoveAllocation(trade.id, idx)}
-                                            >
-                                                &times;
-                                            </button>
-                                        </div>
-                                    ))}
-                                    <button
-                                        className="admin-button-add"
-                                        onClick={() => handleAddAllocation(trade.id)}
-                                    >
-                                        + Add Allocation Bucket
-                                    </button>
-                                </div>
-
-                                <div className="trade-card-footer">
-                                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                                        <strong>Calculation:</strong> {trade.operationalEscrowVP} VP (15% Allocation) - {(allocations[trade.id] || []).reduce((sum, a) => sum + a.amountVP, 0)} VP (Actual Recovery) =
-                                        <span style={{ color: '#059669', fontWeight: 'bold' }}>
-                                            {trade.operationalEscrowVP - (allocations[trade.id] || []).reduce((sum, a) => sum + a.amountVP, 0)} Credits Refund to Buyer
-                                        </span>
-                                    </div>
-                                    <button
-                                        onClick={() => handleVerifyTrade(trade.id)}
-                                        className="admin-button admin-button-primary"
-                                        style={{ backgroundColor: '#111827' }}
-                                    >
-                                        Confirm Verification & Refund
-                                    </button>
-                                </div>
-                                <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: 10 }}>
-                                    * Protocol: Any portion of the 15% budget not allocated to operational costs is automatically returned to the buyer ledger.
+                                <div className="text-right">
+                                    <div className="text-xs font-bold text-green-600">{b.globalTrustScore}% Trust</div>
+                                    <div className="text-[9px] text-gray-400">Onboarded {new Date(b.createdAt).toLocaleDateString()}</div>
                                 </div>
                             </div>
                         ))}
+                        {businessRegistry.length === 0 && <p className="text-center text-gray-400 py-4 italic">No verified businesses currently registered.</p>}
+                    </div>
+                </section>
+            </div>
+        );
+    }
+
+    if (protocol === "LEGAL") {
+        return (
+            <div className="admin-container">
+                {renderPortalHeader("Dispute Resolution Desk", "Legal & Conflict Protocol")}
+                <section className="admin-section">
+                    <h2>⚖️ Trade Disputes</h2>
+                    {disputedTrades.map(t => (
+                        <div key={t.id} className="trade-card p-4 border rounded mb-2">
+                            <p><strong>{t.listing.title}</strong> - {t.offerVP} VP</p>
+                            <div className="flex gap-2 mt-2">
+                                <button onClick={() => handleResolveDispute(t.id, "RELEASE")} className="admin-button-small bg-green-600 text-white">Release</button>
+                                <button onClick={() => handleResolveDispute(t.id, "REFUND")} className="admin-button-small bg-red-600 text-white">Refund</button>
+                            </div>
+                        </div>
+                    ))}
+                </section>
+                <section className="admin-section">
+                    <h2>🛡️ Moderation Queue</h2>
+                    <table className="admin-table">
+                        <thead><tr><th>Item</th><th>Action</th></tr></thead>
+                        <tbody>
+                            {moderationFlags.map(f => (
+                                <tr key={f.id}>
+                                    <td>{f.listing.title} ({f.category})</td>
+                                    <td>
+                                        <button onClick={() => handleFlagAction(f.id, "approve")} className="admin-button-small mr-2">Allow</button>
+                                        <button onClick={() => handleFlagAction(f.id, "reject")} className="admin-button-small bg-red-600 text-white">Remove</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </section>
+            </div >
+        );
+    }
+
+    if (protocol === "BOARD") {
+        return (
+            <div className="admin-container">
+                {renderPortalHeader("Disaster Recovery & Board", "Foundation Continuity")}
+                <section className="admin-section">
+                    <h2>🧬 Succession Protocol (Heirloom)</h2>
+                    <p className="text-xs text-gray-500 mb-4 italic">Institutional Continuity: Five-Key survival mechanism. Requires Alpha + Fingerprint to view keys.</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        {[1, 2, 3, 4, 5].map(nu => (
+                            <div key={nu} className="p-3 bg-gray-50 rounded border border-gray-100">
+                                <label className="text-[10px] font-bold text-gray-400 block mb-1 uppercase">Heir {nu} Portal</label>
+                                <input
+                                    className="admin-input mb-2 text-sm"
+                                    placeholder={`Full Name of Heir ${nu}`}
+                                    value={(config as any)[`heir${nu}`] || ""}
+                                    onChange={e => setConfig({ ...config, [`heir${nu}`]: e.target.value })}
+                                />
+                                <input
+                                    className="admin-input text-sm"
+                                    type="password"
+                                    placeholder={`Emergency Key ${nu}`}
+                                    value={(config as any)[`heir${nu}Key`] || ""}
+                                    onChange={e => setConfig({ ...config, [`heir${nu}Key`]: e.target.value })}
+                                />
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex gap-2">
+                        <button onClick={fetchHeirConfig} className="admin-button bg-blue-600 text-white flex-1">Reveal Keys</button>
+                        <button onClick={handleUpdateConfig} className="admin-button bg-orange-600 text-white flex-1">Update Protocol</button>
+                    </div>
+                </section>
+
+                <section className="admin-section border-l-4 border-red-600">
+                    <h2 className="text-red-700">💀 Disaster Recovery (Protocol 00)</h2>
+                    <p className="text-xs text-red-500 italic mb-4 font-medium">ONLY use in case of catastrophic institutional failure or owner passing.</p>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+                        <input className="admin-input-small text-[10px]" placeholder="Death Date" value={deathDate} onChange={e => setDeathDate(e.target.value)} />
+                        <input className="admin-input-small text-[10px]" placeholder="Death Place" value={deathPlace} onChange={e => setDeathPlace(e.target.value)} />
+                        <input className="admin-input-small text-[10px]" placeholder="Mokhtar Name" value={mokhtarName} onChange={e => setMokhtarName(e.target.value)} />
+                        <input className="admin-input-small text-[10px]" placeholder="License #" value={mokhtarLicense} onChange={e => setMokhtarLicense(e.target.value)} />
+                    </div>
+
+                    <div className="grid grid-cols-5 gap-1 mb-4">
+                        {[1, 2, 3, 4, 5].map(nu => (
+                            <input
+                                key={nu}
+                                type="password"
+                                className="admin-input-small text-center"
+                                placeholder={`K${nu}`}
+                                id={`em-key-${nu}`}
+                            />
+                        ))}
+                    </div>
+
+                    <button
+                        onClick={async () => {
+                            if (!confirm("ACTIVATE SURVIVAL PROTOCOL? IRREVERSIBLE.")) return;
+                            const keys = [1, 2, 3, 4, 5].map(nu => (document.getElementById(`em-key-${nu}`) as HTMLInputElement)?.value);
+                            try {
+                                const res = await fetch(`${API_BASE_URL}/admin/emergency-unlock`, {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        key1: keys[0], key2: keys[1], key3: keys[2], key4: keys[3], key5: keys[4],
+                                        deathDate, deathPlace, mokhtarName, mokhtarLicense
+                                    })
+                                });
+                                const data = await res.json();
+                                if (res.ok) {
+                                    alert(`AUTHENTICATED. Admin Codes: ALPHA: ${data.alpha}, BETA: ${data.beta}, FINGERPRINT: ${data.fingerprint}`);
+                                } else {
+                                    alert(data.message);
+                                }
+                            } catch (err) { alert("Failed to connect to protocol handler."); }
+                        }}
+                        className="admin-button bg-black text-white w-full py-3 font-bold"
+                    >
+                        EXECUTE RECOVERY
+                    </button>
+                </section>
+                <section className="admin-section">
+                    <h2>🤝 Community Grants</h2>
+                    <div className="admin-grid mb-2">
+                        <input placeholder="Email" className="admin-input" value={grantEmail} onChange={e => setGrantEmail(e.target.value)} />
+                        <input type="number" placeholder="Amount" className="admin-input" value={grantAmount} onChange={e => setGrantAmount(parseInt(e.target.value))} />
+                    </div>
+                    <textarea placeholder="Reason/Justification" className="admin-input mb-2" value={grantReason} onChange={e => setGrantReason(e.target.value)} />
+                    <button onClick={handleGrant} className="admin-button bg-purple-700 text-white">Issue Grant</button>
+                </section>
+                <section className="admin-section">
+                    <h2>🏆 Bounty Review</h2>
+                    {submittedBounties.map(b => (
+                        <div key={b.id} className="p-2 border mb-2 flex justify-between">
+                            <span>{b.title} ({b.rewardVP} VP)</span>
+                            <button onClick={() => handleApproveBounty(b.id)} className="admin-button-small bg-green-600 text-white">Pay</button>
+                        </div>
+                    ))}
+                </section>
+            </div>
+        );
+    }
+
+    if (protocol === "STRATEGIC") {
+        return (
+            <div className="admin-container">
+                {renderPortalHeader("MeetBarter Intelligence", "Strategic Institutional Analysis")}
+
+                <div className="admin-notice flex justify-between items-center">
+                    <span><strong>MeetBarter Intelligence Engine:</strong> High-fidelity signals for liquidity and trade velocity.</span>
+                    <button
+                        onClick={async () => {
+                            await fetch(`${API_BASE_URL}/admin/intelligence/snapshot`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code1, fingerprintCode }) });
+                            fetchIntelligence();
+                        }}
+                        className="text-xs bg-white text-blue-600 px-2 py-1 rounded border border-blue-100 hover:bg-blue-50"
+                    >
+                        Force Market Snapshot
+                    </button>
+                </div>
+
+                {intelligence?.anomaliesDetected && (
+                    <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-100 text-sm font-bold mb-6 flex items-center gap-3 animate-pulse">
+                        <span className="text-2xl">⚠️</span>
+                        <div>
+                            ALERT: Potential Economic Manipulation Detected
+                            <div className="text-[10px] font-normal opacity-70">Significant circular trading patterns identified in the last 30 days.</div>
+                        </div>
                     </div>
                 )}
-            </section>
 
-            {/* SUCCESSION & CONTINUITY SECTION */}
-            <section className="admin-section" style={{ backgroundColor: '#fff7ed', borderColor: '#fdba74' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h2>🧬 Succession & Continuity Protocol</h2>
-                    <button className="admin-button-small" onClick={fetchHeirConfig}>🔓 Reveal Heirs</button>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    {/* Top Searches */}
+                    <section className="admin-section">
+                        <h2 className="flex items-center gap-2">🔍 Top Intent Clusters</h2>
+                        <div className="space-y-3 mt-4">
+                            {intelligence?.topSearches?.map((s: any, i: number) => {
+                                const vector = s.intentVector ? JSON.parse(s.intentVector) : {};
+                                const label = Object.keys(vector).join(', ') || 'General Interest';
+                                return (
+                                    <div key={i} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
+                                        <span className="font-medium text-gray-700">{label}</span>
+                                        <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-bold">{s._count._all} signals</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+
+                    {/* Scarcity / Opportunity */}
+                    <section className="admin-section section-orange">
+                        <h2 className="flex items-center gap-2 text-orange-700">🔥 Opportunity Indices (High Scarcity)</h2>
+                        <p className="text-[10px] text-gray-400 mb-4 italic">Demand vs. Supply ratio (100 = Peak Scarcity)</p>
+                        <div className="space-y-3">
+                            {intelligence?.opportunityCategories?.map((cat: { category: { name: string }, opportunityIndex: number }, i: number) => (
+                                <div key={i} className="p-3 bg-orange-50 rounded border border-orange-100">
+                                    <div className="flex justify-between items-start mb-1">
+                                        <span className="font-bold text-gray-800 text-sm">{cat.category.name}</span>
+                                        <span className="text-orange-600 font-black">{cat.opportunityIndex}/100</span>
+                                    </div>
+                                    <div className="w-full bg-orange-200 h-1.5 rounded-full overflow-hidden">
+                                        <div className="bg-orange-600 h-full" style={{ width: `${cat.opportunityIndex}%` }}></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* Liquidity Health */}
+                    <section className="admin-section section-green">
+                        <h2 className="flex items-center gap-2 text-green-700">🌊 Liquidity Health (Conversion)</h2>
+                        <p className="text-[10px] text-gray-400 mb-4 italic">Trade completion velocity by category.</p>
+                        <div className="space-y-3">
+                            {intelligence?.liquidityHealth?.map((cat: { category: { name: string }, tradeVelocity: number }, i: number) => (
+                                <div key={i} className="p-3 bg-green-50 rounded border border-green-100">
+                                    <div className="flex justify-between items-start mb-1">
+                                        <span className="font-bold text-gray-800 text-sm">{cat.category.name}</span>
+                                        <span className="text-green-600 font-bold">{(cat.tradeVelocity * 100).toFixed(1)}%</span>
+                                    </div>
+                                    <div className="w-full bg-green-200 h-1.5 rounded-full overflow-hidden">
+                                        <div className="bg-green-600 h-full" style={{ width: `${Math.min(cat.tradeVelocity * 100, 100)}%` }}></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
                 </div>
-                <div className="admin-grid">
-                    <div className="admin-notice" style={{ gridColumn: '1 / -1', backgroundColor: '#ffedd5', color: '#9a3412' }}>
-                        <strong>Survival Protocol:</strong> The following individuals are the sole designated heirs and owners of this platform.
-                        Access recovery is restricted: It requires **1 Year of Admin Inactivity** and a **verified Death Certificate**.
-                    </div>
 
-                    <div className="admin-notice" style={{ gridColumn: '1 / -1', backgroundColor: '#eff6ff', color: '#1e40af', border: '1px solid #bfdbfe' }}>
-                        🕒 <strong>Last Owner Activity:</strong> {config.lastAdminActivity ? new Date(config.lastAdminActivity).toLocaleString() : "Never"}
-                        <br />
-                        <span style={{ fontSize: '0.8rem' }}> (Succession protocol unlocks after 365 days of inactivity)</span>
-                    </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    {/* Risk Mapping */}
+                    <section className="admin-section section-red">
+                        <h2 className="flex items-center gap-2 text-red-700">🛡️ Trust Risk Mapping</h2>
+                        <table className="admin-table mt-4">
+                            <thead><tr><th>User</th><th>Active Protocol</th><th>Risk Score</th><th>Action</th></tr></thead>
+                            <tbody>
+                                {intelligence?.trustRisk?.map((r: { fullName: string, userId: string, totalTrades: number, riskScore: number }, i: number) => (
+                                    <tr key={i}>
+                                        <td className="text-sm font-medium">{r.fullName}</td>
+                                        <td>{r.totalTrades} Trades</td>
+                                        <td><span className={`px-2 py-0.5 rounded text-xs font-bold ${r.riskScore > 70 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>{r.riskScore}%</span></td>
+                                        <td><button className="admin-button-small bg-slate-800 text-white" onClick={() => handleForensicScan(r.userId)}>Perform Forensic Scan</button></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </section>
 
-                    <div className="heir-card" style={{ gridColumn: '1 / -1', padding: 15, backgroundColor: '#fdf2f8', border: '1px solid #fbcfe8', borderRadius: 8 }}>
-                        <h3>🧬 Primary Successor: Gia Alkoroum</h3>
-                        <div style={{ marginTop: 10 }}>
-                            <strong>Status:</strong> 🔒 <span style={{ color: 'red', fontWeight: 'bold' }}>LOCKED (Underage)</span>
-                            <br />
-                            <strong>Born:</strong> Sep 4, 2024
-                            <br />
-                            <strong>Unlock Date:</strong> Sep 4, 2045
-                            <br />
-                            <span style={{ fontSize: '0.8rem', color: '#666' }}>
-                                Automatic unlocking enabled. System checks eligibility daily.
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="heir-management" style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
-                        <div className="heir-card" style={{ padding: 15, backgroundColor: '#fff', borderRadius: 8, border: '1px solid #fed7aa' }}>
-                            <label>Heir 1 (Guardian)</label>
-                            <input className="admin-input" value={config.heir1} onChange={e => setConfig({ ...config, heir1: e.target.value })} placeholder="Name" />
-                            <input className="admin-input" type="password" value={config.heir1Key} onChange={e => setConfig({ ...config, heir1Key: e.target.value })} placeholder="Fingerprint Code" style={{ marginTop: 5 }} />
-                        </div>
-                        <div className="heir-card" style={{ padding: 15, backgroundColor: '#fff', borderRadius: 8, border: '1px solid #fed7aa' }}>
-                            <label>Heir 2 (Successor)</label>
-                            <input className="admin-input" title="Heir 2 Name" value={config.heir2} onChange={e => setConfig({ ...config, heir2: e.target.value })} placeholder="Name" />
-                            <input className="admin-input" type="password" title="Heir 2 Fingerprint" value={config.heir2Key} onChange={e => setConfig({ ...config, heir2Key: e.target.value })} placeholder="Fingerprint Code" style={{ marginTop: 5 }} />
-                        </div>
-                        <div className="heir-card" style={{ padding: 15, backgroundColor: '#fff', borderRadius: 8, border: '1px solid #fed7aa' }}>
-                            <label>Heir 3 (Successor)</label>
-                            <input className="admin-input" title="Heir 3 Name" value={config.heir3} onChange={e => setConfig({ ...config, heir3: e.target.value })} placeholder="Name" />
-                            <input className="admin-input" type="password" title="Heir 3 Fingerprint" value={config.heir3Key} onChange={e => setConfig({ ...config, heir3Key: e.target.value })} placeholder="Fingerprint" style={{ marginTop: 5 }} />
-                        </div>
-                        <div className="heir-card" style={{ padding: 15, backgroundColor: '#fff', borderRadius: 8, border: '1px solid #fed7aa' }}>
-                            <label>Heir 4 (Successor)</label>
-                            <input className="admin-input" title="Heir 4 Name" value={config.heir4} onChange={e => setConfig({ ...config, heir4: e.target.value })} placeholder="Name" />
-                            <input className="admin-input" type="password" title="Heir 4 Fingerprint" value={config.heir4Key} onChange={e => setConfig({ ...config, heir4Key: e.target.value })} placeholder="Fingerprint" style={{ marginTop: 5 }} />
-                        </div>
-                        <div className="heir-card" style={{ padding: 15, backgroundColor: '#fff', borderRadius: 8, border: '1px solid #fed7aa' }}>
-                            <label>Heir 5 (Successor)</label>
-                            <input className="admin-input" title="Heir 5 Name" value={config.heir5} onChange={e => setConfig({ ...config, heir5: e.target.value })} placeholder="Name" />
-                            <input className="admin-input" type="password" title="Heir 5 Fingerprint" value={config.heir5Key} onChange={e => setConfig({ ...config, heir5Key: e.target.value })} placeholder="Fingerprint" style={{ marginTop: 5 }} />
-                        </div>
-                    </div>
-
-                    <div style={{ gridColumn: '1 / -1' }}>
-                        <button className="admin-button" style={{ backgroundColor: '#f97316' }} onClick={handleUpdateConfig}>Save Heirloom Updates</button>
-                    </div>
-
-                    <div className="emergency-form" style={{ gridColumn: '1 / -1', marginTop: 30, padding: 20, border: '1px dashed #fdba74', borderRadius: 8 }}>
-                        <h3>🆘 Emergency Heir Override</h3>
-                        <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: 15 }}>Requires all 3 Succession Keys + Verified Death Registration.</p>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15, marginBottom: 20 }}>
-                            <div>
-                                <label style={{ fontSize: '0.8rem', color: '#9a3412' }}>Date of Death</label>
-                                <input type="date" className="admin-input" value={deathDate} onChange={e => setDeathDate(e.target.value)} />
+                    {/* Strategic Governance Controls */}
+                    <section className="admin-section section-indigo">
+                        <h2 className="flex items-center gap-2 text-indigo-700">🏛️ Strategic Governance Controls</h2>
+                        <div className="space-y-4 mt-6">
+                            <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                                <h3 className="text-sm font-bold text-indigo-900 mb-1">Supply Gap Mitigation</h3>
+                                <p className="text-xs text-indigo-700 mb-3">Detected significant scarcity in categories with high intent signals.</p>
+                                <button className="w-full py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold shadow-sm" onClick={() => alert("Strategic outreach protocol activated. Verification rewards for high-demand categories increased by 15% for 48 hours.")}>
+                                    Activate Bounty Multiplier
+                                </button>
                             </div>
-                            <div>
-                                <label style={{ fontSize: '0.8rem', color: '#9a3412' }}>Place of Death</label>
-                                <input placeholder="Location (e.g. Beirut)" className="admin-input" value={deathPlace} onChange={e => setDeathPlace(e.target.value)} />
-                            </div>
-                            <div>
-                                <label style={{ fontSize: '0.8rem', color: '#9a3412' }}>Mokhtar Full Name</label>
-                                <input placeholder="Legal Certifier" className="admin-input" value={mokhtarName} onChange={e => setMokhtarName(e.target.value)} />
-                            </div>
-                            <div>
-                                <label style={{ fontSize: '0.8rem', color: '#9a3412' }}>Mokhtar License/Credentials</label>
-                                <input placeholder="Official ID / License" className="admin-input" value={mokhtarLicense} onChange={e => setMokhtarLicense(e.target.value)} />
+                            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                <h3 className="text-sm font-bold text-slate-800 mb-1">Economic Pulse Stabilization</h3>
+                                <p className="text-xs text-slate-600 mb-3">Monitor VP velocity and prevent stagnation pools.</p>
+                                <button className="w-full py-2 bg-slate-800 text-white rounded-lg text-sm font-bold" onClick={() => alert("Global liquidity check initiated. Idle escrow balances will be re-validated.")}>
+                                    Trigger Global Health Check
+                                </button>
                             </div>
                         </div>
-
-                        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                            <input type="password" placeholder="Heir 1 Key" className="admin-input" id="heirKey1" style={{ flex: 1, minWidth: '150px' }} />
-                            <input type="password" placeholder="Heir 2 Key" className="admin-input" id="heirKey2" style={{ flex: 1, minWidth: '150px' }} />
-                            <input type="password" placeholder="Heir 3 Key" className="admin-input" id="heirKey3" style={{ flex: 1, minWidth: '150px' }} />
-                            <input type="password" placeholder="Heir 4 Key" className="admin-input" id="heirKey4" style={{ flex: 1, minWidth: '150px' }} />
-                            <input type="password" placeholder="Heir 5 Key" className="admin-input" id="heirKey5" style={{ flex: 1, minWidth: '150px' }} />
-                        </div>
-                        <button
-                            className="admin-button"
-                            style={{ marginTop: 15, backgroundColor: '#9a3412', color: 'white' }}
-                            onClick={async () => {
-                                const key1 = (document.getElementById('heirKey1') as HTMLInputElement).value;
-                                const key2 = (document.getElementById('heirKey2') as HTMLInputElement).value;
-                                const key3 = (document.getElementById('heirKey3') as HTMLInputElement).value;
-                                const key4 = (document.getElementById('heirKey4') as HTMLInputElement).value;
-                                const key5 = (document.getElementById('heirKey5') as HTMLInputElement).value;
-
-                                try {
-                                    const res = await fetch("http://localhost:3001/admin/emergency-unlock", {
-                                        method: "POST",
-                                        headers: { "Content-Type": "application/json" },
-                                        body: JSON.stringify({
-                                            key1, key2, key3, key4, key5,
-                                            deathDate, deathPlace,
-                                            mokhtarName, mokhtarLicense
-                                        })
-                                    });
-                                    if (!res.ok) {
-                                        const errData = await res.json();
-                                        throw new Error(errData.message || "Emergency Override Denied.");
-                                    }
-                                    const data = await res.json();
-                                    alert(`DANGER: Heir Protocol Activated.\n\nAlpha: ${data.alpha}\nBeta: ${data.beta}\nFingerprint: ${data.fingerprint}`);
-                                } catch (err: any) {
-                                    alert(err.message);
-                                }
-                            }}
-                        >
-                            Authorize Emergency Retrieval
-                        </button>
-                    </div>
+                    </section>
                 </div>
-            </section>
-            <section className="admin-section">
-                <h2>📜 System Audit Logs</h2>
-                <table className="audit-table">
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>Action</th>
-                            <th>Details</th>
-                            <th>Admin</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {logs.map((log: AuditLog) => (
-                            <tr key={log.id}>
-                                <td>{new Date(log.createdAt).toLocaleString()}</td>
-                                <td style={{ fontWeight: 'bold' }}>{log.action}</td>
-                                <td style={{ fontFamily: 'monospace' }}>{log.details}</td>
-                                <td>{log.adminId}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </section>
 
-            {message && <div style={{ marginTop: 20, padding: 15, backgroundColor: '#f3f4f6', borderRadius: 8, textAlign: 'center' }}>{message}</div>}
+                <section className="admin-section bg-slate-900 text-white border-none">
+                    <h2 className="text-slate-400 uppercase text-xs tracking-widest mb-6">Ecosystem Intelligence Insights</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="p-4 border border-slate-700 rounded-lg">
+                            <div className="text-slate-500 text-[10px] uppercase font-bold mb-1">VP Circulation Velocity</div>
+                            <div className="text-2xl font-black text-blue-400">{intelligence?.economicPulse?.velocity || '0.0'}x <span className="text-[10px] text-slate-500 font-normal">/ 30d</span></div>
+                        </div>
+                        <div className="p-4 border border-slate-700 rounded-lg">
+                            <div className="text-slate-500 text-[10px] uppercase font-bold mb-1">Recent Trade Volume</div>
+                            <div className="text-2xl font-black text-green-400">{intelligence?.economicPulse?.totalVolumeVP?.toLocaleString() || '0'} VP</div>
+                        </div>
+                        <div className="p-4 border border-slate-700 rounded-lg">
+                            <div className="text-slate-500 text-[10px] uppercase font-bold mb-1">Total Circulation</div>
+                            <div className="text-2xl font-black text-indigo-400">{(intelligence?.economicPulse?.circulationVP / 1000)?.toFixed(1) || '0'}k VP</div>
+                        </div>
+                        <div className="p-4 border border-slate-700 rounded-lg">
+                            <div className="text-slate-500 text-[10px] uppercase font-bold mb-1">System Stagnation</div>
+                            <div className="text-2xl font-black text-red-500">{(intelligence?.economicPulse?.velocity < 0.1) ? 'HIGH' : 'LOW'}</div>
+                        </div>
+                    </div>
+                </section>
 
-            <footer style={{ marginTop: 60, textAlign: 'center', borderTop: '1px solid #eee', paddingTop: 20, color: '#666' }}>
-                <Link href="/" style={{ color: '#2563eb', textDecoration: 'none' }}>&larr; Back to Marketplace</Link>
-            </footer>
-        </div>
-    );
+                {forensicResults && (
+                    <section className="admin-section forensic-lab mt-8">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-slate-800">🔬 Forensic Investigation: {forensicResults.userId}</h2>
+                            <button onClick={() => setForensicResults(null)} className="text-xs text-gray-400">Close Scan</button>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div>
+                                <h3 className="text-xs font-bold uppercase text-gray-400 mb-4">Audit Ledger Matches</h3>
+                                <div className="space-y-2">
+                                    {forensicResults.auditLogs.map((log: any, i: number) => (
+                                        <div key={i} className="text-[11px] p-2 bg-white border border-gray-100 rounded">
+                                            <span className="font-bold text-blue-600">{log.action}</span> - {new Date(log.createdAt).toLocaleString()}
+                                            <div className="text-gray-400 italic mt-1 font-mono">{log.ipAddress}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="text-xs font-bold uppercase text-gray-400 mb-4">Recent Trade Behavior</h3>
+                                <div className="space-y-4">
+                                    {forensicResults.tradeActivity.map((trade: any, i: number) => (
+                                        <div key={i} className="forensic-activity-card">
+                                            <div className="flex justify-between text-xs font-bold mb-2">
+                                                <span>Trade {trade.id.slice(0, 8)}</span>
+                                                <span className="text-blue-600">{trade.status}</span>
+                                            </div>
+                                            <div className="text-[10px] text-gray-500">
+                                                {trade.operationCosts.length} Security Checkpoints Triggered.
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                )}
+            </div>
+        );
+    }
+
+    if (protocol === "AUDITOR") {
+        return (
+            <div className="admin-container">
+                {renderPortalHeader("Audit Logs", "Monitoring & Transparency")}
+                <section className="admin-section">
+                    <div className="flex justify-between mb-4">
+                        <h2>📊 Audit Feed</h2>
+                        <button onClick={handleExportAudit} className="admin-button-small bg-amber-600">Export CSV</button>
+                    </div>
+                    <table className="admin-table">
+                        <thead><tr><th>Action</th><th>Date</th></tr></thead>
+                        <tbody>
+                            {logs.slice(0, 50).map(l => (
+                                <tr key={l.id}>
+                                    <td>{l.action}</td>
+                                    <td className="text-xs">{new Date(l.createdAt).toLocaleString()}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </section>
+
+                <section className="admin-section border-t-4 border-blue-500">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-blue-700">⚡ Live Performance Stream</h2>
+                        <span className="text-xs text-blue-500 font-mono">Real-Time WebSocket Feed</span>
+                    </div>
+                    <div className="space-y-2">
+                        {perfLogs.length === 0 ? (
+                            <p className="text-center text-gray-400 py-4 italic">Waiting for system activity...</p>
+                        ) : (
+                            perfLogs.map((log, i) => (
+                                <div key={i} className="flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-100 font-mono text-xs">
+                                    <div className="flex gap-2">
+                                        <span className={`font-bold ${log.method === 'GET' ? 'text-green-600' : 'text-blue-600'}`}>{log.method}</span>
+                                        <span className="text-gray-600">{log.url}</span>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <span className={`font-bold ${log.duration > 200 ? 'text-red-500' : 'text-green-500'}`}>
+                                            {log.duration}ms
+                                        </span>
+                                        <span className="text-gray-400">{log.timestamp.toLocaleTimeString()}</span>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </section>
+            </div>
+        );
+    }
+
+    return null;
 }

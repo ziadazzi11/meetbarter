@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { API_BASE_URL } from "@/config/api";
 
 interface Bounty {
     id: string;
@@ -19,17 +20,9 @@ export default function BuildersPage() {
     const [submissionProof, setSubmissionProof] = useState("");
     const [selectedBountyId, setSelectedBountyId] = useState<string | null>(null);
 
-    // Auth & Data Fetching
-    useEffect(() => {
-        const uid = localStorage.getItem("meetbarter_uid");
-        if (uid) setUserId(uid);
-
-        fetchBounties();
-    }, []);
-
     const fetchBounties = () => {
         setLoading(true);
-        fetch('http://localhost:3001/bounties')
+        fetch(`${API_BASE_URL}/bounties`)
             .then(res => res.json())
             .then(data => {
                 // Ensure data is an array before setting
@@ -43,12 +36,20 @@ export default function BuildersPage() {
             .finally(() => setLoading(false));
     };
 
+    // Auth & Data Fetching
+    useEffect(() => {
+        const uid = localStorage.getItem("meetbarter_uid");
+        if (uid) setUserId(uid);
+
+        fetchBounties();
+    }, []);
+
     const handleClaim = async (id: string) => {
         if (!userId) return alert("Please log in first.");
         if (!confirm("Commit to this task?")) return;
 
         try {
-            const res = await fetch(`http://localhost:3001/bounties/${id}/claim`, {
+            const res = await fetch(`${API_BASE_URL}/bounties/${id}/claim`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId })
@@ -66,7 +67,7 @@ export default function BuildersPage() {
         if (!selectedBountyId) return;
 
         try {
-            const res = await fetch(`http://localhost:3001/bounties/${selectedBountyId}/submit`, {
+            const res = await fetch(`${API_BASE_URL}/bounties/${selectedBountyId}/submit`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ evidence: submissionProof })
@@ -88,7 +89,7 @@ export default function BuildersPage() {
                 {/* Header */}
                 <div className="text-center mb-16">
                     <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-4">
-                        🛠️ Builders' Hub
+                        🛠️ Builders&apos; Hub
                     </h1>
                     <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                         Earn Value Points by contributing code, design, or audit work to the community.

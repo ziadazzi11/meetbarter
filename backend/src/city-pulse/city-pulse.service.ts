@@ -22,7 +22,7 @@ export class CityPulseService {
         });
 
         // If cache is fresh (< 15 minutes), return it
-        if (cached && this.isCacheFresh(cached.lastUpdated)) {
+        if (cached && this.isDisplayCacheFresh(cached.lastUpdated)) {
             return this.formatCityPulse(cached);
         }
 
@@ -59,7 +59,10 @@ export class CityPulseService {
                 topCategories: JSON.stringify(topCategories),
                 newListingsToday,
                 activeTraders,
-                lastUpdated: new Date()
+                lastUpdated: new Date(),
+                // Phase 5: Market Sentiment Engine
+                sentimentScore: this.calculateMarketSentiment(newListingsToday, activeTraders),
+                isCrisisActive: false // Default to false, handled by external override or advanced logic later
             },
             create: {
                 city,
@@ -67,7 +70,9 @@ export class CityPulseService {
                 topCategories: JSON.stringify(topCategories),
                 newListingsToday,
                 activeTraders,
-                lastUpdated: new Date()
+                lastUpdated: new Date(),
+                sentimentScore: this.calculateMarketSentiment(newListingsToday, activeTraders),
+                isCrisisActive: false
             }
         });
     }
@@ -151,9 +156,43 @@ export class CityPulseService {
     }
 
     /**
-     * Check if cache is fresh (< 15 minutes old)
+     * Phase 5: Market Sentiment Algorithm
+     * Score 0-100 (100 = Booming, 0 = Collapse)
+     * Failsafe: If inputs are suspicious (e.g. 0 active traders but high listings), allow it but log warning.
+     */
+    private calculateMarketSentiment(newListings: number, activeTraders: number): number {
+        if (activeTraders === 0) return 50; // Neutral start if no data
+
+        // Simple Velocity Model: Listings per Trader
+        // Healthy market = 1-3 listings per active trader
+        const velocity = newListings / activeTraders;
+
+        // Normalize to 0-100
+        // Ideal velocity 2.0 -> Score 100
+        // Velocity 0.0 -> Score 0
+        let score = (velocity / 2.0) * 100;
+
+        // Cap at 100
+        if (score > 100) score = 100;
+
+        return Math.round(score);
+    }
+
+    /**
+     * Check if cache is fresh (< 24h for Failsafe Mode)
+     * If data is older than 24h, we consider it STALE and potentially dangerous for auto-pricing.
      */
     private isCacheFresh(lastUpdated: Date): boolean {
+        const now = new Date();
+        const diff = now.getTime() - lastUpdated.getTime();
+        const hours = diff / (1000 * 60 * 60);
+        return hours < 24; // Relaxed from 15 mins to 24h for "Safety" check
+    }
+
+    /**
+     * Check if cache is fresh for display (< 15 mins)
+     */
+    private isDisplayCacheFresh(lastUpdated: Date): boolean {
         const now = new Date();
         const diff = now.getTime() - lastUpdated.getTime();
         const minutes = diff / (1000 * 60);
@@ -170,7 +209,9 @@ export class CityPulseService {
             topCategories: JSON.parse(cache.topCategories),
             newListingsToday: cache.newListingsToday,
             activeTraders: cache.activeTraders,
-            lastUpdated: cache.lastUpdated
+            lastUpdated: cache.lastUpdated,
+            sentimentScore: cache.sentimentScore,
+            isCrisisActive: cache.isCrisisActive
         };
     }
 

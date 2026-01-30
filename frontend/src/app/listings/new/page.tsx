@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { API_BASE_URL } from "@/config/api";
+import { adsClient } from "@/lib/ads-client";
 import UpgradeModal from "@/components/UpgradeModal";
 import ImageUpload from "@/components/ImageUpload";
 
@@ -19,6 +21,9 @@ export default function CreateListing() {
     const [originalPrice, setOriginalPrice] = useState("");
     const [location, setLocation] = useState("Beirut");
     const [country, setCountry] = useState("Lebanon");
+    const [originType, setOriginType] = useState("PERSONAL_GIFT");
+    const [authenticityStatus, setAuthenticityStatus] = useState("UNVERIFIED");
+    const [isRefurbished, setIsRefurbished] = useState(false);
     const [images, setImages] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -31,7 +36,7 @@ export default function CreateListing() {
     const DEMO_USER_ID = "9d2c7649-9cf0-48fb-889a-1369e20615a6";
 
     useEffect(() => {
-        fetch("http://localhost:3001/categories")
+        fetch(`${API_BASE_URL}/categories`)
             .then(res => res.json())
             .then(setCategories)
             .catch(console.error);
@@ -41,7 +46,7 @@ export default function CreateListing() {
 
     const checkStorageLimits = async () => {
         try {
-            const userRes = await fetch("http://localhost:3001/users/me");
+            const userRes = await fetch(`${API_BASE_URL}/users/me`);
             const user = await userRes.json();
 
             let limit = 5;
@@ -52,7 +57,7 @@ export default function CreateListing() {
     };
 
     const handleUpgrade = async () => {
-        await fetch(`http://localhost:3001/users/${DEMO_USER_ID}/upgrade`, { method: 'PUT' });
+        await fetch(`${API_BASE_URL}/users/${DEMO_USER_ID}/upgrade`, { method: 'PUT' });
         setIsUpgradeModalOpen(false);
         alert("Upgraded to Premium! You can now post unlimited items.");
         window.location.reload();
@@ -78,6 +83,9 @@ export default function CreateListing() {
             listingType,
             condition,
             originalPrice: originalPrice ? parseFloat(originalPrice) : null,
+            originType,
+            authenticityStatus,
+            isRefurbished,
             images: JSON.stringify(images),
             location,
             country,
@@ -86,13 +94,15 @@ export default function CreateListing() {
         };
 
         try {
-            const res = await fetch("http://localhost:3001/listings", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
+            await adsClient.post('/listings', payload);
 
-            if (!res.ok) throw new Error(await res.text());
+            // const res = await fetch(`${API_BASE_URL}/listings`, {
+            //     method: "POST",
+            //     headers: { "Content-Type": "application/json" },
+            //     body: JSON.stringify(payload)
+            // });
+
+            // if (!res.ok) throw new Error(await res.text());
 
             // Add a small delay for better UX
             setTimeout(() => {
@@ -215,6 +225,63 @@ export default function CreateListing() {
                             </div>
                         </div>
 
+                        {listingType === 'OFFER' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-50">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Origin Type</label>
+                                    <select
+                                        value={originType}
+                                        onChange={e => setOriginType(e.target.value)}
+                                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                                    >
+                                        <option value="PERSONAL_GIFT">Personal / Gift</option>
+                                        <option value="HANDMADE">Handmade / Craft</option>
+                                        <option value="COMMERCIAL_INVENTORY">Commercial Inventory</option>
+                                        <option value="LIQUIDATION">Liquidation / Clearance</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Authenticity</label>
+                                    <select
+                                        value={authenticityStatus}
+                                        onChange={e => setAuthenticityStatus(e.target.value)}
+                                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                                    >
+                                        <option value="UNVERIFIED">Not Verified</option>
+                                        <option value="VERIFIED_ORIGINAL">Verified Original</option>
+                                        <option value="REPLICA_DECLARED">Declared Replica</option>
+                                    </select>
+                                </div>
+                                <div className="md:col-span-2 flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        id="refurbished"
+                                        checked={isRefurbished}
+                                        onChange={e => setIsRefurbished(e.target.checked)}
+                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                    />
+                                    <label htmlFor="refurbished" className="ml-2 block text-sm text-gray-900">
+                                        This item is refurbished / repaired
+                                    </label>
+                                </div>
+                            </div>
+                        )}
+
+                        {listingType === 'OFFER' && (
+                            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                <h4 className="text-sm font-bold text-blue-800 mb-1">⚖️ MeetBarter Fair Value Protocol</h4>
+                                <p className="text-xs text-blue-700 leading-relaxed">
+                                    Our system automatically calculates <strong>Value Points (VP)</strong> based on your Reference Value and item attributes.
+                                    To prevent inflation and ensure fairness:
+                                    <ul className="list-disc ml-4 mt-1 space-y-1">
+                                        <li>Used items are capped at 85% of Reference Value.</li>
+                                        <li>Declared replicas are capped at 40%.</li>
+                                        <li>Refurbished items are capped at 60%.</li>
+                                    </ul>
+                                </p>
+                            </div>
+                        )}
+
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                             <textarea
@@ -271,6 +338,16 @@ export default function CreateListing() {
                                     <p className="mt-1 text-xs text-gray-500">Urgent listings get higher visibility.</p>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* INSTITUTIONAL PROHIBITION NOTICE */}
+                        <div className="bg-red-50 p-4 rounded-xl border border-red-100 mt-6">
+                            <h4 className="text-sm font-bold text-red-800 mb-1">🚫 Institutional Prohibition Notice</h4>
+                            <p className="text-xs text-red-700 leading-relaxed">
+                                Meetbarter Lebanon strictly prohibits the listing of <strong>Firearms, Ammunition, Military-Grade Equipment, Weaponized Robotics, Narcotics, Prescription Drugs,</strong> or <strong>Medical Supplies</strong> requiring professional permits.
+                                <br />
+                                <span className="font-bold">Zero Tolerance:</span> Any attempt to list these items will result in an immediate block and permanent account suspension upon repeat offenses (Insistence Rule).
+                            </p>
                         </div>
 
                         {/* Images */}

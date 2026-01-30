@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 
 export class CreateTradeDto {
     @IsString()
@@ -8,4 +8,12 @@ export class CreateTradeDto {
     @IsString()
     @IsNotEmpty()
     buyerId: string;
+
+    @IsNumber()
+    @IsOptional()
+    cashOffer?: number;
+
+    @IsString()
+    @IsOptional()
+    cashCurrency?: string;
 }

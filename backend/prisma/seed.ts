@@ -79,7 +79,7 @@ async function main() {
     const passwordHash = await bcrypt.hash('password123', 10);
 
     // Create a Demo User
-    const demoUser = await prisma.user.upsert({
+    await prisma.user.upsert({
         where: { email: 'demo@meetbarter.com' },
         update: { passwordHash },
         create: {
@@ -174,7 +174,24 @@ async function main() {
         });
     }
 
-    console.log('Seeding complete with AI Pricing logic. Vehicles/Cars categories removed for minimal launch.');
+    // v1.2: System Configuration (Phase 1 Baseline)
+    await prisma.systemConfig.upsert({
+        where: { id: 1 },
+        update: {},
+        create: {
+            id: 1,
+            isFrozen: false,
+            alphaCode: '2abwal2ibin', // Prototype Alpha
+            betaCode: 'love one another',
+            baseEscrowRate: 15,
+            emergencyFundVP: 0,
+            ambassadorFundVP: 0,
+            adminFundVP: 0,
+            isCrisisActive: true, // Lebanon context
+        },
+    });
+
+    console.log('Seeding complete with AI Pricing logic and Phase 1 SystemConfig.');
 }
 
 main()

@@ -20,6 +20,8 @@ export const PROHIBITED_CATEGORIES = {
     LIVE_ANIMALS: 'live_animals',
     TOBACCO: 'tobacco',
     ALCOHOL: 'alcohol',
+    MILITARY: 'military',
+    ROBOTICS: 'robotics',
 } as const;
 
 /**
@@ -35,7 +37,8 @@ export const REGION_PROHIBITED_ITEMS = {
             'zatla', 'zatli', 'حشيش', 'زطلة', 'مخدرات',
         ],
         [PROHIBITED_CATEGORIES.WEAPONS]: [
-            'gun', 'pistol', 'rifle', 'firearm', 'سلاح', 'مسدس',
+            'gun', 'pistol', 'rifle', 'firearm', 'سلاح', 'مسدس', 'ammo', 'bullets',
+            'military', 'army', 'war', 'jish', 'جيش',
         ],
         [PROHIBITED_CATEGORIES.ALCOHOL]: ['alcohol', 'beer', 'wine', 'liquor'],
     },
@@ -88,35 +91,57 @@ export const REGION_PROHIBITED_ITEMS = {
  * Global prohibited items (illegal everywhere)
  */
 export const GLOBAL_PROHIBITED_KEYWORDS = {
-    // Stolen Items (English)
+    // Stolen Items
     [PROHIBITED_CATEGORIES.STOLEN]: [
         'stolen', 'no receipt', 'hot', 'fell off truck',
         'no questions asked', 'icloud locked', 'blacklisted',
     ],
 
-    // Counterfeit (English)
+    // Counterfeit
     [PROHIBITED_CATEGORIES.COUNTERFEIT]: [
         'replica', 'fake', 'knockoff', 'counterfeit', 'copy',
         'aaa quality', 'mirror quality', 'unauthorized',
     ],
 
-    // Prescription Medication (requires verification)
-    [PROHIBITED_CATEGORIES.PRESCRIPTION]: [
-        'prescription', 'rx', 'no prescription needed',
-        'viagra', 'cialis', 'antibiotics', 'insulin',
-        'ritalin', 'concerta', 'vyvanse', 'xanax', 'adderall',
-    ],
-
-    // Adult Content (English)
+    // Adult Content
     [PROHIBITED_CATEGORIES.ADULT]: [
         'escort', 'massage with benefits', 'adult services',
         'sex', 'porn', 'xxx', 'nsfw',
     ],
 
-    // Live Animals (restricted globally, requires verification)
     [PROHIBITED_CATEGORIES.LIVE_ANIMALS]: [
         'puppy', 'kitten', 'dog for sale', 'cat for sale',
         'exotic pet', 'monkey', 'snake', 'reptile',
+    ],
+
+    // Comprehensive Drug & Controlled Substances (Global)
+    [PROHIBITED_CATEGORIES.DRUGS]: [
+        'weed', 'marijuana', 'cannabis', 'hash', 'hashish', 'cbd', 'thc',
+        'cocaine', 'heroin', 'meth', 'ecstasy', 'mdma', 'lsd', 'acid',
+        'psilocybin', 'mushrooms', 'shrooms', 'amanita', 'psychedelic',
+        'ketamine', 'fentanyl', 'oxycodone', 'percocet', 'xanax', 'alprazolam',
+        'lyrica', 'pregabalin', 'tramadol', 'captagon', 'amphetamine',
+        'حشيش', 'زطلة', 'مخدرات', 'كبتاجون', 'ليريكا',
+    ],
+
+    // Medical Supplies & Prescription (Global - Authorization Required)
+    [PROHIBITED_CATEGORIES.PRESCRIPTION]: [
+        'prescription', 'rx', 'pharmaceutical', 'medical supply',
+        'antibiotics', 'insulin', 'ritalin', 'concerta', 'vyvanse', 'adderall',
+        'viagra', 'cialis', 'steroids', 'testosterone',
+        'surgical mask', 'ventilator', 'medical equipment',
+    ],
+
+    // Military Grades & Weaponized Robotics (Global)
+    [PROHIBITED_CATEGORIES.MILITARY]: [
+        'military grade', 'army surplus', 'tactical gear', 'body armor',
+        'kevlar', 'ballistic', 'night vision', 'thermal scope',
+        'grenade launcher', 'mortar', 'missile', 'explosive',
+    ],
+
+    [PROHIBITED_CATEGORIES.ROBOTICS]: [
+        'weaponized robot', 'combat drone', 'attack drone', 'armed robot',
+        'killer robot', 'sentry gun', 'military drone', 'tactical robot',
     ],
 };
 
@@ -144,8 +169,12 @@ export const CATEGORY_SEVERITY_MAP = {
     [PROHIBITED_CATEGORIES.STOLEN]: MODERATION_SEVERITY.HIGH_RISK,
     [PROHIBITED_CATEGORIES.COUNTERFEIT]: MODERATION_SEVERITY.MEDIUM_RISK,
     [PROHIBITED_CATEGORIES.ADULT]: MODERATION_SEVERITY.HIGH_RISK,
-    [PROHIBITED_CATEGORIES.PRESCRIPTION]: MODERATION_SEVERITY.HIGH_RISK,
+    [PROHIBITED_CATEGORIES.PRESCRIPTION]: MODERATION_SEVERITY.AUTO_REJECT,
     [PROHIBITED_CATEGORIES.LIVE_ANIMALS]: MODERATION_SEVERITY.LOW_RISK,
+    [PROHIBITED_CATEGORIES.MILITARY]: MODERATION_SEVERITY.AUTO_REJECT,
+    [PROHIBITED_CATEGORIES.ROBOTICS]: MODERATION_SEVERITY.AUTO_REJECT,
+    [PROHIBITED_CATEGORIES.ALCOHOL]: MODERATION_SEVERITY.AUTO_REJECT,
+    [PROHIBITED_CATEGORIES.TOBACCO]: MODERATION_SEVERITY.MEDIUM_RISK,
 } as const;
 
 /**

@@ -16,8 +16,25 @@ export class UsersController {
     }
 
     @Post(':id/request-business')
-    requestBusiness(@Param('id') id: string, @Body() body: { businessName: string; referralCode?: string }) {
-        return this.usersService.requestBusinessVerification(id, body.businessName, body.referralCode);
+    requestBusiness(@Param('id') id: string, @Body() body: { businessName: string; evidence: any; referralCode?: string }) {
+        return this.usersService.requestBusinessVerification(id, body.businessName, body.evidence, body.referralCode);
+    }
+
+    @Post(':id/submit-license')
+    submitLicense(@Param('id') id: string, @Body() body: {
+        businessName?: string;
+        registrationNumber: string;
+        permitType: string;
+        issuingAuthority: string;
+        evidence: { links: string[]; photos: string[] };
+        issuedAt: string;
+        expiresAt: string;
+    }) {
+        return this.usersService.submitBusinessLicense(id, {
+            ...body,
+            issuedAt: new Date(body.issuedAt),
+            expiresAt: new Date(body.expiresAt)
+        });
     }
 
     @Post(':id/request-community')

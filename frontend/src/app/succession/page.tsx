@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { API_BASE_URL } from "@/config/api";
 
 export default function SuccessionPage() {
     const [email, setEmail] = useState("demo@securebarter.com"); // Emulated identity
@@ -11,6 +12,7 @@ export default function SuccessionPage() {
         heir4Name: "", heir4Key: "",
         heir5Name: "", heir5Key: "",
     });
+    const [successors, setSuccessors] = useState<any[]>([]);
     const [lastActivity, setLastActivity] = useState("");
 
     // Recovery State
@@ -25,18 +27,19 @@ export default function SuccessionPage() {
     }, []);
 
     const fetchHeirs = async () => {
-        const res = await fetch("http://localhost:3001/succession/me", {
+        const res = await fetch(`${API_BASE_URL}/succession/me`, {
             headers: { "x-user-email": email }
         });
         if (res.ok) {
             const data = await res.json();
             setHeirs(data);
+            setSuccessors(data.successors || []);
             setLastActivity(data.lastActivity);
         }
     };
 
     const handleUpdate = async () => {
-        const res = await fetch("http://localhost:3001/succession/update", {
+        const res = await fetch(`${API_BASE_URL}/succession/update`, {
             method: "POST",
             headers: { "x-user-email": email, "Content-Type": "application/json" },
             body: JSON.stringify(heirs)
@@ -46,7 +49,7 @@ export default function SuccessionPage() {
 
     const handleClaim = async () => {
         try {
-            const res = await fetch("http://localhost:3001/succession/claim", {
+            const res = await fetch(`${API_BASE_URL}/succession/claim`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -99,11 +102,64 @@ export default function SuccessionPage() {
                 <button className="btn btn-primary" onClick={handleUpdate} style={{ marginTop: 20 }}>Save Survival Setup</button>
             </section>
 
+            {/* AGE-GATED SUCCESSORS SECTION */}
+            {successors.length > 0 && (
+                <section className="card" style={{ padding: 25, marginBottom: 40, border: '1px solid #c7d2fe', backgroundColor: '#eef2ff', borderRadius: 12 }}>
+                    <h2 style={{ color: '#3730a3', marginBottom: 20 }}>🧬 Age-Gated Continuators (Next Gen)</h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+                        {successors.map(succ => {
+                            const unlockDate = new Date(succ.unlockDate);
+                            const now = new Date();
+                            const isLocked = now < unlockDate;
+                            const yearsLeft = Math.ceil((unlockDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
+
+                            return (
+                                <div key={succ.id} style={{ padding: 20, backgroundColor: 'white', border: '1px solid #e0e7ff', borderRadius: 10, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                                    <h3 style={{ fontSize: '1.1rem', marginBottom: 5 }}>{succ.fullName}</h3>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 15 }}>
+                                        <span style={{
+                                            padding: '2px 8px',
+                                            borderRadius: 20,
+                                            fontSize: '0.7rem',
+                                            fontWeight: 'bold',
+                                            backgroundColor: isLocked ? '#fee2e2' : '#dcfce7',
+                                            color: isLocked ? '#991b1b' : '#166534'
+                                        }}>
+                                            {isLocked ? '🔒 AGE-LOCKED' : '🔓 ELIGIBLE'}
+                                        </span>
+                                        {isLocked && <span style={{ fontSize: '0.75rem', color: '#6366f1' }}>{yearsLeft} years remain</span>}
+                                    </div>
+                                    <p style={{ fontSize: '0.8rem', color: '#666' }}>
+                                        <strong>Unlock Date:</strong> {unlockDate.toLocaleDateString()} (Age 21)
+                                    </p>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
+            )}
+
+            {/* STATUS ALERT */}
+            <div style={{
+                padding: 15,
+                backgroundColor: '#f1f5f9',
+                borderRadius: 8,
+                marginBottom: 40,
+                borderLeft: '4px solid #475569',
+                fontSize: '0.9rem'
+            }}>
+                <strong>Last Account Heartbeat:</strong> {lastActivity ? new Date(lastActivity).toLocaleString() : 'Never'}
+                <br />
+                <span style={{ color: '#64748b', fontSize: '0.8rem' }}>
+                    * Account must remain inactive for 2190 days (6 years) before verification triggers.
+                </span>
+            </div>
+
             {/* RECOVERY SECTION */}
             <section className="card" style={{ padding: 25, backgroundColor: '#fff7ed', border: '1px dashed #fdba74', borderRadius: 12 }}>
                 <h2 style={{ color: '#9a3412', marginBottom: 10 }}>🆘 Advanced Death Verification Recovery</h2>
                 <p style={{ fontSize: '0.9rem', color: '#7c2d12', marginBottom: 20 }}>
-                    Strict 365-day inactivity rule + Lebanese Mokhtar certification required.
+                    Strict 6-year (2190-day) inactivity rule + Lebanese Mokhtar certification required.
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>

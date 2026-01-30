@@ -4,6 +4,6 @@ import { Controller, Get } from '@nestjs/common';
 export class AppController {
     @Get()
     getHello(): string {
-        return 'Hello from Dekish Backend! (Running locally on SQLite)';
+        return 'Hello from MeetBarter Backend! (Running locally on SQLite)';
     }
 }

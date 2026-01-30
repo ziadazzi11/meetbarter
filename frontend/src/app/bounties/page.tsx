@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "@/config/api";
 // import { useRouter } from "next/navigation";
 
 interface Bounty {
@@ -33,7 +34,7 @@ export default function BountiesPage() {
 
     const fetchBounties = async () => {
         try {
-            const res = await fetch("http://localhost:3001/bounties");
+            const res = await fetch(`${API_BASE_URL}/bounties`);
             if (res.ok) {
                 const data = await res.json();
                 setBounties(data);
@@ -49,7 +50,7 @@ export default function BountiesPage() {
         if (!confirm("Are you sure you want to claim this bounty? You will be responsible for completing it.")) return;
 
         try {
-            const res = await fetch(`http://localhost:3001/bounties/${bountyId}/claim`, {
+            const res = await fetch(`${API_BASE_URL}/bounties/${bountyId}/claim`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId: DEMO_USER_ID })
@@ -70,7 +71,7 @@ export default function BountiesPage() {
         setSubmitting(true);
 
         try {
-            const res = await fetch(`http://localhost:3001/bounties/${selectedBountyId}/submit`, {
+            const res = await fetch(`${API_BASE_URL}/bounties/${selectedBountyId}/submit`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ evidence })

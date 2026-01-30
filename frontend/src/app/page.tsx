@@ -4,11 +4,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import BusinessVerificationModal from "@/components/BusinessVerificationModal";
-import CommunityVerificationModal from "@/components/CommunityVerificationModal";
+import VerificationTiersModal from "@/components/VerificationTiersModal";
 import ImageUpload from "@/components/ImageUpload";
 import Link from "next/link";
 import Image from "next/image";
+import { API_BASE_URL } from "@/config/api";
 
 interface Category {
   id: string;
@@ -24,6 +24,7 @@ interface User {
   walletBalance: number;
   globalTrustScore: number;
   ambassadorStatus: string;
+  verificationLevel: number;
 }
 
 export default function Home() {
@@ -37,8 +38,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchLocation, setSearchLocation] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isBusinessModalOpen, setIsBusinessModalOpen] = useState(false);
-  const [isCommunityModalOpen, setIsCommunityModalOpen] = useState(false);
+  const [isTierModalOpen, setIsTierModalOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState('Lebanon');
   const [newListing, setNewListing] = useState({
     title: '',
@@ -60,34 +60,29 @@ export default function Home() {
     } else {
       setLoading(false);
     }
-    fetch("http://localhost:3001/categories").then(res => res.json()).then(setCategories);
+    fetch(`${API_BASE_URL}/categories`).then(res => res.json()).then(setCategories);
   }, []);
 
   const fetchUserData = (uid: string) => {
     fetchActiveTrades(uid);
-    fetch("http://localhost:3001/users/me").then(res => res.json()).then(setUser);
+    fetch(`${API_BASE_URL}/users/me`).then(res => res.json()).then(setUser);
   };
 
   useEffect(() => {
-    let url = 'http://localhost:3001/listings';
+    let url = `${API_BASE_URL}/listings`;
     const params = new URLSearchParams();
+    if (searchQuery) params.append('q', searchQuery); // Backend now handles keyword search & logging
     if (searchLocation) params.append('location', searchLocation);
     if (selectedCountry) params.append('country', selectedCountry);
     if (params.toString()) url += `?${params.toString()}`;
 
     fetch(url).then(res => res.json()).then(data => {
-      if (searchQuery) {
-        const lower = searchQuery.toLowerCase();
-        const filtered = data.filter((l: any) => l.title.toLowerCase().includes(lower) || l.description.toLowerCase().includes(lower));
-        setListings(filtered);
-      } else {
-        setListings(data);
-      }
+      setListings(Array.isArray(data) ? data : []);
     });
   }, [searchLocation, selectedCountry, searchQuery]);
 
   const fetchActiveTrades = (uid: string) => {
-    fetch(`http://localhost:3001/trades?userId=${uid}`)
+    fetch(`${API_BASE_URL}/trades?userId=${uid}`)
       .then(res => res.json())
       .then(data => {
         setTrades(data);
@@ -99,7 +94,7 @@ export default function Home() {
   async function handleConfirm(tradeId: string) {
     if (!userId) return;
     try {
-      const res = await fetch(`http://localhost:3001/trades/${tradeId}/confirm`, {
+      const res = await fetch(`${API_BASE_URL}/trades/${tradeId}/confirm`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: userId })
@@ -116,7 +111,7 @@ export default function Home() {
     }
 
     try {
-      const res = await fetch("http://localhost:3001/listings", {
+      const res = await fetch(`${API_BASE_URL}/listings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -146,7 +141,7 @@ export default function Home() {
       const params = new URLSearchParams();
       if (searchLocation) params.append('location', searchLocation);
       if (selectedCountry) params.append('country', selectedCountry);
-      const url = params.toString() ? `http://localhost:3001/listings?${params.toString()}` : 'http://localhost:3001/listings';
+      const url = params.toString() ? `${API_BASE_URL}/listings?${params.toString()}` : `${API_BASE_URL}/listings`;
       fetch(url).then(res => res.json()).then(setListings);
     } catch (err: unknown) {
       alert("Error: " + (err as Error).message);
@@ -167,12 +162,12 @@ export default function Home() {
   const handleApplyAmbassador = async () => {
     if (!userId) return;
     try {
-      const res = await fetch(`http://localhost:3001/users/${userId}/apply-ambassador`, {
+      const res = await fetch(`${API_BASE_URL}/users/${userId}/apply-ambassador`, {
         method: 'POST'
       });
       if (res.ok) {
         alert("Ambassador Application Submitted! 🚀");
-        fetch(`http://localhost:3001/users/me`).then(r => r.json()).then(setUser);
+        fetch(`${API_BASE_URL}/users/me`).then(r => r.json()).then(setUser);
       } else {
         const err = await res.json();
         alert(err.message || "Failed to apply.");
@@ -216,7 +211,7 @@ export default function Home() {
                   VP
                 </div>
 
-                <div className="relative z-10 flex justify-between items-center h-full min-h-[100px]">
+                <div className="relative z-10 flex flex-col md:flex-row justify-between md:items-center h-full min-h-[100px] gap-4">
                   {/* Trust Score (Left) */}
                   <div className="flex flex-col gap-1">
                     <div className="text-xs uppercase tracking-wider opacity-80 font-semibold">Trust Score</div>
@@ -226,7 +221,7 @@ export default function Home() {
                   </div>
 
                   {/* Credits/VP (Right) */}
-                  <div className="text-right">
+                  <div className="text-left md:text-right">
                     <div className="text-xs uppercase tracking-wider opacity-80 font-semibold mb-1">Administrative Credits</div>
                     <div className={`text-4xl font-extrabold tracking-tight filter drop-shadow-sm ${user && user.walletBalance < 100 ? 'text-red-200' : 'text-white'}`}>
                       {user?.walletBalance.toLocaleString()} <span className="text-xl opacity-80 font-normal">VP</span>
@@ -236,13 +231,15 @@ export default function Home() {
               </div>
 
               {/* 2. Detached Actions (Separate Row) */}
-              <div className="grid grid-cols-2 gap-3">
-                <button onClick={() => setIsBusinessModalOpen(true)} className="flex items-center justify-center gap-2 p-3 bg-white border border-indigo-100 text-indigo-700 rounded-xl font-semibold shadow-sm hover:bg-indigo-50 hover:border-indigo-200 hover:shadow-md transition-all active:scale-95 group">
-                  <span className="text-sm">Verify Business</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button onClick={() => setIsTierModalOpen(true)} className="flex items-center justify-center gap-2 p-3 bg-white border border-indigo-100 text-indigo-700 rounded-xl font-semibold shadow-sm hover:bg-indigo-50 hover:border-indigo-200 hover:shadow-md transition-all active:scale-95 group">
+                  <span className="text-sm">
+                    {user && user.verificationLevel >= 3 ? 'Institutional Member' : `Upgrade to Level ${user ? user.verificationLevel + 1 : 1}`}
+                  </span>
                 </button>
-                <button onClick={() => setIsCommunityModalOpen(true)} className="flex items-center justify-center gap-2 p-3 bg-white border border-indigo-100 text-indigo-700 rounded-xl font-semibold shadow-sm hover:bg-indigo-50 hover:border-indigo-200 hover:shadow-md transition-all active:scale-95 group">
-                  <span className="text-sm">Community Role</span>
-                </button>
+                <div className="flex items-center justify-center p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                  <span className="text-xs font-bold text-indigo-600">Tier {user?.verificationLevel || 1} Trust</span>
+                </div>
               </div>
 
             </div>
@@ -461,8 +458,8 @@ export default function Home() {
           {listings.length === 0 && searchQuery ? (
             <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-300">
               <div className="text-4xl mb-4"></div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No results for "{searchQuery}"</h3>
-              <p className="text-gray-500 mb-6">Can't find what you're looking for?</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">No results for &quot;{searchQuery}&quot;</h3>
+              <p className="text-gray-500 mb-6">Can&apos;t find what you&apos;re looking for?</p>
               <button onClick={handlePostRequest} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg font-bold transition-colors">
                 Post a Request
               </button>
@@ -647,16 +644,12 @@ export default function Home() {
         </div>
       )}
 
-      <BusinessVerificationModal
-        isOpen={isBusinessModalOpen}
-        onClose={() => setIsBusinessModalOpen(false)}
+      <VerificationTiersModal
+        isOpen={isTierModalOpen}
+        onClose={() => setIsTierModalOpen(false)}
         userId={userId || ''}
-      />
-
-      <CommunityVerificationModal
-        isOpen={isCommunityModalOpen}
-        onClose={() => setIsCommunityModalOpen(false)}
-        userId={userId || ''}
+        currentLevel={user?.verificationLevel || 1}
+        onSuccess={() => fetchUserData(userId || '')}
       />
 
 

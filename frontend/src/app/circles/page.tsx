@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { API_BASE_URL } from "@/config/api";
 import "./circles.css";
 
 export default function CirclesBrowse() {
-    const router = useRouter();
     const [circles, setCircles] = useState<any[]>([]);
     const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -22,7 +21,7 @@ export default function CirclesBrowse() {
     }, []);
 
     const fetchCircles = () => {
-        fetch(`http://localhost:3001/circles?userId=${DEMO_USER_ID}`)
+        fetch(`${API_BASE_URL}/circles?userId=${DEMO_USER_ID}`)
             .then(res => res.json())
             .then(setCircles)
             .catch(console.error);
@@ -31,7 +30,7 @@ export default function CirclesBrowse() {
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch("http://localhost:3001/circles", {
+            const res = await fetch(`${API_BASE_URL}/circles`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId: DEMO_USER_ID, name, description, isPublic })

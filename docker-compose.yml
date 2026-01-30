@@ -1,27 +1,39 @@
-# docker-compose file (version omitted for v2 compatibility)
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: meetbarter_postgres
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: meetbarter_backend
     restart: always
+    ports:
+      - '3001:3001'
     environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: ${DB_NAME:-meetbarter_db}
-    ports:
-      - '5432:5432'
+      DATABASE_URL: "file:../data/meetbarter.db"
+      JWT_SECRET: ${JWT_SECRET:-super-secret-key-change-this}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      # Vault & Codes - Ensure these match your .env
+      VAULT_KEY: ${VAULT_KEY}
+      ADMIN_ALPHA_CODE: ${ADMIN_ALPHA_CODE}
+      ADMIN_BETA_CODE: ${ADMIN_BETA_CODE}
+      ADMIN_FINGERPRINT: ${ADMIN_FINGERPRINT}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./data:/app/backend/data
+      - ./data/vault:/app/backend/vault_storage
+    depends_on: []
 
-  redis:
-    image: redis:6-alpine
-    container_name: meetbarter_redis
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: meetbarter_frontend
     restart: always
     ports:
-      - '6379:6379'
-    volumes:
-      - redis_data:/data
+      - '3000:3000'
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+    depends_on:
+      - backend
 
 volumes:
-  postgres_data:
-  redis_data:
+  # Using local bind mounts in ./data instead of named volumes for easier backup
+

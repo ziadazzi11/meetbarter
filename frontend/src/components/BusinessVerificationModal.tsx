@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from "@/config/api";
 
 interface BusinessVerificationModalProps {
     isOpen: boolean;
@@ -17,7 +18,7 @@ export default function BusinessVerificationModal({ isOpen, onClose, userId }: B
         e.preventDefault();
         setStatus('SUBMITTING');
         try {
-            const res = await fetch(`http://localhost:3001/users/${userId}/request-business`, {
+            const res = await fetch(`${API_BASE_URL}/users/${userId}/request-business`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ businessName, referralCode })
@@ -31,22 +32,22 @@ export default function BusinessVerificationModal({ isOpen, onClose, userId }: B
 
     return (
         <div className="modal-overlay">
-            <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-content max-w-[500px]">
                 <h2 className="modal-title">Business Identity Verification</h2>
 
                 {status === 'SUCCESS' ? (
-                    <div style={{ textAlign: 'center', padding: '20px' }}>
-                        <div style={{ fontSize: '40px', marginBottom: '10px' }}>✅</div>
+                    <div className="text-center p-5">
+                        <div className="text-[40px] mb-2">✅</div>
                         <h3>Request Submitted</h3>
                         <p>Your application is under review.</p>
                         <p><strong>Next Step:</strong> Please contact the Admin to complete the identity check and processing fee payment via WhatsApp.</p>
-                        <button onClick={onClose} className="btn-primary" style={{ marginTop: '20px' }}>Close</button>
+                        <button onClick={onClose} className="btn-primary mt-5">Close</button>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit}>
-                        <div style={{ background: '#f0f9ff', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #bae6fd' }}>
-                            <h4 style={{ margin: '0 0 10px 0', color: '#0369a1' }}>🛡️ Why Verify?</h4>
-                            <p style={{ fontSize: '0.9rem', color: '#334155', margin: 0 }}>
+                        <div className="bg-blue-50 p-4 rounded-lg mb-5 border border-blue-200">
+                            <h4 className="m-0 mb-2 text-blue-700">🛡️ Why Verify?</h4>
+                            <p className="text-sm text-slate-700 m-0">
                                 Verification is an <strong>identity check</strong> to ensure businesses are legitimate entities.
                                 This protects our community from anonymous actors and fraud.
                             </p>
@@ -63,19 +64,18 @@ export default function BusinessVerificationModal({ isOpen, onClose, userId }: B
                             />
                         </div>
 
-                        <div className="form-group">
+                        <div className="form-group font-bold">
                             <label className="input-label">Invited by? (Referral Code)</label>
                             <input
-                                className="form-input"
-                                style={{ borderColor: '#86efac' }}
+                                className="form-input border-green-300"
                                 onChange={e => setReferralCode(e.target.value)}
                                 placeholder="Optional: Enter a User ID"
                             />
                         </div>
 
-                        <div className="form-group" style={{ marginBottom: 20 }}>
+                        <div className="form-group mb-5">
                             <label className="input-label">Country of Registration</label>
-                            <select className="form-input" defaultValue="Lebanon">
+                            <select className="form-input" defaultValue="Lebanon" title="Country of Registration">
                                 <option value="Lebanon">Lebanon</option>
                                 <option value="UAE">UAE</option>
                                 <option value="KSA">KSA</option>
@@ -83,10 +83,10 @@ export default function BusinessVerificationModal({ isOpen, onClose, userId }: B
                             </select>
                         </div>
 
-                        <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '20px' }}>
+                        <div className="text-[0.85rem] text-slate-500 mb-5">
                             <p><strong>Required Documents (Transparency Check):</strong></p>
-                            <ul style={{ paddingLeft: '20px', marginTop: '5px' }}>
-                                <li><strong>Lebanon:</strong> Commercial Circular (Idha'ah Tujariyah) & Tax ID (Maliyah).</li>
+                            <ul className="pl-5 mt-1">
+                                <li><strong>Lebanon:</strong> Commercial Circular (Idha&apos;ah Tujariyah) & Tax ID (Maliyah).</li>
                                 <li><strong>UAE/KSA:</strong> Valid Trade License.</li>
                                 <li>One-time administrative processing fee applies.</li>
                                 <li><strong>Note:</strong> This checks legal existence only. No VP benefits.</li>
@@ -99,7 +99,7 @@ export default function BusinessVerificationModal({ isOpen, onClose, userId }: B
                                 {status === 'SUBMITTING' ? 'Submitting...' : 'Submit Request'}
                             </button>
                         </div>
-                        {status === 'ERROR' && <p style={{ color: 'red', marginTop: '10px', fontSize: '0.9rem' }}>Something went wrong. Please try again.</p>}
+                        {status === 'ERROR' && <p className="text-red-500 mt-2 text-sm">Something went wrong. Please try again.</p>}
                     </form>
                 )}
             </div>

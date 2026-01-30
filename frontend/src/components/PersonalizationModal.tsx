@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import ImageUpload from "@/components/ImageUpload";
+import { useTheme } from "./ThemeContext";
+import { API_BASE_URL } from "@/config/api";
 
 interface PersonalizationModalProps {
     isOpen: boolean;
@@ -9,6 +11,7 @@ interface PersonalizationModalProps {
 }
 
 export default function PersonalizationModal({ isOpen, onClose }: PersonalizationModalProps) {
+    const { theme: currentTheme, setTheme, isAutoMode, setIsAutoMode } = useTheme();
     const [userId, setUserId] = useState<string | null>(null);
     const [bannerUrl, setBannerUrl] = useState('');
     const [themeConfig, setThemeConfig] = useState({
@@ -23,8 +26,8 @@ export default function PersonalizationModal({ isOpen, onClose }: Personalizatio
 
         const uid = localStorage.getItem("meetbarter_uid");
         if (uid) {
-            setUserId(uid);
-            fetch(`http://localhost:3001/users/me`).then(res => res.json()).then(data => {
+            if (userId !== uid) setUserId(uid);
+            fetch(`${API_BASE_URL}/users/me`).then(res => res.json()).then(data => {
                 if (data) {
                     if (data.bannerUrl) setBannerUrl(data.bannerUrl);
                     if (data.themePreferences) {
@@ -50,7 +53,7 @@ export default function PersonalizationModal({ isOpen, onClose }: Personalizatio
                 bannerUrl,
                 themePreferences: JSON.stringify(themeConfig)
             };
-            await fetch(`http://localhost:3001/users/${userId}/profile`, {
+            await fetch(`${API_BASE_URL}/users/${userId}/profile`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -113,6 +116,75 @@ export default function PersonalizationModal({ isOpen, onClose }: Personalizatio
                             <option value="Monospace">Coder Monospace</option>
                             <option value="Comic Sans MS">Playful Marker</option>
                         </select>
+                    </div>
+
+                    {/* Background Scenery (New) */}
+                    <div className="mb-6 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                        <div className="flex justify-between items-center mb-4">
+                            <div>
+                                <label className="text-sm font-bold text-gray-900 block">Background Scenery</label>
+                                <p className="text-xs text-gray-500">
+                                    {isAutoMode ? 'Dynamic theme based on your journey' : 'You are in control'}
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <span className={`text-xs font-medium ${isAutoMode ? 'text-indigo-600' : 'text-gray-500'}`}>
+                                    {isAutoMode ? 'Auto-Journey Active' : 'Manual Mode'}
+                                </span>
+                                <button
+                                    onClick={() => setIsAutoMode(!isAutoMode)}
+                                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isAutoMode ? 'bg-indigo-600' : 'bg-gray-200'
+                                        }`}
+                                    role="switch"
+                                    aria-checked={isAutoMode}
+                                >
+                                    <span
+                                        aria-hidden="true"
+                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isAutoMode ? 'translate-x-5' : 'translate-x-0'
+                                            }`}
+                                    />
+                                </button>
+                            </div>
+                        </div>
+
+                        {isAutoMode && (
+                            <div className="mb-4 p-3 bg-blue-50 text-blue-800 text-xs rounded-lg border border-blue-100 flex items-start gap-2">
+                                <span className="text-base">💡</span>
+                                <p>
+                                    <strong>"Auto-Journey" is ON.</strong> The background changes automatically as you navigate the app.
+                                    <br />
+                                    <span className="underline cursor-pointer" onClick={() => setIsAutoMode(false)}>Click here to switch to Manual Mode</span> if you want to pick a specific background.
+                                </p>
+                            </div>
+                        )}
+
+                        <div className={`grid grid-cols-2 sm:grid-cols-3 gap-3 transition-opacity ${isAutoMode ? 'opacity-50 pointer-events-none grayscale-[0.5]' : ''}`}>
+                            {[
+                                { id: 'jungle', label: 'Jungle Maze' },
+                                { id: 'beach', label: 'Sunrise Beach' },
+                                { id: 'himalaya', label: 'Himalayas' },
+                                { id: 'sacred_geometry', label: 'Sacred Geo' },
+                                { id: 'farm_night', label: 'Farm Night' },
+                                { id: 'sacred_geometry_4d', label: '4D Dimension' },
+                            ].map((scenery) => (
+                                <button
+                                    key={scenery.id}
+                                    disabled={isAutoMode}
+                                    onClick={() => setTheme(scenery.id as any)}
+                                    className={`p-2 text-xs rounded-lg border text-center transition-all ${currentTheme === scenery.id
+                                        ? 'bg-white border-indigo-500 ring-2 ring-indigo-500/20 font-bold text-indigo-700 shadow-md'
+                                        : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                                        }`}
+                                >
+                                    {scenery.label}
+                                </button>
+                            ))}
+                        </div>
+                        {isAutoMode && (
+                            <p className="text-[10px] text-center text-indigo-600 mt-3 font-medium">
+                                Switch to "Manual Control" to select a specific background.
+                            </p>
+                        )}
                     </div>
 
                     {/* Colors */}

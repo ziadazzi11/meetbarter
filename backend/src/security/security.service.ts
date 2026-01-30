@@ -44,6 +44,22 @@ export class SecurityService {
                 assessment.factors.push('POTENTIAL_COLLUSION');
                 assessment.level = RiskLevel.RESTRICT;
             }
+
+            const isRingFraud = await this.fraudDetector.detectRingFraud(userId);
+            if (isRingFraud) {
+                assessment.score += 80; // High severity
+                assessment.factors.push('DETECTED_RING_FRAUD');
+                assessment.level = RiskLevel.LOCKDOWN; // Immediate block
+            }
+        }
+
+        if (event.action === 'LOGIN' || event.action === 'LOGIN_FAILURE') {
+            const isLowAndSlow = await this.fraudDetector.detectLowAndSlowAttack(userId);
+            if (isLowAndSlow) {
+                assessment.score += 40;
+                assessment.factors.push('LOW_AND_SLOW_ATTACK');
+                assessment.level = RiskLevel.FRICTION; // Force 2FA or CAPTCHA
+            }
         }
 
         // 3. Log to Immutable "Black Box"

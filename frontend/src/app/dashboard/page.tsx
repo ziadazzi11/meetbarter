@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import Link from "next/link";
+import { API_BASE_URL } from "@/config/api";
 import ImageUpload from "@/components/ImageUpload";
+import PersonalizationModal from "@/components/PersonalizationModal";
 
 export default function DashboardPage() {
     const [activeTab, setActiveTab] = useState<'listings' | 'trades' | 'wallet' | 'settings'>('listings');
@@ -13,26 +15,37 @@ export default function DashboardPage() {
 
     // Theme States
     const [bannerUrl, setBannerUrl] = useState('');
-    const [themeConfig, setThemeConfig] = useState({
-        font: 'Inter',
-        cardColor: '#ffffff',
-        textColor: '#1f2937',
-        primaryColor: '#2563eb'
+    const [themeConfig, setThemeConfig] = useState<any>({});
+
+    // Modal States
+    const [isPersonalizeOpen, setIsPersonalizeOpen] = useState(false);
+    const [isListingModalOpen, setIsListingModalOpen] = useState(false);
+    const [editingListing, setEditingListing] = useState<any>(null); // If set, we are editing
+    const [listingFormData, setListingFormData] = useState({
+        title: '',
+        description: '',
+        location: '',
+        country: 'Lebanon',
+        categoryId: '',
+        originalPrice: 0,
+        condition: 'USED_GOOD',
+        images: [] as string[]
     });
+    const [categories, setCategories] = useState<any[]>([]);
 
     // Fetch User Data on Mount
     useEffect(() => {
         const uid = localStorage.getItem("meetbarter_uid");
         if (uid) {
             setUserId(uid);
-            fetch(`http://localhost:3001/users/me`).then(res => res.json()).then(data => {
+            fetch(`${API_BASE_URL}/users/me`).then(res => res.json()).then(data => {
                 if (data) {
                     setWalletBalance(data.walletBalance || 0);
                     if (data.bannerUrl) setBannerUrl(data.bannerUrl);
                     if (data.themePreferences) {
                         try {
                             const parsed = JSON.parse(data.themePreferences);
-                            setThemeConfig(prev => ({ ...prev, ...parsed }));
+                            setThemeConfig((prev: any) => ({ ...prev, ...parsed }));
                         } catch (e) {
                             console.error("Error parsing theme", e);
                         }
@@ -40,39 +53,102 @@ export default function DashboardPage() {
                 }
             });
             // Fetch Listings
-            fetch(`http://localhost:3001/listings?sellerId=${uid}`).then(r => r.json()).then(setMyListings);
+            fetch(`${API_BASE_URL}/listings?sellerId=${uid}`).then(r => r.json()).then(setMyListings);
             // Fetch Trades (pending)
-            fetch(`http://localhost:3001/trades?userId=${uid}`).then(r => r.json()).then(d => {
+            fetch(`${API_BASE_URL}/trades?userId=${uid}`).then(r => r.json()).then(d => {
                 setPendingTrades(d.filter((t: any) => t.status !== 'COMPLETED'));
             });
         }
+        fetch(`${API_BASE_URL}/categories`).then(r => r.json()).then(setCategories);
     }, []);
 
-    const handleSaveTheme = async () => {
-        if (!userId) return;
+    const openEditModal = (listing: any) => {
+        setEditingListing(listing);
+        let images = [];
+        try { images = JSON.parse(listing.images); } catch { }
+
+        setListingFormData({
+            title: listing.title,
+            description: listing.description,
+            location: listing.location,
+            country: listing.country || 'Lebanon', // Fallback if old data doesn't have country
+            categoryId: listing.categoryId,
+            originalPrice: listing.originalPrice,
+            condition: listing.condition,
+            images: images
+        });
+        setIsListingModalOpen(true);
+    };
+
+    const openCreateModal = () => {
+        setEditingListing(null);
+        setListingFormData({
+            title: '',
+            description: '',
+            location: '',
+            country: 'Lebanon',
+            categoryId: '',
+            originalPrice: 0,
+            condition: 'USED_GOOD',
+            images: []
+        });
+        setIsListingModalOpen(true);
+    };
+
+    const handleSaveListing = async (e: React.FormEvent) => {
+        e.preventDefault();
         try {
+            const url = editingListing
+                ? `${API_BASE_URL}/listings/${editingListing.id}`
+                : `${API_BASE_URL}/listings`;
+
+            const method = editingListing ? 'PUT' : 'POST';
+
             const payload = {
-                bannerUrl,
-                themePreferences: JSON.stringify(themeConfig)
+                ...listingFormData,
+                sellerId: userId,
+                images: JSON.stringify(listingFormData.images),
+                // Recalculate priceVP if logic needed, but backend handles it usually? 
+                // For MVP let's assume backend recalculates or we trust frontend.
+                // Assuming backend recalculates 'priceVP' based on 'originalPrice' and condition if logic exists there,
+                // otherwise we might need to send priceVP. Checking backend seed implies backend calculates it? 
+                // Actually seed calculates it. Let's send originalPrice and condition.
             };
-            await fetch(`http://localhost:3001/users/${userId}/profile`, {
-                method: 'PUT',
+
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            alert("Theme Saved! Refresh to see changes.");
-            window.location.reload(); // Simple reload to apply changes for now
-        } catch (e) {
-            alert("Failed to save theme");
+
+            if (!res.ok) throw new Error(await res.text());
+
+            alert(editingListing ? "Listing Updated!" : "Listing Created!");
+            setIsListingModalOpen(false);
+            // Refresh listings
+            fetch(`${API_BASE_URL}/listings?sellerId=${userId}`).then(r => r.json()).then(setMyListings);
+
+        } catch (error: any) {
+            alert("Error: " + error.message);
         }
     };
+
+
 
     return (
         <div className="min-h-screen bg-gray-50 py-8 px-4">
             <div className="max-w-6xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                    <p className="text-gray-600 mt-1">Manage your listings and trades</p>
+                <div className="mb-8 flex justify-between items-end">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+                        <p className="text-gray-600 mt-1">Manage your listings and trades</p>
+                    </div>
+                    <button
+                        onClick={() => setIsPersonalizeOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
+                    >
+                        <span>🎨 Personalize</span>
+                    </button>
                 </div>
 
                 {/* Navigation Grid */}
@@ -124,24 +200,24 @@ export default function DashboardPage() {
                                 <div className="flex justify-between items-center mb-6">
                                     <h2 className="text-xl font-semibold">Your Active Listings</h2>
                                     {myListings.length > 0 && (
-                                        <Link
-                                            href="/listings/new"
+                                        <button
+                                            onClick={openCreateModal}
                                             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                                         >
                                             + Create Listing
-                                        </Link>
+                                        </button>
                                     )}
                                 </div>
 
                                 {myListings.length === 0 ? (
                                     <div className="text-center py-12">
                                         <p className="text-gray-500 mb-4">You haven&apos;t created any listings yet</p>
-                                        <Link
-                                            href="/listings/new"
+                                        <button
+                                            onClick={openCreateModal}
                                             className="inline-block px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700"
                                         >
                                             Create Your First Listing
-                                        </Link>
+                                        </button>
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
@@ -160,7 +236,7 @@ export default function DashboardPage() {
                                                         </div>
                                                     </div>
                                                     <div className="flex gap-2">
-                                                        <button className="text-blue-600 hover:underline text-sm">Edit</button>
+                                                        <button onClick={() => openEditModal(listing)} className="text-blue-600 hover:underline text-sm font-medium">Edit</button>
                                                         <button className="text-red-600 hover:underline text-sm">Delete</button>
                                                     </div>
                                                 </div>
@@ -234,6 +310,70 @@ export default function DashboardPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Personalization Modal */}
+            <PersonalizationModal
+                isOpen={isPersonalizeOpen}
+                onClose={() => setIsPersonalizeOpen(false)}
+            />
+
+            {/* Edit/Create Listing Modal */}
+            {
+                isListingModalOpen && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                            <div className="p-6">
+                                <h2 className="text-2xl font-bold text-gray-900 mb-6">{editingListing ? 'Edit Listing' : 'Create New Listing'}</h2>
+                                <form onSubmit={handleSaveListing} className="space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                                        <input required className="w-full p-2 border rounded" value={listingFormData.title} onChange={e => setListingFormData({ ...listingFormData, title: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                        <textarea required className="w-full p-2 border rounded min-h-[100px]" value={listingFormData.description} onChange={e => setListingFormData({ ...listingFormData, description: e.target.value })} />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Original Price (Value)</label>
+                                            <input type="number" required className="w-full p-2 border rounded" value={listingFormData.originalPrice} onChange={e => setListingFormData({ ...listingFormData, originalPrice: Number(e.target.value) })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
+                                            <select className="w-full p-2 border rounded" value={listingFormData.condition} onChange={e => setListingFormData({ ...listingFormData, condition: e.target.value })}>
+                                                <option value="NEW">New</option>
+                                                <option value="USED_GOOD">Used - Good</option>
+                                                <option value="USED_FAIR">Used - Fair</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                            <select required className="w-full p-2 border rounded" value={listingFormData.categoryId} onChange={e => setListingFormData({ ...listingFormData, categoryId: e.target.value })}>
+                                                <option value="">Select Category</option>
+                                                {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                            <input required className="w-full p-2 border rounded" value={listingFormData.location} onChange={e => setListingFormData({ ...listingFormData, location: e.target.value })} />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Images</label>
+                                        <ImageUpload initialImages={listingFormData.images} onUpload={(urls) => setListingFormData({ ...listingFormData, images: urls })} maxImages={5} />
+                                    </div>
+                                    <div className="flex justify-end gap-3 pt-4">
+                                        <button type="button" onClick={() => setIsListingModalOpen(false)} className="px-4 py-2 border rounded text-gray-600">Cancel</button>
+                                        <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">Save Listing</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
         </div>
     );
 }

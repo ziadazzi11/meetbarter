@@ -7,11 +7,44 @@ import PreTradeChecklist from "@/components/PreTradeChecklist";
 import SoftCommitmentModal from "@/components/SoftCommitmentModal";
 import CashWaiverModal from "@/components/CashWaiverModal";
 import MessageThread from "@/components/MessageThread";
+import { useNotifications } from "@/hooks/useNotifications";
+import { API_BASE_URL } from "@/config/api";
+import { adsClient } from "@/lib/ads-client";
+
+interface Trade {
+    id: string;
+    listingId: string;
+    buyerId: string;
+    sellerId: string;
+    offerVP: number;
+    coordinationEscrowVP: number;
+    status: string;
+    intentTimestamp?: string;
+    cashOffer?: number;
+    cashCurrency?: string;
+    listing: {
+        title: string;
+    };
+    buyer: {
+        id: string;
+        fullName: string;
+        phoneNumber?: string;
+    };
+    seller: {
+        id: string;
+        fullName: string;
+        phoneNumber?: string;
+    };
+    timeline: {
+        state: string;
+        timestamp: string;
+    }[];
+}
 
 export default function TradeDetails() {
     const { id } = useParams();
     const router = useRouter();
-    const [trade, setTrade] = useState<any>(null);
+    const [trade, setTrade] = useState<Trade | null>(null);
     const [loading, setLoading] = useState(true);
     const [showCommitmentModal, setShowCommitmentModal] = useState(false);
     const [showCashModal, setShowCashModal] = useState(false);
@@ -20,16 +53,19 @@ export default function TradeDetails() {
     // DEMO USER ID (From seed)
     const DEMO_USER_ID = "9d2c7649-9cf0-48fb-889a-1369e20615a6";
 
+    // 🔔 Real-Time Notifications
+    useNotifications(DEMO_USER_ID);
+
     // Poll for updates (simplified for MVP)
     const fetchTrade = useCallback(() => {
         if (!id) return;
-        fetch(`http://localhost:3001/trades/${id}`)
+        fetch(`${API_BASE_URL}/trades/${id}`)
             .then(res => res.json())
-            .then(data => {
+            .then((data: Trade) => {
                 setTrade(data);
                 setLoading(false);
             })
-            .catch(err => {
+            .catch((err: unknown) => {
                 console.error(err);
                 setLoading(false);
             });
@@ -43,40 +79,49 @@ export default function TradeDetails() {
 
     const handleSoftCommitment = async () => {
         try {
-            const res = await fetch(`http://localhost:3001/trades/${id}/intent`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: DEMO_USER_ID })
-            });
+            await adsClient.post(`/trades/${id}/intent`, { userId: DEMO_USER_ID });
 
-            if (!res.ok) throw new Error(await res.text());
+            // const res = await fetch(`${API_BASE_URL}/trades/${id}/intent`, {
+            //     method: "POST",
+            //     headers: { "Content-Type": "application/json" },
+            //     body: JSON.stringify({ userId: DEMO_USER_ID })
+            // });
+
+            // if (!res.ok) throw new Error(await res.text());
 
             setShowCommitmentModal(false);
             fetchTrade();
             alert("Intent recorded!");
-        } catch (err: any) {
-            alert("Error: " + err.message);
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Unknown error";
+            alert("Error: " + message);
         }
     };
 
-    const handleChecklistSubmit = async (checklist: any) => {
+    const handleChecklistSubmit = async (checklist: Record<string, any>) => {
         try {
-            const res = await fetch(`http://localhost:3001/trades/${id}/checklist`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    userId: DEMO_USER_ID,
-                    checklist
-                })
+            await adsClient.post(`/trades/${id}/checklist`, {
+                userId: DEMO_USER_ID,
+                checklist
             });
 
-            if (!res.ok) throw new Error(await res.text());
+            // const res = await fetch(`${API_BASE_URL}/trades/${id}/checklist`, {
+            //     method: "POST",
+            //     headers: { "Content-Type": "application/json" },
+            //     body: JSON.stringify({
+            //         userId: DEMO_USER_ID,
+            //         checklist
+            //     })
+            // });
+
+            // if (!res.ok) throw new Error(await res.text());
 
             setShowChecklist(false);
             fetchTrade();
             alert("Checklist submitted! Meetup confirmed.");
-        } catch (err: any) {
-            alert("Error: " + err.message);
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Unknown error";
+            alert("Error: " + message);
         }
     };
 
@@ -84,13 +129,15 @@ export default function TradeDetails() {
         if (!confirm("Confirm you have received the item and want to unlock the funds?")) return;
 
         try {
-            const res = await fetch(`http://localhost:3001/trades/${id}/confirm`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: DEMO_USER_ID })
-            });
+            await adsClient.post(`/trades/${id}/confirm`, { userId: DEMO_USER_ID });
 
-            if (!res.ok) throw new Error(await res.text());
+            // const res = await fetch(`${API_BASE_URL}/trades/${id}/confirm`, {
+            //     method: "POST",
+            //     headers: { "Content-Type": "application/json" },
+            //     body: JSON.stringify({ userId: DEMO_USER_ID })
+            // });
+
+            // if (!res.ok) throw new Error(await res.text());
 
             fetchTrade();
             alert("Trade Confirmed!");
@@ -99,12 +146,28 @@ export default function TradeDetails() {
         }
     };
 
-    const handleConfirmCashProposal = async (amount: number) => {
+    const handleConfirmCashProposal = async (amount: number, currency: string) => {
         setShowCashModal(false);
-        if (amount > 0) {
-            alert(`System Message Sent: 'User proposed $${amount} private cash settlement. Liability Waived.'`);
-        } else {
+        if (amount <= 0) {
             alert("Proposed amount must be greater than 0.");
+            return;
+        }
+
+        try {
+            await adsClient.post(`/trades/${id}/cash`, { userId: DEMO_USER_ID, amount, currency });
+
+            // const res = await fetch(`${API_BASE_URL}/trades/${id}/cash`, {
+            //     method: "POST",
+            //     headers: { "Content-Type": "application/json" },
+            //     body: JSON.stringify({ userId: DEMO_USER_ID, amount, currency })
+            // });
+
+            // if (!res.ok) throw new Error(await res.text());
+
+            fetchTrade();
+            alert(`Sweetener Added: ${amount} ${currency} recorded in timeline.`);
+        } catch (err: any) {
+            alert("Error: " + err.message);
         }
     };
 
@@ -164,8 +227,8 @@ export default function TradeDetails() {
                                     <div className="text-2xl font-bold text-gray-900">{trade.offerVP} VP</div>
                                 </div>
                                 <div>
-                                    <div className="text-sm text-gray-500 mb-1">Operational Escrow</div>
-                                    <div className="text-2xl font-bold text-blue-600">{trade.operationalEscrowVP} VP</div>
+                                    <div className="text-sm text-gray-500 mb-1">Operational Escrow (Coordination & Verification)</div>
+                                    <div className="text-2xl font-bold text-blue-600">{trade.coordinationEscrowVP} VP</div>
                                 </div>
                                 <div className="pt-4 border-t border-gray-100 md:col-span-2">
                                     <div className="flex items-center justify-between">
@@ -185,6 +248,11 @@ export default function TradeDetails() {
                             {trade.intentTimestamp && (
                                 <div className="bg-green-50 p-4 border-t border-green-100 flex items-center gap-2 text-green-700 text-sm font-medium">
                                     <span>✅</span> Intent Soft-Committed on {new Date(trade.intentTimestamp).toLocaleDateString()}
+                                </div>
+                            )}
+                            {trade.cashOffer && (
+                                <div className="bg-yellow-50 p-4 border-t border-yellow-100 flex items-center gap-2 text-yellow-800 text-sm font-medium">
+                                    <span>💰</span> Cash Sweetener: {trade.cashOffer} {trade.cashCurrency} (Off-Platform)
                                 </div>
                             )}
                         </div>
@@ -242,17 +310,16 @@ export default function TradeDetails() {
                                 )}
 
                                 {/* Cash Proposal */}
+                                {/* Cash Proposal - LAST RESORT */}
                                 {trade.status !== 'COMPLETED' && (
-                                    <div className="mt-6 pt-6 border-t border-dashed border-gray-200">
+                                    <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+                                        <p className="text-xs text-gray-400 mb-2">Struggling to finalize this barter?</p>
                                         <button
-                                            className="w-full py-2.5 text-sm font-medium text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg hover:bg-yellow-100 transition-colors flex items-center justify-center gap-2"
+                                            className="text-xs text-gray-500 hover:text-gray-900 underline decoration-dotted underline-offset-4"
                                             onClick={() => setShowCashModal(true)}
                                         >
-                                            <span>💰</span> Propose Private Cash Top-up
+                                            Add Off-Platform Cash Sweetener (Last Resort)
                                         </button>
-                                        <p className="text-xs text-center text-gray-400 mt-2">
-                                            (Private Contract • Off-Platform)
-                                        </p>
                                     </div>
                                 )}
                             </div>
@@ -277,6 +344,15 @@ export default function TradeDetails() {
                                 <li>Verify item condition before confirming.</li>
                                 <li>Do not bring large amounts of cash unless agreed.</li>
                             </ul>
+                        </div>
+
+                        {/* Legal One-Line Shield Footnote */}
+                        <div className="bg-gray-100 rounded-xl p-4 border border-gray-200">
+                            <p className="text-[10px] text-gray-500 leading-tight">
+                                <span className="font-bold">🛡️ Institutional Notice:</span> The platform charges for operational coordination services,
+                                not for value exchange or access to Value Points. Value Points have no monetary value and are not purchased or sold.
+                                Unused coordination escrow is automatically returned.
+                            </p>
                         </div>
                     </div>
                 </div>

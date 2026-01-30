@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ImageUpload from './ImageUpload';
+import { API_BASE_URL } from "@/config/api";
 
 interface CommunityVerificationModalProps {
     isOpen: boolean;
@@ -24,7 +25,7 @@ export default function CommunityVerificationModal({ isOpen, onClose, userId }: 
         const finalRole = role === 'OTHER' ? customRole : role;
 
         try {
-            const response = await fetch(`http://localhost:3001/users/${userId}/request-community`, {
+            const response = await fetch(`${API_BASE_URL}/users/${userId}/request-community`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -130,9 +131,9 @@ export default function CommunityVerificationModal({ isOpen, onClose, userId }: 
                     {/* Special Gardener Section */}
                     {role === 'GARDENER' && (
                         <div className="p-3 bg-green-50 rounded-lg border border-green-200 mt-2 mb-2">
-                            <label className="input-label text-green-800">The "Gardener's Special" (Optional)</label>
+                            <label className="input-label text-green-800">The &quot;Gardener&quot;s Special&quot; (Optional)</label>
                             <p className="text-xs text-green-600 mb-2">
-                                We love our gardeners! Upload a selfie with your favorite tree or bush to join the "Green Thumb" club.
+                                We love our gardeners! Upload a selfie with your favorite tree or bush to join the &quot;Green Thumb&quot; club.
                                 <br /><em>(Totally optional if you are shy!)</em>
                             </p>
                             <ImageUpload

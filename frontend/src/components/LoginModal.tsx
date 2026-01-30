@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { adsClient } from "@/lib/ads-client";
 
 interface LoginModalProps {
     onLogin: (userId: string) => void;
@@ -39,12 +40,20 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
             }
 
             try {
-                const res = await fetch("http://localhost:3001/users/social-login", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, name, provider, photoUrl })
+                const user = await adsClient.post('/users/social-login', {
+                    email,
+                    name,
+                    provider,
+                    photoUrl
                 });
-                const user = await res.json();
+
+                // const res = await fetch(`${API_BASE_URL}/users/social-login`, {
+                //     method: "POST",
+                //     headers: { "Content-Type": "application/json" },
+                //     body: JSON.stringify({ email, name, provider, photoUrl })
+                // });
+                // const user = await res.json();
+
                 localStorage.setItem("meetbarter_uid", user.id);
                 onLogin(user.id);
             } catch (e) {
