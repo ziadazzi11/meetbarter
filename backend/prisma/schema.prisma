@@ -6,20 +6,67 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// Enums removed for SQLite compatibility. using String instead.
-// Role: USER, ADMIN, MODERATOR
-// TradeStatus: OFFER_MADE, LOCKED, CONFIRMED_BY_BUYER, CONFIRMED_BY_SELLER, COMPLETED, DISPUTED, CANCELLED
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+enum TradeStatus {
+  OFFER_MADE
+  LOCKED
+  CONFIRMED_BY_BUYER
+  CONFIRMED_BY_SELLER
+  COMPLETED
+  DISPUTED
+  CANCELLED
+}
+
+enum ListingStatus {
+  ACTIVE
+  TRADED
+  ARCHIVED
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum VerificationStatus {
+  NONE
+  PENDING
+  VERIFIED
+  REJECTED
+  EXPIRED
+  REVOKED
+}
+
+enum BountyStatus {
+  OPEN
+  CLAIMED
+  SUBMITTED
+  COMPLETED
+}
+
+enum GovernanceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXECUTED
+}
 
 model User {
   id              String   @id @default(uuid())
   email           String   @unique
   passwordHash    String
   fullName        String?
-  role            String   @default("USER") // Was Role
+  role            Role     @default(USER)
   globalTrustScore Float   @default(1.0) // Base trust multiplier
   walletBalance   Int      @default(0)   // Value Points (VP)
   isSupporter     Boolean  @default(false) // Donations (Badge only)
@@ -35,12 +82,12 @@ model User {
   // Business Profile
   isBusiness               Boolean @default(false)
   businessName             String? // Trading name if different from full name
-  businessVerificationStatus String @default("NONE") // NONE, PENDING, REJECTED, VERIFIED
+  businessVerificationStatus VerificationStatus @default(NONE)
   businessVerificationData String? // JSON: { country, notes, documentsChecked, adminId }
 
   // Community Service Profile (Gardeners, Teachers, etc.)
   communityRole            String? // DOCTOR, TEACHER, GARDENER, STUDENT, VETERAN, FIREFIGHTER
-  communityVerificationStatus String @default("NONE") // NONE, PENDING, REJECTED, VERIFIED
+  communityVerificationStatus VerificationStatus @default(NONE)
   
   // "Shy Gardener Protocol": Photo with tree is encouraged but OPTIONAL. 
   // Standard ID or simple work proof is sufficient if user is shy.
@@ -187,9 +234,9 @@ model Listing {
   
   // Content Moderation
   isActive        Boolean  @default(true)
-  moderationStatus String  @default("APPROVED") // APPROVED, PENDING, REJECTED
+  moderationStatus ModerationStatus  @default(APPROVED)
   
-  status          String   @default("ACTIVE") // ACTIVE, TRADED, ARCHIVED
+  status          ListingStatus   @default(ACTIVE)
   
   categoryId      String
   sellerId        String
@@ -220,7 +267,7 @@ model Trade {
   categoryId      String
 
   offerVP         Int
-  status          String      @default("OFFER_MADE") // Was TradeStatus (OFFER_MADE)
+  status          TradeStatus      @default(OFFER_MADE)
   
   // Phase 4: Dynamic Operational Escrow (Coordination & Verification)
   coordinationEscrowVP Int     @default(0)   // Calculated at creation
@@ -399,7 +446,7 @@ model ContentModerationFlag {
   severity        String   // AUTO_REJECT, HIGH_RISK, MEDIUM_RISK, LOW_RISK
   matchedKeywords String?  // JSON array of keywords that triggered flag
   
-  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  status          ModerationStatus   @default(PENDING)
   reviewedBy      String?
   reviewNotes     String?
   reviewedAt      DateTime?
@@ -491,7 +538,7 @@ model Bounty {
   title           String
   description     String
   rewardVP        Int
-  status          String   @default("OPEN") // OPEN, CLAIMED, SUBMITTED, COMPLETED
+  status          BountyStatus   @default(OPEN)
   
   assigneeId      String?
   assignee        User?    @relation(fields: [assigneeId], references: [id])
@@ -570,7 +617,7 @@ model BusinessLicense {
   issuingAuthority  String   // e.g. "Ministry of Industry"
   evidence          String   // JSON: { links: string[], photos: string[] }
   
-  status            String   @default("PENDING") // PENDING, VERIFIED, EXPIRED, REVOKED
+  status            VerificationStatus   @default(PENDING)
   issuedAt          DateTime
   expiresAt         DateTime
   lastVerifiedAt    DateTime @default(now())
@@ -590,7 +637,7 @@ model GovernanceRequest {
   actionType      String   // e.g., "FREEZE_SYSTEM", "WIPE_VAULT", "GRANT_ADMIN"
   payload         String   // JSON: Arguments for the action
   
-  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED, EXECUTED
+  status          GovernanceStatus   @default(PENDING)
   
   approverId      String?  // Admin who approved (must be != requesterId)
   approvalNote    String?

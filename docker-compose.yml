@@ -1,4 +1,17 @@
 services:
+  db:
+    image: postgres:15-alpine
+    container_name: meetbarter_db
+    restart: always
+    environment:
+      POSTGRES_USER: meetbarter
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-meetbarter_dev_pw}
+      POSTGRES_DB: meetbarter
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   backend:
     build:
       context: ./backend
@@ -8,7 +21,7 @@ services:
     ports:
       - '3001:3001'
     environment:
-      DATABASE_URL: "file:../data/meetbarter.db"
+      DATABASE_URL: "postgresql://meetbarter:${DB_PASSWORD:-meetbarter_dev_pw}@db:5432/meetbarter?schema=public"
       JWT_SECRET: ${JWT_SECRET:-super-secret-key-change-this}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       # Vault & Codes - Ensure these match your .env
@@ -17,9 +30,9 @@ services:
       ADMIN_BETA_CODE: ${ADMIN_BETA_CODE}
       ADMIN_FINGERPRINT: ${ADMIN_FINGERPRINT}
     volumes:
-      - ./data:/app/backend/data
       - ./data/vault:/app/backend/vault_storage
-    depends_on: []
+    depends_on:
+      - db
 
   frontend:
     build:
@@ -35,5 +48,6 @@ services:
       - backend
 
 volumes:
-  # Using local bind mounts in ./data instead of named volumes for easier backup
+  postgres_data:
+
 
