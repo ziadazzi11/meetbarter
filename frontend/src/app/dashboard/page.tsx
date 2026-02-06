@@ -133,6 +133,23 @@ export default function DashboardPage() {
         }
     };
 
+    const handleToggleStatus = async (listingId: string, newStatus: 'ACTIVE' | 'INACTIVE') => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/listings/${listingId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if (!res.ok) throw new Error(await res.text());
+
+            // Refresh to update UI
+            fetch(`${API_BASE_URL}/listings?sellerId=${userId}`).then(r => r.json()).then(setMyListings);
+        } catch (error: any) {
+            alert("Error updating status: " + error.message);
+        }
+    };
+
 
 
     return (
@@ -230,12 +247,36 @@ export default function DashboardPage() {
                                                     <div>
                                                         <h3 className="font-semibold text-gray-900">{listing.title}</h3>
                                                         <p className="text-sm text-gray-600 mt-1">{listing.description}</p>
-                                                        <div className="flex gap-4 mt-2">
+                                                        <div className="flex gap-4 mt-2 items-center">
                                                             <span className="text-blue-600 font-bold">{listing.priceVP} VP</span>
                                                             <span className="text-gray-500">{listing.location}</span>
+                                                            {/* Status Badge */}
+                                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide
+                                                                ${listing.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}
+                                                            `}>
+                                                                {listing.status}
+                                                            </span>
                                                         </div>
                                                     </div>
                                                     <div className="flex gap-2">
+                                                        {/* Slot Swapping Logic */}
+                                                        {listing.status === 'INACTIVE' && (
+                                                            <button
+                                                                onClick={() => handleToggleStatus(listing.id, 'ACTIVE')}
+                                                                className="text-green-600 hover:underline text-sm font-bold bg-green-50 px-2 rounded"
+                                                            >
+                                                                Activate
+                                                            </button>
+                                                        )}
+                                                        {listing.status === 'ACTIVE' && (
+                                                            <button
+                                                                onClick={() => handleToggleStatus(listing.id, 'INACTIVE')}
+                                                                className="text-orange-600 hover:underline text-sm font-medium"
+                                                            >
+                                                                Deactivate
+                                                            </button>
+                                                        )}
+
                                                         <button onClick={() => openEditModal(listing)} className="text-blue-600 hover:underline text-sm font-medium">Edit</button>
                                                         <button className="text-red-600 hover:underline text-sm">Delete</button>
                                                     </div>

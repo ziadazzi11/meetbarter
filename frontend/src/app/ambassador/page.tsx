@@ -60,7 +60,7 @@ export default function AmbassadorPortal() {
     }, []);
 
     const handleApprove = async (businessId: string) => {
-        if (!confirm("Verify this business? You will accept liability for their initial trust score.")) return;
+        if (!confirm("Verify this business? Your reputation vouches for their initial trust score.")) return;
 
         try {
             await fetch(`${API_BASE_URL}/users/${businessId}/approve-business`, {

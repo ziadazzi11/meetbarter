@@ -45,6 +45,7 @@ export enum Permission {
     EXPORT_AUDIT = 'EXPORT_AUDIT',
     ACCESS_INTEL = 'ACCESS_INTEL',       // Strategic dashboard access
     MANAGE_FINANCE = 'MANAGE_FINANCE',     // VP credits and grant adjustments
+    BAN_USER = 'BAN_USER',                 // Suspend user accounts
     READ_ONLY_FALLBACK = 'READ_ONLY_FALLBACK' // Emergency mode restricted access
 }
 
@@ -55,7 +56,8 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
         Permission.CREATE_TRADE,
         Permission.FLAG_CONTENT,
         Permission.APPROVE_BUSINESS,
-        Permission.RESOLVE_DISPUTE_LITE
+        Permission.RESOLVE_DISPUTE_LITE,
+        Permission.BAN_USER
     ],
     ADMIN: Object.values(Permission),
     CTO: [

@@ -27,6 +27,10 @@ export default function CreateListing() {
     const [images, setImages] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
+    // Hybrid Marketplace (Cash Options)
+    const [priceCash, setPriceCash] = useState("");
+    const [priceCurrency, setPriceCurrency] = useState("USD");
+
     // Storage Limits
     const [listingCount, setListingCount] = useState(0);
     const [listingLimit, setListingLimit] = useState(5);
@@ -90,7 +94,9 @@ export default function CreateListing() {
             location,
             country,
             sellerId: DEMO_USER_ID,
-            expiresAt
+            expiresAt,
+            priceCash: priceCash ? parseFloat(priceCash) : null,
+            priceCurrency
         };
 
         try {
@@ -210,9 +216,9 @@ export default function CreateListing() {
                             )}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    {listingType === 'OFFER' ? 'Reference Value (RV)' : 'Budget Range (RV)'}
+                                    {listingType === 'OFFER' ? 'Reference Value (VP)' : 'Budget Range (VP)'}
                                     <span className="ml-1 text-xs text-gray-400 font-normal block">
-                                        (Informational only. VP is minted upon trade completion.)
+                                        (Priced in Virtual Points. Free to barter.)
                                     </span>
                                 </label>
                                 <input
@@ -223,6 +229,44 @@ export default function CreateListing() {
                                     className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                                 />
                             </div>
+                        </div>
+
+                        {/* Hybrid Marketplace: Cash Price */}
+                        <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
+                            <h3 className="text-sm font-bold text-green-800 mb-4 flex items-center">
+                                <span className="mr-2 text-lg">💰</span> Hybrid Marketplace Options
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-green-700 mb-1">
+                                        Cash Price (Optional)
+                                        <span className="ml-1 text-xs text-green-600 block font-normal">
+                                            Enable "Buy Now" for this item.
+                                        </span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={priceCash}
+                                        onChange={e => setPriceCash(e.target.value)}
+                                        placeholder="e.g. 100"
+                                        className="block w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-green-700 mb-1">Currency</label>
+                                    <select
+                                        value={priceCurrency}
+                                        onChange={e => setPriceCurrency(e.target.value)}
+                                        className="block w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
+                                    >
+                                        <option value="USD">USD ($)</option>
+                                        <option value="LBP">LBP (LL)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <p className="mt-3 text-xs text-green-700">
+                                <strong>Note:</strong> Cash sales are subject to a small brokerage fee (2.5% or $1).
+                            </p>
                         </div>
 
                         {listingType === 'OFFER' && (

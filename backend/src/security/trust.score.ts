@@ -16,7 +16,7 @@ export class TrustScore {
         let score = user.globalTrustScore || 0;
 
         // Institutional Override
-        if (user.role === 'PARTNER') return 'T4';
+        if (user.verificationLevel === 3) return 'T4';
 
         // Community Anchor
         if (user.ambassadorStatus === 'ACTIVE') return 'T3';

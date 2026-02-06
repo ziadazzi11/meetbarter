@@ -42,6 +42,7 @@ import { GovernanceModule } from './governance/governance.module';
 import { IntelligenceModule } from './intelligence/intelligence.module';
 import { SystemStateModule } from './system-state/system-state.module';
 import { AdsModule } from './ads/ads.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { CanaryInterceptor } from './ads/canary.interceptor';
 import { SemanticNoiseInterceptor } from './ads/recon/semantic-noise.interceptor';
 
@@ -81,7 +82,8 @@ import { validate } from './config/env.validation';
         ValuationModule,
         GovernanceModule,
         SystemStateModule,
-        AdsModule
+        AdsModule,
+        SubscriptionsModule
     ],
     controllers: [AppController, AdminController],
     providers: [

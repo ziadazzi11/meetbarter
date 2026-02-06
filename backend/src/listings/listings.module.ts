@@ -12,6 +12,6 @@ import { ModerationModule } from '../moderation/moderation.module';
   imports: [PrismaModule, CategoriesModule, IntelligenceModule, ValuationModule, ModerationModule],
   controllers: [ListingsController],
   providers: [ListingsService, AiPricingService],
-  exports: [AiPricingService],
+  exports: [ListingsService, AiPricingService],
 })
 export class ListingsModule { }

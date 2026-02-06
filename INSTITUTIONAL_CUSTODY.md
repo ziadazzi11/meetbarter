@@ -17,7 +17,7 @@ This directory contains the core documentation for registering the Meetbarter en
 ## 3. Investor & Partner Onboarding
 
 - **The Value Proposition**:
-  - 4% Emergency Fund (Insurance for users).
+  - 4% Emergency Relief Fund (Community support during crises).
   - 1% Ambassador Fund (Growth engine).
   - 10% Admin Budget (Sustainability).
 - **Investor Package**:

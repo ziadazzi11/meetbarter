@@ -145,7 +145,7 @@ export class UsersService {
             where: { id: userId },
             data: {
                 communityRole: role,
-                communityVerificationStatus: 'PENDING_REVIEW', // Matches "Pending Businesses"
+                communityVerificationStatus: 'PENDING', // Matches "Pending Businesses"
                 communityEvidence: encryptedEvidence
             }
         });
@@ -290,7 +290,7 @@ export class UsersService {
 
     async findPendingCommunityVerifications() {
         return this.prisma.user.findMany({
-            where: { communityVerificationStatus: 'PENDING_REVIEW' },
+            where: { communityVerificationStatus: 'PENDING' },
             select: {
                 id: true,
                 fullName: true,

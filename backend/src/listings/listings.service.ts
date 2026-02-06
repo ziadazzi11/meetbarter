@@ -19,7 +19,7 @@ export class ListingsService {
   ) { }
 
   async create(createListingDto: any) {
-    let { priceVP, originalPrice, condition, images } = createListingDto;
+    let { priceVP, priceCash, priceCurrency, originalPrice, condition, images } = createListingDto;
 
     if (images) {
       try {
@@ -34,10 +34,13 @@ export class ListingsService {
     if (!user) throw new Error("User not found");
 
     const currentCount = await this.prisma.listing.count({ where: { sellerId: user.id, status: 'ACTIVE' } });
-    let limit = 5;
-    if (user.isBusiness) limit = 20;
-    if (user.subscriptionTier === 'PREMIUM') limit = 1000;
 
+    let limit = 5; // Default FREE
+    if (user.subscriptionTier === 'BUSINESS') limit = 20;
+    if (user.subscriptionTier === 'PREMIUM') limit = 9999;
+    if (user.isBusiness && limit < 20) limit = 20; // Legacy support for isBusiness flag
+
+    // Legacy "Shy Gardener" bonus
     if (user.communityVerificationStatus === 'VERIFIED') {
       if (user.communityRole === 'GARDENER') limit += 20;
       else limit += 5;
@@ -189,5 +192,34 @@ export class ListingsService {
 
   async remove(id: string) {
     return this.prisma.listing.delete({ where: { id } });
+  }
+
+  // Phase 7: Subscription Downgrade Logic
+  async handleDowngrade(userId: string) {
+    // 1. Get all active listings ordered by creation (oldest first)
+    const activeListings = await this.prisma.listing.findMany({
+      where: { sellerId: userId, status: 'ACTIVE' },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    const FREE_LIMIT = 5;
+
+    // 2. If user has more than limit
+    if (activeListings.length > FREE_LIMIT) {
+      const listingsToKeep = activeListings.slice(0, FREE_LIMIT);
+      const listingsToDeactivate = activeListings.slice(FREE_LIMIT);
+
+      // 3. Update excess to INACTIVE
+      const idsToDeactivate = listingsToDeactivate.map(l => l.id);
+
+      if (idsToDeactivate.length > 0) {
+        await this.prisma.listing.updateMany({
+          where: { id: { in: idsToDeactivate } },
+          data: { status: 'INACTIVE' } // Assuming INACTIVE is valid or ARCHIVED if not
+        });
+
+        console.log(`[Downgrade] Deactivated ${idsToDeactivate.length} listings for user ${userId}`);
+      }
+    }
   }
 }

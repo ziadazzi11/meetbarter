@@ -96,7 +96,33 @@ export default function TermsOfService() {
                     </section>
 
                     <section>
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">5. Content Moderation</h2>
+                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">5. Safety Guidelines</h2>
+                        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 my-4">
+                            <p className="font-semibold text-yellow-800 mb-2">
+                                ⚠️ Meeting Safety (Your Responsibility)
+                            </p>
+                            <p className="text-yellow-700 mb-3">
+                                <strong>MeetBarter is not responsible for your safety during in-person trades.</strong>
+                                You are solely responsible for choosing safe meeting locations and protecting yourself.
+                            </p>
+                            <p className="font-semibold text-yellow-800 mb-2">Recommended Safety Practices:</p>
+                            <ul className="list-disc list-inside space-y-1 text-yellow-700">
+                                <li><strong>Always meet in public places</strong> (cafes, malls, police station parking lots)</li>
+                                <li>Meet during daylight hours when possible</li>
+                                <li>Tell a friend or family member where you're going</li>
+                                <li>Inspect items thoroughly before completing the trade</li>
+                                <li>Trust your instincts - cancel if something feels wrong</li>
+                                <li>Never share personal information (home address, financial details) until meeting</li>
+                            </ul>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-2">
+                            These are recommendations only. MeetBarter does not enforce meeting locations and
+                            is not liable for any incidents, injuries, or losses during in-person exchanges.
+                        </p>
+                    </section>
+
+                    <section>
+                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">6. Content Moderation</h2>
                         <p>
                             We reserve the right to:
                         </p>

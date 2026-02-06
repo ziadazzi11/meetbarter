@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Query, UseGuards, ServiceUnavailabl
 import { TradesService } from './trades.service';
 import { SystemStateService } from '../system-state/system-state.service';
 import { SystemFreezeGuard } from '../common/guards/system-freeze.guard';
-import { IsString, IsNumber, IsOptional, IsObject } from 'class-validator';
+import { IsString, IsNumber, IsOptional } from 'class-validator';
 
 class CreateTradeDto {
   @IsString()
@@ -18,6 +18,34 @@ class CreateTradeDto {
   @IsOptional()
   @IsString()
   cashCurrency?: string;
+
+  @IsOptional()
+  @IsString()
+  exchangeMode?: 'VP' | 'CASH';
+
+}
+
+class ReviewTradeDto {
+  @IsNumber()
+  rating: number;
+
+  @IsString()
+  comment: string;
+
+  @IsString()
+  userId: string;
+}
+
+class FraudReportDto {
+  @IsString()
+  reason: string;
+
+  @IsOptional()
+  @IsString()
+  evidence?: string;
+
+  @IsString()
+  userId: string;
 }
 
 class DisputeTradeDto {
@@ -56,6 +84,7 @@ export class TradesController {
     return this.tradesService.createTrade(
       dto.listingId,
       dto.buyerId,
+      dto.exchangeMode as any,
       dto.cashOffer,
       dto.cashCurrency
     );
@@ -90,5 +119,42 @@ export class TradesController {
     @Body() dto: CashSweetenerDto
   ) {
     return this.tradesService.addCashSweetener(id, dto.userId, dto.amount, dto.currency || 'USD');
+  }
+
+  // --- Admin Methods ---
+
+  @Post(':id/reality-check')
+  markRealityChecked(
+    @Param('id') id: string,
+    @Body('adminId') adminId: string,
+    @Body('notes') notes: string
+  ) {
+    return this.tradesService.markRealityChecked(id, adminId, notes);
+  }
+
+  @Post(':id/verify-fees')
+  verifyFees(
+    @Param('id') id: string,
+    @Body('adminId') adminId: string
+  ) {
+    return this.tradesService.verifyFeePayment(id, adminId);
+  }
+
+  // --- Post-Trade Methods ---
+
+  @Post(':id/review')
+  submitReview(
+    @Param('id') id: string,
+    @Body() dto: ReviewTradeDto
+  ) {
+    return this.tradesService.submitReview(id, dto.userId, dto.rating, dto.comment);
+  }
+
+  @Post(':id/fraud')
+  reportFraud(
+    @Param('id') id: string,
+    @Body() dto: FraudReportDto
+  ) {
+    return this.tradesService.reportFraud(id, dto.userId, dto.reason, dto.evidence);
   }
 }

@@ -21,7 +21,13 @@ export class TradesService {
     private automation: AutomationService,
   ) { }
 
-  async createTrade(listingId: string, buyerId: string, cashOffer?: number, cashCurrency?: string) {
+  async createTrade(
+    listingId: string,
+    buyerId: string,
+    exchangeMode: 'VP' | 'CASH' = 'VP',
+    cashOffer?: number,
+    cashCurrency?: string,
+  ) {
     this.automation.reportEvent('TRADE_CREATE');
 
     // 1. Validate Listing & Buyer
@@ -104,12 +110,14 @@ export class TradesService {
           category: { connect: { id: listing.categoryId } },
           buyer: { connect: { id: buyerId } },
           seller: { connect: { id: listing.sellerId } },
-          offerVP: listing.priceVP,
+          offerVP: exchangeMode === 'VP' ? listing.priceVP : 0,
           coordinationEscrowVP: coordinationEscrowVP,
-          status: 'LOCKED', // Zero-Pre-Mint: Value exists only as Locked Escrow
+          status: exchangeMode === 'CASH' ? 'OFFER_MADE' : 'LOCKED', // Cash trades start at OFFER_MADE for reality check
           expiresAt: expiresAt,
-          cashOffer: cashOffer || null,
-          cashCurrency: cashCurrency || 'USD',
+          cashOffer: cashOffer || (exchangeMode === 'CASH' ? listing.priceCash : null),
+          cashCurrency: cashCurrency || listing.priceCurrency || 'USD',
+          exchangeMode: exchangeMode,
+          ...this.calculateBrokerageFees(exchangeMode === 'CASH' ? listing.priceCash : 0),
         }
       });
 
@@ -173,16 +181,18 @@ export class TradesService {
 
     // Check if BOTH confirmed -> Release Funds
     if (updatedTrade.buyerConfirmed && updatedTrade.sellerConfirmed) {
+      // For VP trades, release VP. For CASH trades, this might just be a ritual if fees are already paid, 
+      // but we use it to trigger COMPLETED status.
       return this.prisma.$transaction(async (tx) => {
-        // Seller Payout = Trade VP - Seller's Fee (7.5%)
-        // Platform holds the rest (15% total: 7.5% from Buyer, 7.5% from Seller) in Escrow
-        const sellerFee = Math.floor(trade.offerVP * 0.075);
-        const sellerPayout = trade.offerVP - sellerFee;
+        if (trade.exchangeMode === 'VP') {
+          const sellerFee = Math.floor(trade.offerVP * 0.075);
+          const sellerPayout = trade.offerVP - sellerFee;
 
-        await tx.user.update({
-          where: { id: trade.sellerId },
-          data: { walletBalance: { increment: sellerPayout } }
-        });
+          await tx.user.update({
+            where: { id: trade.sellerId },
+            data: { walletBalance: { increment: sellerPayout } }
+          });
+        }
 
         // Update Trade status
         const finalizedTrade = await tx.trade.update({
@@ -205,6 +215,55 @@ export class TradesService {
       tradeId: id,
       by: isBuyer ? 'Buyer' : 'Seller'
     });
+
+    return updatedTrade;
+  }
+
+  /**
+   * Admin: Reality Check (Physical/Photo verification of item)
+   */
+  async markRealityChecked(id: string, adminId: string, notes: string) {
+    const trade = await this.prisma.trade.findUnique({ where: { id } });
+    if (!trade) throw new BadRequestException('Trade not found');
+
+    const updatedTrade = await this.prisma.trade.update({
+      where: { id },
+      data: {
+        isRealityChecked: true,
+        status: 'LOCKED', // Moves from OFFER_MADE to LOCKED once checked
+        justification: `Reality Check Passed by Admin ${adminId}: ${notes}`
+      }
+    });
+
+    await this.timelineService.addTimelineEvent(id, 'REALITY_CHECK_PASSED', { adminId, notes });
+
+    // Notify users
+    this.notificationsGateway.sendNotification(trade.buyerId, 'REALITY_CHECK_PASSED', { tradeId: id });
+    this.notificationsGateway.sendNotification(trade.sellerId, 'REALITY_CHECK_PASSED', { tradeId: id });
+
+    return updatedTrade;
+  }
+
+  /**
+   * Admin: Verify Whish/OMT Fee Payment
+   */
+  async verifyFeePayment(id: string, adminId: string) {
+    const trade = await this.prisma.trade.findUnique({ where: { id } });
+    if (!trade) throw new BadRequestException('Trade not found');
+
+    // Simplified logic: Once fees are verified, we mark as CONFIRMED_BY_BUYER (or similar intermediate state)
+    // allowing the flow to proceed to final completion.
+    const statusUpdate = 'CONFIRMED_BY_BUYER';
+
+    const updatedTrade = await this.prisma.trade.update({
+      where: { id },
+      data: {
+        status: statusUpdate as any,
+        justification: `Platform Fees Verified by Admin ${adminId}`
+      }
+    });
+
+    await this.timelineService.addTimelineEvent(id, 'FEES_VERIFIED', { adminId });
 
     return updatedTrade;
   }
@@ -483,7 +542,11 @@ export class TradesService {
 
     const updatedTrade = await this.prisma.trade.update({
       where: { id: tradeId },
-      data: { intentTimestamp: new Date() }
+      data: {
+        intentTimestamp: new Date(),
+        // For CASH trades starting at OFFER_MADE, this commitment transitions them to LOCKED (Agreement Reached)
+        status: trade.status === 'OFFER_MADE' ? 'LOCKED' : undefined
+      }
     });
 
     // Notify Counterparty (Real-Time)
@@ -542,6 +605,20 @@ export class TradesService {
 
     if (!trade) throw new BadRequestException('Trade not found');
 
+    // 🔒 PRIVACY GATE: Redact contact info for CASH trades until fees are verified.
+    if (trade.exchangeMode === 'CASH') {
+      // Fees are verified when status moves beyond LOCKED (e.g. CONFIRMED_BY_BUYER/SELLER or COMPLETED)
+      // or if the trade has been explicitly marked as Verified by admin logic (though currently we use status).
+      // The verifyFeePayment method sets status to 'CONFIRMED_BY_BUYER'.
+      const isFeeVerified = ['CONFIRMED_BY_BUYER', 'CONFIRMED_BY_SELLER', 'COMPLETED'].includes(trade.status);
+
+      if (!isFeeVerified) {
+        if (trade.buyer) trade.buyer.phoneNumber = null;
+        if (trade.seller) trade.seller.phoneNumber = null;
+        // We could also redact listing location if it was specific, but currently it's just city/country usually.
+      }
+    }
+
     return trade;
   }
 
@@ -576,5 +653,76 @@ export class TradesService {
     });
 
     return updatedTrade;
+  }
+
+  /**
+   * Post-Trade: Submit Review
+   */
+  async submitReview(tradeId: string, reviewerId: string, rating: number, comment: string) {
+    const trade = await this.prisma.trade.findUnique({ where: { id: tradeId } });
+    if (!trade || trade.status !== 'COMPLETED') {
+      throw new BadRequestException('Reviews can only be submitted for completed trades');
+    }
+
+    if (trade.buyerId !== reviewerId && trade.sellerId !== reviewerId) {
+      throw new BadRequestException('Not authorized');
+    }
+
+    const revieweeId = trade.buyerId === reviewerId ? trade.sellerId : trade.buyerId;
+
+    return this.prisma.tradeReview.create({
+      data: {
+        tradeId,
+        reviewerId,
+        revieweeId,
+        rating,
+        comment
+      }
+    });
+  }
+
+  /**
+   * Post-Trade: Report Fraud
+   */
+  async reportFraud(tradeId: string, reporterId: string, reason: string, evidence?: string) {
+    const trade = await this.prisma.trade.findUnique({ where: { id: tradeId } });
+    if (!trade) throw new BadRequestException('Trade not found');
+
+    if (trade.buyerId !== reporterId && trade.sellerId !== reporterId) {
+      throw new BadRequestException('Not authorized');
+    }
+
+    const accusedId = trade.buyerId === reporterId ? trade.sellerId : trade.buyerId;
+
+    return this.prisma.fraudReport.create({
+      data: {
+        tradeId,
+        reporterId,
+        accusedId,
+        reason,
+        evidence
+      }
+    });
+  }
+
+  private calculateBrokerageFees(priceCash: number) {
+    if (!priceCash || priceCash <= 0) {
+      return {
+        platformFeeSeller: 0,
+        platformFeeBuyer: 0,
+      };
+    }
+
+    let fee = 0;
+    if (priceCash <= 40) {
+      fee = 1; // Flat $1
+    } else {
+      fee = priceCash * 0.025; // 2.5%
+    }
+
+    return {
+      platformFeeSeller: fee,
+      platformFeeBuyer: fee,
+    };
   }
 }

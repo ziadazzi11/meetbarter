@@ -9,6 +9,9 @@ import {
 } from '@nestjs/common';
 import { ContentModerationService } from './content-moderation.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PermissionGuard } from '../common/guards/permission.guard';
+import { Permissions } from '../common/decorators/permissions.decorator';
+import { Permission } from '../security/security.types';
 
 @Controller('moderation')
 export class ModerationController {
@@ -49,9 +52,9 @@ export class ModerationController {
      * Admin: Get all pending flags
      */
     @Get('flags/pending')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.FLAG_CONTENT)
     async getPendingFlags(@Request() req) {
-        // TODO: Add admin role check
         return this.moderationService.getPendingFlags();
     }
 
@@ -59,13 +62,13 @@ export class ModerationController {
      * Admin: Approve a flag
      */
     @Post('flags/:id/approve')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.FLAG_CONTENT)
     async approveFlag(
         @Request() req,
         @Param('id') flagId: string,
         @Body() data: { notes?: string },
     ) {
-        // TODO: Add admin role check
         await this.moderationService.approveFlag(
             flagId,
             req.user.userId,
@@ -79,13 +82,13 @@ export class ModerationController {
      * Admin: Reject a flag
      */
     @Post('flags/:id/reject')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.FLAG_CONTENT)
     async rejectFlag(
         @Request() req,
         @Param('id') flagId: string,
         @Body() data: { notes?: string },
     ) {
-        // TODO: Add admin role check
         await this.moderationService.rejectFlag(
             flagId,
             req.user.userId,
@@ -99,12 +102,12 @@ export class ModerationController {
      * Admin: Ban a user
      */
     @Post('users/:id/ban')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.BAN_USER)
     async banUser(
         @Param('id') userId: string,
         @Body() data: { reason: string },
     ) {
-        // TODO: Add admin role check
         await this.moderationService.banUser(userId, data.reason);
 
         return { message: 'User banned successfully' };

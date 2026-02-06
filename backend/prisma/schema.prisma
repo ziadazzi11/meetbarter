@@ -61,6 +61,13 @@ enum GovernanceStatus {
   EXECUTED
 }
 
+enum ExchangeMode {
+  VP
+  CASH
+  HYBRID
+}
+
+
 model User {
   id              String   @id @default(uuid())
   email           String   @unique
@@ -165,6 +172,12 @@ model User {
   governanceRequests GovernanceRequest[] @relation("GovernanceRequester")
   governanceApprovals GovernanceRequest[] @relation("GovernanceApprover")
 
+  subscriptions     Subscription[]
+  tradeReviewsGiven TradeReview[]    @relation("Reviewer")
+  tradeReviews      TradeReview[]    @relation("Reviewee")
+  fraudReports      FraudReport[]    @relation("Reporter")
+  fraudRecords      FraudReport[]    @relation("Accused")
+
   @@index([email])
   @@index([role])
   @@index([isBusiness])
@@ -223,6 +236,10 @@ model Listing {
   images          String // Stored as JSON string locally
   location        String   @default("Beirut") // Item Location
   country         String   @default("Lebanon") // Worldwide accessibility
+
+  // Hybrid Pricing
+  priceCash       Float?
+  priceCurrency   String?  @default("USD") // USD or LBP
   
   // JSON field for category-specific attributes (e.g. proof of ownership, production date)
   attributes      String? // Was Json, stored as string in SQLite
@@ -279,6 +296,13 @@ model Trade {
   cashOffer       Float?      // Optional cash amount
   cashCurrency    String?     @default("USD") // USD, LBP, EUR
 
+  // Brokerage & Hybrid Marketplace
+  exchangeMode    ExchangeMode @default(VP)
+  platformFeeSeller Float      @default(0)
+  platformFeeBuyer  Float      @default(0)
+  isRealityChecked  Boolean    @default(false)
+
+
   
   // v1.2: Trade enhancements
   intentTimestamp DateTime?   // Soft commitment timestamp (non-binding)
@@ -297,8 +321,9 @@ model Trade {
   timeline        TradeTimeline[]
   operationCosts  TradeOperationCost[]
   transactions    Transaction[]
-
   messages        Message[]
+  reviews         TradeReview[]
+  fraudReports    FraudReport[]
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -350,7 +375,7 @@ model SystemConfig {
   baseEscrowRate   Int      @default(15)
   laborBaseline    Int      @default(6)
 
-  // Gardener's Insurance Protocol
+  // Community Emergency Support Protocol
   emergencyFundVP Int      @default(0)
   ambassadorFundVP Int     @default(0) // 1% of Trade Value
   adminFundVP      Int     @default(0) // 10% of Trade Value
@@ -382,6 +407,10 @@ model SystemConfig {
   deathPlace      String?
   mokhtarName     String?
   mokhtarLicense  String?
+
+  // Institutional Payments
+  whishPhoneNumber String   @default("0096171023083")
+  omtPhoneNumber   String?
   
   updatedAt DateTime @updatedAt
 }
@@ -649,5 +678,58 @@ model GovernanceRequest {
   requester       User     @relation("GovernanceRequester", fields: [requesterId], references: [id])
   approver        User?    @relation("GovernanceApprover", fields: [approverId], references: [id])
 
+  @@index([status])
+}
+
+model Subscription {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  tier            String   // BUSINESS, INSTITUTIONAL
+  status          ModerationStatus @default(PENDING) // Reusing status enum for simplicity
+  amount          Float
+  currency        String
+  transactionId   String?  // Whish/OMT reference
+  receiptUrl      String?  
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model TradeReview {
+  id              String   @id @default(uuid())
+  tradeId         String
+  trade           Trade    @relation(fields: [tradeId], references: [id])
+  reviewerId      String
+  reviewer        User     @relation("Reviewer", fields: [reviewerId], references: [id])
+  revieweeId      String
+  reviewee        User     @relation("Reviewee", fields: [revieweeId], references: [id])
+  rating          Int
+  comment         String?
+  createdAt       DateTime @default(now())
+
+  @@index([tradeId])
+  @@index([revieweeId])
+}
+
+model FraudReport {
+  id              String   @id @default(uuid())
+  tradeId         String
+  trade           Trade    @relation(fields: [tradeId], references: [id])
+  reporterId      String
+  reporter        User     @relation("Reporter", fields: [reporterId], references: [id])
+  accusedId       String
+  accused         User     @relation("Accused", fields: [accusedId], references: [id])
+  reason          String
+  evidence        String?  // Links or photo URLs
+  status          ModerationStatus @default(PENDING)
+  adminNotes      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tradeId])
   @@index([status])
 }
