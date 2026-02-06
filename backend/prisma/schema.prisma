@@ -733,3 +733,20 @@ model FraudReport {
   @@index([tradeId])
   @@index([status])
 }
+
+// Phase 11: Community Economics - Voluntary Contributions
+model Contribution {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  tradeId         String?  // Optional: track which trade prompted this
+  amount          Float
+  currency        String   @default("USD")
+  message         String?  // Optional supporter message
+  isPublic        Boolean  @default(false)
+  paymentProof    String?
+  status          String   @default("PENDING") // PENDING, VERIFIED, REJECTED
+  createdAt       DateTime @default(now())
+  
+  @@index([userId])
+}

@@ -45,6 +45,7 @@ import { AdsModule } from './ads/ads.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { CanaryInterceptor } from './ads/canary.interceptor';
 import { SemanticNoiseInterceptor } from './ads/recon/semantic-noise.interceptor';
+import { ContributionsModule } from './contributions/contributions.module';
 
 import { ConfigModule } from '@nestjs/config';
 import { validate } from './config/env.validation';
@@ -81,9 +82,11 @@ import { validate } from './config/env.validation';
         IntelligenceModule,
         ValuationModule,
         GovernanceModule,
+        GovernanceModule,
         SystemStateModule,
         AdsModule,
-        SubscriptionsModule
+        SubscriptionsModule,
+        ContributionsModule
     ],
     controllers: [AppController, AdminController],
     providers: [

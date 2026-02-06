@@ -12,6 +12,7 @@ import { API_BASE_URL } from "@/config/api";
 import { adsClient } from "@/lib/ads-client";
 import TradeReviewModal from "@/components/TradeReviewModal";
 import FraudReportModal from "@/components/FraudReportModal";
+import TipJarModal from "@/components/TipJarModal";
 
 interface Trade {
     id: string;
@@ -59,7 +60,9 @@ export default function TradeDetails() {
     const [showCashModal, setShowCashModal] = useState(false);
     const [showChecklist, setShowChecklist] = useState(false);
     const [showReviewModal, setShowReviewModal] = useState(false);
+    const [showReviewModal, setShowReviewModal] = useState(false);
     const [showFraudModal, setShowFraudModal] = useState(false);
+    const [showTipJarModal, setShowTipJarModal] = useState(false);
 
     // DEMO USER ID (From seed)
     const DEMO_USER_ID = "9d2c7649-9cf0-48fb-889a-1369e20615a6";
@@ -151,7 +154,8 @@ export default function TradeDetails() {
             // if (!res.ok) throw new Error(await res.text());
 
             fetchTrade();
-            alert("Trade Confirmed!");
+            fetchTrade();
+            setShowTipJarModal(true);
         } catch (err: any) {
             alert("Error: " + err.message);
         }
@@ -521,6 +525,14 @@ export default function TradeDetails() {
                 onClose={() => setShowReviewModal(false)}
                 onConfirm={handleReviewSubmit}
                 revieweeName={otherParty.fullName}
+            />
+
+            <TipJarModal
+                isOpen={showTipJarModal}
+                onClose={() => setShowTipJarModal(false)}
+                tradeId={id as string}
+                estimatedSavings={trade?.listing.priceCash || 50}
+                userCurrency={trade?.listing.priceCurrency || 'USD'}
             />
 
             <FraudReportModal

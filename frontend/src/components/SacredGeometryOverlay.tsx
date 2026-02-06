@@ -59,21 +59,42 @@ export default function SacredGeometryOverlay() {
 
             {/* Ambient particles for extra depth */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                {[...Array(30)].map((_, i) => (
-                    <div
-                        key={i}
-                        className="particle"
-                        style={{
-                            left: `${Math.random() * 100}%`,
-                            top: `${Math.random() * 100}%`,
-                            width: `${1 + Math.random() * 2}px`,
-                            height: `${1 + Math.random() * 2}px`,
-                            animationDelay: `${Math.random() * 20}s`,
-                            animationDuration: `${10 + Math.random() * 20}s`,
-                        }}
-                    />
-                ))}
+                <Particles count={30} />
             </div>
         </div>
+    );
+}
+
+function Particles({ count }: { count: number }) {
+    const [particles, setParticles] = React.useState<Array<{
+        left: string;
+        top: string;
+        width: string;
+        height: string;
+        animationDelay: string;
+        animationDuration: string;
+    }>>([]);
+
+    React.useEffect(() => {
+        setParticles(Array.from({ length: count }).map(() => ({
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            width: `${1 + Math.random() * 2}px`,
+            height: `${1 + Math.random() * 2}px`,
+            animationDelay: `${Math.random() * 20}s`,
+            animationDuration: `${10 + Math.random() * 20}s`,
+        })));
+    }, [count]);
+
+    return (
+        <>
+            {particles.map((style, i) => (
+                <div
+                    key={i}
+                    className="particle"
+                    style={style}
+                />
+            ))}
+        </>
     );
 }
