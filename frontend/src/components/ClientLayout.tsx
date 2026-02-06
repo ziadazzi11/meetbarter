@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 import { AudioProvider } from "@/components/AudioContext";
-import { ToastProvider } from "@/context/ToastContext";
+import { ToastProvider, ToastContainer } from "@/context/ToastContext";
 import BackgroundAudio from "@/components/BackgroundAudio";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
@@ -38,6 +38,7 @@ function ThemedContent({ children }: { children: React.ReactNode }) {
     const { theme } = useTheme();
     return (
         <body className={`${geistSans.variable} ${geistMono.variable} flex flex-col min-h-screen theme-${theme}`} suppressHydrationWarning={true}>
+            <ToastContainer />
             <Header />
             <ThemeManager />
             <RouteThemeController />

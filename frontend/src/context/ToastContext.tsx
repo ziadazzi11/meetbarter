@@ -14,6 +14,8 @@ interface Toast {
 
 interface ToastContextType {
     showToast: (message: string, type?: ToastType, duration?: number) => void;
+    toasts: Toast[];
+    setToasts: React.Dispatch<React.SetStateAction<Toast[]>>;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -31,16 +33,29 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     return (
-        <ToastContext.Provider value={{ showToast }}>
+        <ToastContext.Provider value={{ showToast, toasts }}>
             {children}
-            <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+        </ToastContext.Provider>
+    );
+};
+
+export const ToastContainer = () => {
+    const context = useContext(ToastContext);
+    if (!context) return null;
+    const { toasts, setToasts } = context;
+
+    if (toasts.length === 0) return null;
+
+    return (
+        <>
+            <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
                 {toasts.map(toast => (
                     <div
                         key={toast.id}
-                        className={`px-6 py-4 rounded-xl shadow-2xl border-l-4 transform transition-all animate-slide-in flex items-center gap-3 min-w-[300px] ${toast.type === 'SUCCESS' ? 'bg-white border-green-500 text-green-800' :
-                                toast.type === 'WARNING' ? 'bg-white border-yellow-500 text-yellow-800' :
-                                    toast.type === 'ERROR' ? 'bg-white border-red-500 text-red-800' :
-                                        'bg-white border-blue-500 text-blue-800'
+                        className={`pointer-events-auto px-6 py-4 rounded-xl shadow-2xl border-l-4 transform transition-all animate-slide-in flex items-center gap-3 min-w-[300px] ${toast.type === 'SUCCESS' ? 'bg-white border-green-500 text-green-800' :
+                            toast.type === 'WARNING' ? 'bg-white border-yellow-500 text-yellow-800' :
+                                toast.type === 'ERROR' ? 'bg-white border-red-500 text-red-800' :
+                                    'bg-white border-blue-500 text-blue-800'
                             }`}
                     >
                         <div className="text-xl">
@@ -68,9 +83,9 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
                     animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
                 }
             `}</style>
-        </ToastContext.Provider>
+        </>
     );
-};
+}
 
 export const useToast = () => {
     const context = useContext(ToastContext);
