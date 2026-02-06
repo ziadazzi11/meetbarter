@@ -1,0 +1,11 @@
+{
+    "name": "meetbarter-root",
+    "private": true,
+    "description": "Root for Render detection",
+    "engines": {
+        "node": ">= 18.x"
+    },
+    "scripts": {
+        "build": "echo 'Use Root Directory: backend in Render Settings'"
+    }
+}
