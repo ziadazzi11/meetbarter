@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { API_BASE_URL } from '@/config/api';
+import { useSystemConfig } from '@/hooks/useSystemConfig';
 
 interface TipJarModalProps {
     isOpen: boolean;
@@ -18,6 +19,7 @@ export default function TipJarModal({ isOpen, onClose, tradeId, estimatedSavings
     const [isPublic, setIsPublic] = useState(false);
     const [step, setStep] = useState<'AMOUNT' | 'PAYMENT'>('AMOUNT');
     const { showToast } = useToast();
+    const { config } = useSystemConfig();
 
     if (!isOpen) return null;
 
@@ -153,7 +155,7 @@ export default function TipJarModal({ isOpen, onClose, tradeId, estimatedSavings
                                 Please send <strong>${amount}</strong> via Whish to:
                             </p>
                             <div className="bg-gray-100 p-4 rounded-xl mb-4 font-mono text-lg text-gray-800 select-all">
-                                71-023-083
+                                {config?.whishPhoneNumber || 'Loading...'}
                             </div>
                             <p className="text-xs text-gray-500 mb-6">
                                 (Simulation: Clicking confirm will record the pledge)

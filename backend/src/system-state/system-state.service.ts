@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 
 export type SystemMode = 'NORMAL' | 'SAFE' | 'FROZEN' | 'READ_ONLY';
 
@@ -25,7 +26,7 @@ export class SystemStateService {
         disableSearch: false
     };
 
-    constructor() {
+    constructor(private prisma: PrismaService) {
         this.logger.log(`System initialized in ${this.currentMode} mode.`);
     }
 
@@ -46,6 +47,34 @@ export class SystemStateService {
     toggleKillSwitch(feature: keyof KillSwitches, isDisabled: boolean) {
         this.logger.warn(`Kill Switch for ${feature} set to ${isDisabled}`);
         this.killSwitches[feature] = isDisabled;
+    }
+
+    /**
+     * Fetches public system configuration (safe for frontend exposure)
+     */
+    async getPublicConfig() {
+        // We assume ID 1 is the singleton config row
+        let config = await this.prisma.systemConfig.findUnique({
+            where: { id: 1 }
+        });
+
+        // Auto-seed if missing
+        if (!config) {
+            this.logger.warn('System Config missing! Seeding default...');
+            config = await this.prisma.systemConfig.create({
+                data: {
+                    id: 1,
+                    whishPhoneNumber: '71023083', // Default falback
+                    isFrozen: false
+                }
+            });
+        }
+
+        return {
+            whishPhoneNumber: config.whishPhoneNumber,
+            omtPhoneNumber: config.omtPhoneNumber,
+            isCrisisActive: config.isCrisisActive
+        };
     }
 
     private applyModeDefaults(mode: SystemMode) {
