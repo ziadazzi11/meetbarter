@@ -148,6 +148,7 @@ model User {
   receivedTransactions Transaction[] @relation("Receiver")
   receivedGrants       CommunityGrant[]
   bounties        Bounty[]
+  organizedEvents CommunityEvent[]
   moderationFlags ContentModerationFlag[]
   successors      Successor[]
   contributions   Contribution[]
@@ -266,6 +267,10 @@ model Listing {
   trades          Trade[]
   moderationFlags ContentModerationFlag[]
   messages        Message[]
+  
+  // Community Events
+  communityEventId String?
+  communityEvent   CommunityEvent? @relation("EventListings", fields: [communityEventId], references: [id])
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -327,7 +332,7 @@ model Trade {
   reviews         TradeReview[]
   fraudReports    FraudReport[]
   messages        Message[]
-
+  
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -335,6 +340,33 @@ model Trade {
   @@index([sellerId])
   @@index([listingId])
   @@index([status])
+}
+
+model CommunityEvent {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  location    String
+  imageUrl    String?
+  startDate   DateTime
+  endDate     DateTime
+  
+  status      EventStatus @default(UPCOMING)
+
+  organizerId String
+  organizer   User     @relation(fields: [organizerId], references: [id])
+  
+  eventListings Listing[] @relation("EventListings")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum EventStatus {
+  UPCOMING
+  ACTIVE
+  COMPLETED
+  CANCELLED
 }
 
 // Immutable record of cost allocations

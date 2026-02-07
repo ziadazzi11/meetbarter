@@ -45,6 +45,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { CanaryInterceptor } from './ads/canary.interceptor';
 import { SemanticNoiseInterceptor } from './ads/recon/semantic-noise.interceptor';
 import { ContributionsModule } from './contributions/contributions.module';
+import { EventsModule } from './events/events.module';
 
 
 import { ConfigModule } from '@nestjs/config';
@@ -70,6 +71,7 @@ import { validate } from './config/env.validation';
         ListingsModule,
         TradesModule,
         MessagesModule,
+        EventsModule,
         ModerationModule,
         NotificationsModule,
         // v1.2 Features

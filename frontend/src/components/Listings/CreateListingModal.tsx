@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ImageUpload from "@/components/ImageUpload";
 import { API_BASE_URL } from "@/config/api";
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 interface CreateListingModalProps {
     isOpen: boolean;
@@ -13,6 +15,11 @@ interface CreateListingModalProps {
 
 export default function CreateListingModal({ isOpen, onClose, userId, onSuccess, categories, initialType = 'OFFER' }: CreateListingModalProps) {
     const [loading, setLoading] = useState(false);
+    const [events, setEvents] = useState<{ id: string, title: string }[]>([]);
+    const [selectedEventId, setSelectedEventId] = useState("");
+    const { user, token } = useAuth();
+    const router = useRouter();
+
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -24,6 +31,37 @@ export default function CreateListingModal({ isOpen, onClose, userId, onSuccess,
         condition: 'USED_GOOD',
         images: [] as string[]
     });
+
+    useEffect(() => {
+        if (isOpen) {
+            // fetchCategories(); // Categories are passed as a prop, no need to fetch again unless desired
+            fetchEvents();
+        }
+    }, [isOpen]);
+
+    // const fetchCategories = async () => { // This function is not needed if categories are passed as a prop
+    //     const res = await fetch('http://localhost:3000/categories');
+    //     const data = await res.json();
+    //     // setCategories(data); // This would require categories to be a state variable
+    // };
+
+    const fetchEvents = async () => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/events`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (!res.ok) {
+                throw new Error('Failed to fetch events');
+            }
+            const data = await res.json();
+            setEvents(data.filter((e: any) => e.status !== 'COMPLETED'));
+        } catch (error) {
+            console.error("Error fetching events:", error);
+            alert("Failed to load events.");
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -38,11 +76,15 @@ export default function CreateListingModal({ isOpen, onClose, userId, onSuccess,
                 ...formData,
                 sellerId: userId,
                 images: JSON.stringify(formData.images.filter(img => img !== "")),
+                communityEventId: selectedEventId || undefined
             };
 
             const res = await fetch(`${API_BASE_URL}/listings`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(body)
             });
 
@@ -106,6 +148,20 @@ export default function CreateListingModal({ isOpen, onClose, userId, onSuccess,
                                     {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
                             </div>
+
+                            {events.length > 0 && (
+                                <div className="col-span-2 md:col-span-1">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Participate in Event (Optional)</label>
+                                    <select
+                                        className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        value={selectedEventId}
+                                        onChange={e => setSelectedEventId(e.target.value)}
+                                    >
+                                        <option value="">None</option>
+                                        {events.map((e: any) => <option key={e.id} value={e.id}>{e.title}</option>)}
+                                    </select>
+                                </div>
+                            )}
                         </div>
 
                         <div>
