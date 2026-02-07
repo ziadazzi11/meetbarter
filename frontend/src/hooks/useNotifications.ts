@@ -3,9 +3,14 @@ import { io, Socket } from 'socket.io-client';
 import { API_BASE_URL } from '@/config/api';
 import { useToast } from '@/context/ToastContext';
 
+interface NotificationEvent {
+    type: 'NEW_MESSAGE' | 'CASH_PROPOSED' | 'TRADE_COMPLETED' | 'TRADE_CONFIRMED_PARTIAL' | 'INTENT_RECORDED' | 'MEETUP_AGREED';
+    payload: Record<string, unknown>; // Flexible payload
+}
+
 export const useNotifications = (userId: string) => {
     const socketRef = useRef<Socket | null>(null);
-    const [lastNotification, setLastNotification] = useState<any>(null);
+    const [lastNotification, setLastNotification] = useState<NotificationEvent | null>(null);
     const { showToast } = useToast();
 
     useEffect(() => {

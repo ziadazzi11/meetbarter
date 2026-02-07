@@ -51,7 +51,7 @@ export default function TradeReviewModal({ isOpen, onClose, onConfirm, revieweeN
                     </div>
 
                     <div className="bg-blue-50 p-4 rounded-xl text-[10px] text-blue-700 leading-relaxed italic border border-blue-100">
-                        "Reviews help build trust in the MeetBarter community. Be honest, professional, and fair."
+                        &quot;Reviews help build trust in the MeetBarter community. Be honest, professional, and fair.&quot;
                     </div>
                 </div>
 

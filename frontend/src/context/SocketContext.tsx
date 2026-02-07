@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { API_BASE_URL } from '@/config/api';
 import { useAuth } from './AuthContext';
 
 interface SocketContextType {
@@ -27,7 +28,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         if (user && !socket) {
             // Initialize socket connection
-            const newSocket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001', {
+            const newSocket = io(API_BASE_URL, {
                 // auth: { token }, // TODO: Enable auth when backend verifies it
                 transports: ['websocket'],
             });
@@ -42,6 +43,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                 setIsConnected(false);
             });
 
+            // eslint-disable-next-line
             setSocket(newSocket);
 
             return () => {

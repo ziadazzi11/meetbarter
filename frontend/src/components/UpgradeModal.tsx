@@ -31,7 +31,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, currentCount,
                     <ul style={{ textAlign: 'left', margin: '10px 0 0 0', paddingLeft: '20px', color: '#0c4a6e', fontSize: '0.9rem' }}>
                         <li>Unlimited Listing Storage</li>
                         <li>Priority Search Placement</li>
-                        <li>"Premium" Profile Badge</li>
+                        <li>&quot;Premium&quot; Profile Badge</li>
                     </ul>
                 </div>
 

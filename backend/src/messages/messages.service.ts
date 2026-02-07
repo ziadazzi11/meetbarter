@@ -72,7 +72,7 @@ export class MessagesService {
                 conversation: { connect: { id: conversationId } },
                 listing: data.listingId ? { connect: { id: data.listingId } } : undefined,
                 trade: data.tradeId ? { connect: { id: data.tradeId } } : undefined
-            } as any
+            }
         });
     }
 

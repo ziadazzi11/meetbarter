@@ -11,7 +11,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { MessagesService } from './messages.service';
 import { JwtService } from '@nestjs/jwt';
-import { Logger, UnauthorizedException } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { AnomalyDetectionService } from '../security/anomaly-detection.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -47,7 +47,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             const payload = this.jwtService.verify(cleanToken);
 
             // 2. Behavioral Check
-            const user = await (this.prisma.user as any).findUnique({ where: { id: payload.sub } });
+            const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
             if (!user || user.isBanned) {
                 client.disconnect();
                 return;

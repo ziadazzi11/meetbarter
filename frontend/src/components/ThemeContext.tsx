@@ -21,6 +21,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         const storedAuto = localStorage.getItem('meetbarter_isAutoMode');
         if (storedAuto !== null) {
+            // eslint-disable-next-line
             setIsAutoMode(storedAuto === 'true');
         }
     }, []);
