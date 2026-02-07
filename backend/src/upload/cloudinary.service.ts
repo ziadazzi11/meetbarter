@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import * as crypto from 'crypto';
 
 interface CloudinaryUploadResponse {
     secure_url: string;
@@ -103,7 +104,6 @@ export class CloudinaryService {
      * Generate signature for authenticated requests
      */
     private generateSignature(publicId: string, timestamp: number): string {
-        const crypto = require('crypto');
         const stringToSign = `public_id=${publicId}&timestamp=${timestamp}${this.apiSecret}`;
         return crypto.createHash('sha1').update(stringToSign).digest('hex');
     }

@@ -163,7 +163,7 @@ export class UsersService {
             });
         }
 
-        const { businessName, ...licenseData } = data; // Exclude businessName from license data logic below if needed, though spreading is fine if model ignores it
+        const { businessName: _, ...licenseData } = data; // Exclude businessName from license data logic below if needed, though spreading is fine if model ignores it
 
         return this.prisma.businessLicense.upsert({
             where: { userId },
@@ -271,7 +271,7 @@ export class UsersService {
         if (user.complianceMetadata) {
             try {
                 complianceHistory = JSON.parse(this.encryption.decrypt(user.complianceMetadata));
-            } catch (e) {
+            } catch {
                 // If decryption fails (e.g. key rotation or corruption), start fresh
             }
         }

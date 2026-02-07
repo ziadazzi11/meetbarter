@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 export default function RecentlyViewed() {
-    const [recentItems, setRecentItems] = useState<any[]>([]);
+    const [recentItems, _] = useState<any[]>([]);
 
     // This would load from localStorage in a real implementation
     // useEffect(() => {

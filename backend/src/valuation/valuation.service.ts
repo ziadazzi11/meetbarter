@@ -22,7 +22,7 @@ export class ValuationService {
         const conditionFactor = CONDITION_TABLE[item.condition] || 0.75;
         const authenticityFactor = AUTHENTICITY_TABLE[item.authenticityStatus] || 0.8;
 
-        let baseVp = rmv * originMultiplier;
+        const baseVp = rmv * originMultiplier;
         let adjustedVp = baseVp * conditionFactor;
         adjustedVp *= authenticityFactor;
         adjustedVp *= scarcityCoefficient;

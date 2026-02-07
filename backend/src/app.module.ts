@@ -53,7 +53,7 @@ import { validate } from './config/env.validation';
 
 @Module({
     imports: [
-        ConfigModule.forRoot({ isGlobal: true }),
+        ConfigModule.forRoot({ isGlobal: true, validate }),
         PrismaModule,
         AuthModule,
         UsersModule,

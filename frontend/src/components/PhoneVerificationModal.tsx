@@ -38,8 +38,8 @@ export const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({ 
 
             setMessage('OTP sent! Check your messages (Check console in dev).');
             setStep('OTP');
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'An error occurred');
         } finally {
             setLoading(false);
         }
@@ -63,8 +63,8 @@ export const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({ 
 
             onVerified();
             onClose();
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Verification failed');
         } finally {
             setLoading(false);
         }
@@ -96,7 +96,7 @@ export const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({ 
                                 placeholder="+1234567890"
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                             />
-                            <p className="text-xs text-gray-500 mt-1">We'll send a 6-digit code to verify this number.</p>
+                            <p className="text-xs text-gray-500 mt-1">We&apos;ll send a 6-digit code to verify this number.</p>
                         </div>
                         <button
                             onClick={handleRequestOtp}

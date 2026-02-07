@@ -13,7 +13,7 @@ export class TrustScore {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) return 'T0';
 
-        let score = user.globalTrustScore || 0;
+        const score = user.globalTrustScore || 0;
 
         // Institutional Override
         if (user.verificationLevel === 3) return 'T4';

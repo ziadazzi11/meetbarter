@@ -1,4 +1,4 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { IntelligenceService } from '../intelligence/intelligence.service';
 import { SearchSecurityService } from '../intelligence/search-security.service';
@@ -19,7 +19,7 @@ export class ListingsService {
   ) { }
 
   async create(createListingDto: any) {
-    let { priceVP, priceCash, priceCurrency, originalPrice, condition, images } = createListingDto;
+    let { priceVP, originalPrice, condition, images } = createListingDto;
 
     if (images) {
       try {
@@ -27,7 +27,7 @@ export class ListingsService {
         if (Array.isArray(imageList) && imageList.length > 3) {
           throw new Error('Maximum 3 photos allowed per listing.');
         }
-      } catch (e) { }
+      } catch { }
     }
 
     const user = await this.prisma.user.findUnique({ where: { id: createListingDto.sellerId } });
@@ -206,7 +206,7 @@ export class ListingsService {
 
     // 2. If user has more than limit
     if (activeListings.length > FREE_LIMIT) {
-      const listingsToKeep = activeListings.slice(0, FREE_LIMIT);
+      // const listingsToKeep = activeListings.slice(0, FREE_LIMIT);
       const listingsToDeactivate = activeListings.slice(FREE_LIMIT);
 
       // 3. Update excess to INACTIVE

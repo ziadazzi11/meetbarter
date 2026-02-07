@@ -48,7 +48,7 @@ export default function SoftCommitmentModal({ isOpen, onConfirm, onCancel, trade
                             <strong>Soft Commitment (Non-Binding)</strong>
                         </p>
                         <p>
-                            By confirming, you're indicating your intent to complete this trade under the agreed conditions.
+                            By confirming, you&apos;re indicating your intent to complete this trade under the agreed conditions.
                             This is <em>not legally binding</em> but helps build trust and transparency in the community.
                         </p>
                         <p className="note">

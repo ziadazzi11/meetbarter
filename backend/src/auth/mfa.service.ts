@@ -3,7 +3,7 @@ import * as qrcode from 'qrcode';
 import { PrismaService } from '../prisma/prisma.service';
 
 // Pragmatic fix for otplib import issues in varying TS environments
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 const { authenticator } = require('otplib');
 
 @Injectable()
