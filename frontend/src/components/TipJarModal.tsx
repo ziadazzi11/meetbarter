@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useToast } from '@/context/ToastContext';
 import { API_BASE_URL } from '@/config/api';
 
 interface TipJarModalProps {
@@ -17,7 +17,7 @@ export default function TipJarModal({ isOpen, onClose, tradeId, estimatedSavings
     const [message, setMessage] = useState('');
     const [isPublic, setIsPublic] = useState(false);
     const [step, setStep] = useState<'AMOUNT' | 'PAYMENT'>('AMOUNT');
-    const { addNotification } = useNotifications();
+    const { showToast } = useToast();
 
     if (!isOpen) return null;
 
@@ -44,11 +44,11 @@ export default function TipJarModal({ isOpen, onClose, tradeId, estimatedSavings
                 })
             });
 
-            addNotification('Thank you for your support! 💖', 'SUCCESS');
+            showToast('Thank you for your support! 💖', 'SUCCESS');
             onClose();
         } catch (error) {
             console.error('Failed to creating contribution:', error);
-            addNotification('Failed to process contribution', 'ERROR');
+            showToast('Failed to process contribution', 'ERROR');
         }
     };
 
@@ -79,8 +79,8 @@ export default function TipJarModal({ isOpen, onClose, tradeId, estimatedSavings
                                             key={val}
                                             onClick={() => setAmount(val)}
                                             className={`py-2 rounded-lg border transition-all ${amount === val
-                                                    ? 'bg-purple-50 border-purple-500 text-purple-700 font-semibold shadow-sm'
-                                                    : 'border-gray-200 hover:border-purple-300 text-gray-600'
+                                                ? 'bg-purple-50 border-purple-500 text-purple-700 font-semibold shadow-sm'
+                                                : 'border-gray-200 hover:border-purple-300 text-gray-600'
                                                 }`}
                                         >
                                             ${val}

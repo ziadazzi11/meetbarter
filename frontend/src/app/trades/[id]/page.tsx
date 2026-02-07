@@ -60,7 +60,6 @@ export default function TradeDetails() {
     const [showCashModal, setShowCashModal] = useState(false);
     const [showChecklist, setShowChecklist] = useState(false);
     const [showReviewModal, setShowReviewModal] = useState(false);
-    const [showReviewModal, setShowReviewModal] = useState(false);
     const [showFraudModal, setShowFraudModal] = useState(false);
     const [showTipJarModal, setShowTipJarModal] = useState(false);
 
