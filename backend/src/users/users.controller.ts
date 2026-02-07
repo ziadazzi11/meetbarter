@@ -10,6 +10,11 @@ export class UsersController {
         return this.usersService.findMe();
     }
 
+    @Get(':id')
+    getUser(@Param('id') id: string) {
+        return this.usersService.findOne(id);
+    }
+
     @Put(':id/profile')
     updateProfile(@Param('id') id: string, @Body() body: { bannerUrl?: string; themePreferences?: string; fullName?: string; avatarUrl?: string }) {
         return this.usersService.updateProfile(id, body);

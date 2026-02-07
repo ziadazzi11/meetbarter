@@ -1,9 +1,11 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { API_BASE_URL } from "@/config/api";
 import { adsClient } from "@/lib/ads-client";
+import { useSystemConfig } from "@/hooks/useSystemConfig";
+import { useAuth } from "@/context/AuthContext";
 
 function CheckoutContent() {
     const searchParams = useSearchParams();
@@ -14,16 +16,22 @@ function CheckoutContent() {
     const [reference, setReference] = useState("");
     const [loading, setLoading] = useState(false);
 
-    // DEMO USER ID (From seed)
-    const DEMO_USER_ID = "9d2c7649-9cf0-48fb-889a-1369e20615a6";
+    const { config } = useSystemConfig();
+    const { user } = useAuth(); // Real User
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!user) {
+            alert("You must be logged in to subscribe.");
+            return;
+        }
+
         setLoading(true);
 
         try {
             const payload = {
-                userId: DEMO_USER_ID,
+                userId: user.id,
                 tier: tier || 'BUSINESS',
                 amount: parseFloat(amount || "0"),
                 currency: "USD",
@@ -34,7 +42,7 @@ function CheckoutContent() {
 
             await adsClient.post('/subscriptions/buy', payload);
 
-            alert("Subscription request submitted! Please send payment and notify admin on 0096171023083 with your reference ID.");
+            alert(`Subscription request submitted! Please send payment and notify admin on ${config?.whishPhoneNumber} with your reference ID.`);
             router.push('/dashboard');
         } catch (err: any) {
             alert("Error: " + err.message);
@@ -42,6 +50,14 @@ function CheckoutContent() {
             setLoading(false);
         }
     };
+
+    if (!user) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <p className="text-xl">Please log in to upgrade your account.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-sans">
@@ -62,7 +78,7 @@ function CheckoutContent() {
                             <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
                                 <div className="grid grid-cols-2 gap-4 text-sm">
                                     <div className="text-gray-500 uppercase tracking-wider font-bold text-[10px]">Recipient Number</div>
-                                    <div className="text-gray-900 font-mono font-bold">0096171023083</div>
+                                    <div className="text-gray-900 font-mono font-bold text-xl">{config?.whishPhoneNumber || 'Loading...'}</div>
                                     <div className="text-gray-500 uppercase tracking-wider font-bold text-[10px]">Amount Due</div>
                                     <div className="text-indigo-600 font-bold text-lg">${amount} USD</div>
                                     <div className="text-gray-500 uppercase tracking-wider font-bold text-[10px]">Note</div>
@@ -79,7 +95,7 @@ function CheckoutContent() {
                             </h2>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Transction Reference Number (Optional)</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Transaction Reference Number (Optional)</label>
                                 <input
                                     type="text"
                                     value={reference}

@@ -22,14 +22,18 @@ import { AudioProvider } from "@/components/AudioContext";
 import { ToastProvider, ToastContainer } from "@/context/ToastContext";
 import BackgroundAudio from "@/components/BackgroundAudio";
 
+import { AuthProvider } from "@/context/AuthContext";
+
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
     return (
         <ThemeProvider>
-            <AudioProvider>
-                <ToastProvider>
-                    <ThemedContent>{children}</ThemedContent>
-                </ToastProvider>
-            </AudioProvider>
+            <AuthProvider>
+                <AudioProvider>
+                    <ToastProvider>
+                        <ThemedContent>{children}</ThemedContent>
+                    </ToastProvider>
+                </AudioProvider>
+            </AuthProvider>
         </ThemeProvider>
     );
 }

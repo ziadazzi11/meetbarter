@@ -20,6 +20,12 @@ export class UsersService {
         });
     }
 
+    async findOne(id: string) {
+        return this.prisma.user.findUnique({
+            where: { id },
+        });
+    }
+
     async requestBusinessVerification(userId: string, businessName: string, evidence: any, referralCode?: string) {
         // 🛡️ Security Hook: Business Verification Request
         await this.security.assessAndLog(userId, {

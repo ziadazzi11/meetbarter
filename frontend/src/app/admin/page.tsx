@@ -91,6 +91,15 @@ interface ModerationFlag {
     };
 }
 
+interface SubscriptionRequest {
+    id: string;
+    user: { fullName: string; email: string };
+    tier: string;
+    amount: number;
+    currency: string;
+    status: string;
+}
+
 type Protocol = "COMMAND_CENTER" | "TECHNICAL" | "COMPLIANCE" | "LEGAL" | "BOARD" | "AUDITOR" | "STRATEGIC";
 
 export default function AdminPage() {
@@ -116,6 +125,7 @@ export default function AdminPage() {
     const [pendingBusinesses, setPendingBusinesses] = useState<BusinessRequest[]>([]);
     const [pendingCommunity, setPendingCommunity] = useState<CommunityRequest[]>([]);
     const [pendingAmbassadors, setPendingAmbassadors] = useState<AmbassadorRequest[]>([]);
+    const [pendingSubscriptions, setPendingSubscriptions] = useState<SubscriptionRequest[]>([]);
     const [submittedBounties, setSubmittedBounties] = useState<Bounty[]>([]);
     const [moderationFlags, setModerationFlags] = useState<ModerationFlag[]>([]);
     const [cityPulse, setCityPulse] = useState<any[]>([]);
@@ -214,6 +224,13 @@ export default function AdminPage() {
             .then(setPendingAmbassadors);
     }, []);
 
+    const fetchPendingSubscriptions = useCallback(() => {
+        fetch(`${API_BASE_URL}/subscriptions/pending`)
+            .then(res => res.json())
+            .then(setPendingSubscriptions)
+            .catch(() => { });
+    }, []);
+
     const fetchBounties = useCallback(() => {
         fetch(`${API_BASE_URL}/bounties`)
             .then(res => res.json())
@@ -288,6 +305,7 @@ export default function AdminPage() {
         fetchPendingBusinesses();
         fetchPendingCommunity();
         fetchPendingAmbassadors();
+        fetchPendingSubscriptions();
         fetchBounties();
         fetchModerationFlags();
         fetchDisputes();
@@ -426,6 +444,20 @@ export default function AdminPage() {
             });
             if (res.ok) { alert("Grant Issued."); fetchAuditLogs(); }
         } catch (err) { }
+    };
+
+    const handleVerifySubscription = async (subId: string) => {
+        if (!confirm("Confirm payment receipt and verify subscription?")) return;
+        try {
+            const adminId = "9d2c7649-9cf0-48fb-889a-1369e20615a6"; // TODO: Use real admin session if available
+            await fetch(`${API_BASE_URL}/subscriptions/${subId}/verify`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ adminId })
+            });
+            alert("Subscription Verified!");
+            fetchPendingSubscriptions();
+        } catch (err: any) { alert(err.message); }
     };
 
     const handleApproveBounty = async (id: string) => {
@@ -610,6 +642,49 @@ export default function AdminPage() {
                         </tbody>
                     </table>
                 </section>
+
+                <section className="admin-section">
+                    <h2>💳 Subscription Requests</h2>
+                    <table className="admin-table">
+                        <thead><tr><th>User</th><th>Plan</th><th>Action</th></tr></thead>
+                        <tbody>
+                            {pendingSubscriptions.map(sub => (
+                                <tr key={sub.id}>
+                                    <td>
+                                        <div className="font-bold">{sub.user.fullName}</div>
+                                        <div className="text-xs text-gray-500">{sub.user.email}</div>
+                                    </td>
+                                    <td>
+                                        <span className="px-2 py-1 rounded bg-indigo-100 text-indigo-800 text-xs font-bold">{sub.tier}</span>
+                                        <div className="text-xs text-gray-500 mt-1">${sub.amount} ({sub.currency})</div>
+                                    </td>
+                                    <td>
+                                        <button
+                                            onClick={() => handleVerifySubscription(sub.id)}
+                                            className="admin-button-small bg-green-600 text-white mr-2"
+                                        >
+                                            Verify
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (confirm("Reject subscription?")) {
+                                                    // Implement reject logic if needed, or just ignore
+                                                }
+                                            }}
+                                            className="admin-button-small bg-red-100 text-red-600 hover:bg-red-200"
+                                        >
+                                            Reject
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {pendingSubscriptions.length === 0 && (
+                                <tr><td colSpan={3} className="text-center text-gray-400 italic py-4">No pending subscriptions</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </section>
+
                 <section className="admin-section">
                     <h2>🧑‍🌾 Community Requests</h2>
                     <table className="admin-table">
