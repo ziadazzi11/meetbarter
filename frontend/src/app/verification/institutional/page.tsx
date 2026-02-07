@@ -78,6 +78,7 @@ export default function InstitutionalVerificationPage() {
                             <input
                                 type="text"
                                 required
+                                aria-label="Business Name"
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
                                 value={formData.businessName}
                                 onChange={e => setFormData({ ...formData, businessName: e.target.value })}
@@ -90,6 +91,7 @@ export default function InstitutionalVerificationPage() {
                             <input
                                 type="text"
                                 required
+                                aria-label="Registration or Tax ID"
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
                                 value={formData.registrationNumber}
                                 onChange={e => setFormData({ ...formData, registrationNumber: e.target.value })}
@@ -100,6 +102,7 @@ export default function InstitutionalVerificationPage() {
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Permit Type</label>
                             <select
+                                aria-label="Permit Type"
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
                                 value={formData.permitType}
                                 onChange={e => setFormData({ ...formData, permitType: e.target.value })}
@@ -141,6 +144,7 @@ export default function InstitutionalVerificationPage() {
                             <input
                                 type="date"
                                 required
+                                aria-label="Permit Expiry Date"
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
                                 value={formData.expiresAt}
                                 onChange={e => setFormData({ ...formData, expiresAt: e.target.value })}

@@ -135,7 +135,6 @@ export default function AdminPage() {
     const [pendingBusinesses, setPendingBusinesses] = useState<BusinessRequest[]>([]);
     const [pendingCommunity, setPendingCommunity] = useState<CommunityRequest[]>([]);
     const [pendingAmbassadors, setPendingAmbassadors] = useState<AmbassadorRequest[]>([]);
-    const [pendingAmbassadors, setPendingAmbassadors] = useState<AmbassadorRequest[]>([]);
     const [pendingSubscriptions, setPendingSubscriptions] = useState<SubscriptionRequest[]>([]);
     const [pendingLicenses, setPendingLicenses] = useState<LicenseRequest[]>([]);
     const [submittedBounties, setSubmittedBounties] = useState<Bounty[]>([]);
@@ -377,8 +376,10 @@ export default function AdminPage() {
     const handleUpdateCat = (catId: string, field: keyof Category, value: string) => {
         const next = [...categories];
         const i = next.findIndex(c => c.id === catId);
-        (next[i] as any)[field] = field === 'escrowPercentage' ? parseFloat(value) : parseInt(value);
-        setCategories(next);
+        if (i !== -1) {
+            (next[i] as any)[field] = field === 'escrowPercentage' ? parseFloat(value) : parseInt(value);
+            setCategories(next);
+        }
     };
 
     const handleToggleCrisis = async (city: string, country: string, currentStatus: boolean) => {
@@ -607,9 +608,9 @@ export default function AdminPage() {
                 <section className="admin-section">
                     <h2>❄️ Platform Kill Switch</h2>
                     <div className="admin-grid mb-4">
-                        <input type="password" placeholder="Code Alpha" className="admin-input" value={code1} onChange={e => setCode1(e.target.value)} />
-                        <input type="password" placeholder="Code Beta" className="admin-input" value={code2} onChange={e => setCode2(e.target.value)} />
-                        <input type="password" placeholder="Fingerprint" className="admin-input" value={fingerprintCode} onChange={e => setFingerprintCode(e.target.value)} />
+                        <input type="password" placeholder="Code Alpha" aria-label="Code Alpha" className="admin-input" value={code1} onChange={e => setCode1(e.target.value)} />
+                        <input type="password" placeholder="Code Beta" aria-label="Code Beta" className="admin-input" value={code2} onChange={e => setCode2(e.target.value)} />
+                        <input type="password" placeholder="Fingerprint" aria-label="Fingerprint" className="admin-input" value={fingerprintCode} onChange={e => setFingerprintCode(e.target.value)} />
                     </div>
                     <button onClick={handleToggleFreeze} className={`admin-button ${frozen ? "bg-green-600" : "bg-red-600"} text-white`}>
                         {frozen ? "DEACTIVATE Freeze" : "ACTIVATE Freeze"}
@@ -619,9 +620,9 @@ export default function AdminPage() {
                 <section className="admin-section" style={{ borderColor: "#b91c1c", backgroundColor: "#fef2f2" }}>
                     <h2 style={{ color: "#991b1b" }}>🔑 Master Key Handover</h2>
                     <div className="admin-grid mb-4">
-                        <input type="password" placeholder="New Alpha" className="admin-input" value={newAlpha} onChange={e => setNewAlpha(e.target.value)} />
-                        <input type="password" placeholder="New Beta" className="admin-input" value={newBeta} onChange={e => setNewBeta(e.target.value)} />
-                        <input type="password" placeholder="New Fingerprint" className="admin-input" value={newFingerprint} onChange={e => setNewFingerprint(e.target.value)} />
+                        <input type="password" placeholder="New Alpha" aria-label="New Alpha" className="admin-input" value={newAlpha} onChange={e => setNewAlpha(e.target.value)} />
+                        <input type="password" placeholder="New Beta" aria-label="New Beta" className="admin-input" value={newBeta} onChange={e => setNewBeta(e.target.value)} />
+                        <input type="password" placeholder="New Fingerprint" aria-label="New Fingerprint" className="admin-input" value={newFingerprint} onChange={e => setNewFingerprint(e.target.value)} />
                     </div>
                     <button onClick={handleRotateCodes} className="admin-button bg-red-700 text-white">Rotate Keys</button>
                 </section>
@@ -633,7 +634,7 @@ export default function AdminPage() {
                             {categories.map(cat => (
                                 <tr key={cat.id}>
                                     <td>{cat.name}</td>
-                                    <td><input className="admin-input-small" value={cat.escrowPercentage} onChange={e => handleUpdateCat(cat.id, "escrowPercentage", e.target.value)} />%</td>
+                                    <td><input className="admin-input-small" aria-label={`Escrow percentage for ${cat.name}`} value={cat.escrowPercentage} onChange={e => handleUpdateCat(cat.id, "escrowPercentage", e.target.value)} />%</td>
                                     <td><button onClick={() => handleSaveCategory(cat)} className="admin-button-small">Save</button></td>
                                 </tr>
                             ))}
