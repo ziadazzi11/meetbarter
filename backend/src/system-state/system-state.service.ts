@@ -73,7 +73,9 @@ export class SystemStateService {
         return {
             whishPhoneNumber: config.whishPhoneNumber,
             omtPhoneNumber: config.omtPhoneNumber,
-            isCrisisActive: config.isCrisisActive
+            isCrisisActive: config.isCrisisActive,
+            ambassadorTradeThreshold: (config as any).ambassadorTradeThreshold || 100,
+            legalEntityId: (config as any).legalEntityId
         };
     }
 

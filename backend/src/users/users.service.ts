@@ -201,8 +201,10 @@ export class UsersService {
     }
 
     async applyForAmbassador(userId: string) {
-        // Eligibility Check: Must have at least 100 Completed Trades to apply for "Ambassador"
-        // (Legend status at 1M trades is handled manually/invitation only typically, but we track count)
+        // Eligibility Check: Must have at least X Completed Trades (Dynamic Config)
+        const systemConfig = await this.prisma.systemConfig.findUnique({ where: { id: 1 } });
+        const threshold = (systemConfig as any)?.ambassadorTradeThreshold || 100;
+
         const tradeCount = await this.prisma.trade.count({
             where: {
                 OR: [{ buyerId: userId }, { sellerId: userId }],
@@ -210,8 +212,8 @@ export class UsersService {
             }
         });
 
-        if (tradeCount < 100) {
-            throw new Error(`Not eligible yet. You need 100 completed trades. Current: ${tradeCount}`);
+        if (tradeCount < threshold) {
+            throw new Error(`Not eligible yet. You need ${threshold} completed trades. Current: ${tradeCount}`);
         }
 
         // 🛡️ Security Hook: Ambassador Application

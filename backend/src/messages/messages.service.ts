@@ -34,15 +34,45 @@ export class MessagesService {
             }
         }
 
+        // 3. Resolve Conversation (Auto-Create if missing)
+        let conversationId = "";
+
+        if (data.tradeId) {
+            const existing = await this.prisma.conversation.findFirst({
+                where: { tradeId: data.tradeId }
+            });
+            if (existing) {
+                conversationId = existing.id;
+            } else {
+                const newConv = await this.prisma.conversation.create({
+                    data: {
+                        tradeId: data.tradeId,
+                        participants: { connect: [{ id: data.senderId }, { id: data.receiverId }] }
+                    }
+                });
+                conversationId = newConv.id;
+            }
+        } else {
+            // Fallback for Listing Inquiry (No Trade Yet) - simplified for MVP
+            // Find conversation between these 2 users? 
+            // For now, let's create a stand-alone conversation if distinct
+            const newConv = await this.prisma.conversation.create({
+                data: {
+                    participants: { connect: [{ id: data.senderId }, { id: data.receiverId }] }
+                }
+            });
+            conversationId = newConv.id;
+        }
+
         return this.prisma.message.create({
             data: {
-                senderId: data.senderId,
-                receiverId: data.receiverId,
-                listingId: data.listingId,
-                tradeId: data.tradeId,
                 content: finalContent,
-                templateKey: data.templateKey || "CUSTOM"
-            }
+                sender: { connect: { id: data.senderId } },
+                receiver: { connect: { id: data.receiverId } },
+                conversation: { connect: { id: conversationId } },
+                listing: data.listingId ? { connect: { id: data.listingId } } : undefined,
+                trade: data.tradeId ? { connect: { id: data.tradeId } } : undefined
+            } as any
         });
     }
 
@@ -52,6 +82,26 @@ export class MessagesService {
             orderBy: { createdAt: 'asc' },
             include: {
                 sender: { select: { id: true, fullName: true, email: true } }
+            }
+        });
+    }
+    async findOrCreateConversation(userId1: string, userId2: string) {
+        const conversations = await this.prisma.conversation.findMany({
+            where: {
+                AND: [
+                    { participants: { some: { id: userId1 } } },
+                    { participants: { some: { id: userId2 } } },
+                ]
+            }
+        });
+
+        if (conversations.length > 0) return conversations[0];
+
+        return this.prisma.conversation.create({
+            data: {
+                participants: {
+                    connect: [{ id: userId1 }, { id: userId2 }]
+                }
             }
         });
     }

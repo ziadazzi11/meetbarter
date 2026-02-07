@@ -42,6 +42,8 @@ class CreateListingDto {
   @IsOptional()
   @IsString()
   condition?: string;
+
+
 }
 
 class UpdateListingDto {

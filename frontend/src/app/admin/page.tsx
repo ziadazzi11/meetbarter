@@ -617,14 +617,39 @@ export default function AdminPage() {
                     </button>
                     {message && <p className="mt-2 font-bold text-center">{message}</p>}
                 </section>
-                <section className="admin-section" style={{ borderColor: "#b91c1c", backgroundColor: "#fef2f2" }}>
-                    <h2 style={{ color: "#991b1b" }}>🔑 Master Key Handover</h2>
+                <section className="admin-section border-red-700 bg-red-50">
+                    <h2 className="text-red-800">🔑 Master Key Handover</h2>
                     <div className="admin-grid mb-4">
                         <input type="password" placeholder="New Alpha" aria-label="New Alpha" className="admin-input" value={newAlpha} onChange={e => setNewAlpha(e.target.value)} />
                         <input type="password" placeholder="New Beta" aria-label="New Beta" className="admin-input" value={newBeta} onChange={e => setNewBeta(e.target.value)} />
                         <input type="password" placeholder="New Fingerprint" aria-label="New Fingerprint" className="admin-input" value={newFingerprint} onChange={e => setNewFingerprint(e.target.value)} />
                     </div>
                     <button onClick={handleRotateCodes} className="admin-button bg-red-700 text-white">Rotate Keys</button>
+                </section>
+                <section className="admin-section">
+                    <h2>⚙️ System Configuration</h2>
+                    <div className="admin-grid mb-4">
+                        <div className="admin-input-group">
+                            <label>Ambassador Trade Threshold</label>
+                            <input
+                                type="number"
+                                className="admin-input"
+                                value={config.ambassadorTradeThreshold || 100}
+                                onChange={e => setConfig({ ...config, ambassadorTradeThreshold: parseInt(e.target.value) })}
+                            />
+                        </div>
+                        <div className="admin-input-group">
+                            <label>Legal Entity ID (NGO/Agricultural)</label>
+                            <input
+                                type="text"
+                                className="admin-input"
+                                value={config.legalEntityId || ""}
+                                placeholder="Enter Registration Number"
+                                onChange={e => setConfig({ ...config, legalEntityId: e.target.value })}
+                            />
+                        </div>
+                    </div>
+                    <button onClick={handleUpdateConfig} className="admin-button admin-button-primary">Update Configuration</button>
                 </section>
                 <section className="admin-section">
                     <h2>📁 Category Параметры</h2>
@@ -772,8 +797,8 @@ export default function AdminPage() {
                     <h2>📦 Export Vault</h2>
                     <button onClick={handleExportVault} className="admin-button bg-slate-700 text-white">Download Encrypted Vault</button>
                 </section>
-                <section className="admin-section" style={{ borderColor: "#4338ca" }}>
-                    <h2 style={{ color: "#3730a3" }}>🤝 Ambassador Applications</h2>
+                <section className="admin-section border-indigo-700">
+                    <h2 className="text-indigo-800">🤝 Ambassador Applications</h2>
                     <p className="text-[10px] text-gray-400 mb-4 italic">Behavioral Collusion Analysis Enabled.</p>
                     <table className="admin-table">
                         <thead>

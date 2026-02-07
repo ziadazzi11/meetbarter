@@ -1,728 +1,144 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { TimelineService } from '../timeline/timeline.service';
-import { SecurityService } from '../security/security.service';
-import { NotificationsGateway } from '../notifications/notifications.gateway';
-import { ForensicLoggingService } from '../security/forensic-logging.service';
-
-import { AutomationService } from '../system-state/automation.service';
+import { MessagesService } from '../messages/messages.service';
 
 @Injectable()
 export class TradesService {
-  private readonly logger = new Logger(TradesService.name);
-
   constructor(
     private prisma: PrismaService,
-    private timelineService: TimelineService,
-    private security: SecurityService,
-    private notificationsGateway: NotificationsGateway,
-    private forensicLogging: ForensicLoggingService,
-    private automation: AutomationService,
+    private messagesService: MessagesService,
   ) { }
 
-  async createTrade(
-    listingId: string,
-    buyerId: string,
-    exchangeMode: 'VP' | 'CASH' = 'VP',
-    cashOffer?: number,
-    cashCurrency?: string,
-  ) {
-    this.automation.reportEvent('TRADE_CREATE');
-
-    // 1. Validate Listing & Buyer
-    const listing = await this.prisma.listing.findUnique({ where: { id: listingId } });
-    if (!listing || listing.status !== 'ACTIVE') {
-      throw new BadRequestException('Listing is not available');
-    }
-
-    // 🛡️ Security Hook: Fraud Check
-    await this.security.assessAndLog(buyerId, {
-      action: 'TRADE_INIT',
-      userId: buyerId,
-      details: { listingId, counterpartyId: listing.sellerId, price: listing.priceVP }
+  async initiateTrade(buyerId: string, listingId: string, offerVP: number) {
+    // 1. Check Listing Status
+    const listing = await this.prisma.listing.findUnique({
+      where: { id: listingId },
     });
 
-    const buyer = await this.prisma.user.findUnique({ where: { id: buyerId } });
-    if (!buyer) throw new BadRequestException('Buyer not found');
-
-    // Logic: Buyer pays Price + 7.5% Fee
-    // REFUSE_MINT_MODEL: No upfront deduction. Value is minted to Seller upon verification.
-    // However, we still check if Buyer is "Good Standing" (e.g. Trust Score)
-
-    // Set Expiration (12 Hours from now)
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 12);
-
-    // 🛡️ Economic Containment: Daily Velocity Limits (Survival Mode)
-    const oneDayAgo = new Date();
-    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-
-    const dailyStats = await this.prisma.trade.aggregate({
-      where: {
-        buyerId,
-        createdAt: { gte: oneDayAgo }
-      },
-      _count: { id: true },
-      _sum: { offerVP: true }
-    });
-
-    const DAILY_TRADE_LIMIT = 5;
-    const DAILY_VP_LIMIT = 5000;
-
-    if (dailyStats._count.id >= DAILY_TRADE_LIMIT) {
-      throw new BadRequestException(`Daily trade limit reached (${DAILY_TRADE_LIMIT}). Slow down to ensure ecosystem stability.`);
+    if (!listing) {
+      throw new BadRequestException('Listing not found');
     }
 
-    if ((dailyStats._sum.offerVP || 0) + listing.priceVP > DAILY_VP_LIMIT) {
-      throw new BadRequestException(`Daily VP volume limit reached (${DAILY_VP_LIMIT}). Limit protects against rapid inflation.`);
+    if (listing.status !== 'ACTIVE') {
+      throw new BadRequestException('Listing is no longer active (Reserved, Traded, or Archived)');
     }
 
-    // 2. Transaction: Create Trade (No Deduction)
-    return this.prisma.$transaction(async (tx) => {
-      // NOTE: We do NOT deduct funds here. Funds are minted to Seller on completion.
-
-      // Update Listing status
-      await tx.listing.update({
-        where: { id: listingId },
-        data: { status: 'TRADED' } // Pending
-      });
-
-      // Phase 4: LEGITIMACY PROTOCOL - Coordination & Verification Escrow
-      const config = await (tx.systemConfig as any).findFirst({ where: { id: 1 } });
-      const baseRate = config?.baseEscrowRate || 15;
-
-      // Category-Based Ceiling (Safety Gate)
-      let escrowPct = baseRate;
-      const category = await tx.category.findUnique({ where: { id: listing.categoryId } });
-      if (category) {
-        const cap = this.getCategoryEscrowCap(category.name);
-        escrowPct = Math.min(baseRate, cap);
-      }
-
-      // Total Escrow = (Price * EscrowPct) / 100
-      const coordinationEscrowVP = Math.round(listing.priceVP * (escrowPct / 100));
-
-      // Create Trade
-      const newTrade = await (tx.trade as any).create({
-        data: {
-          listing: { connect: { id: listingId } },
-          category: { connect: { id: listing.categoryId } },
-          buyer: { connect: { id: buyerId } },
-          seller: { connect: { id: listing.sellerId } },
-          offerVP: exchangeMode === 'VP' ? listing.priceVP : 0,
-          coordinationEscrowVP: coordinationEscrowVP,
-          status: exchangeMode === 'CASH' ? 'OFFER_MADE' : 'LOCKED', // Cash trades start at OFFER_MADE for reality check
-          expiresAt: expiresAt,
-          cashOffer: cashOffer || (exchangeMode === 'CASH' ? listing.priceCash : null),
-          cashCurrency: cashCurrency || listing.priceCurrency || 'USD',
-          exchangeMode: exchangeMode,
-          ...this.calculateBrokerageFees(exchangeMode === 'CASH' ? listing.priceCash : 0),
-        }
-      });
-
-      // Phase 1 Trust: Explicit Escrow Transaction
-      await tx.transaction.create({
-        data: {
-          trade: { connect: { id: newTrade.id } },
-          fromUser: { connect: { id: buyerId } },
-          amountVP: coordinationEscrowVP,
-          type: 'OPERATIONAL_ESCROW',
-          timestamp: new Date()
-        }
-      });
-
-
-      // v1.2: Initialize Timeline
-      await this.timelineService.addTimelineEvent(newTrade.id, 'OFFER_SENT');
-
-      // 🛡️ FORENSIC AUDIT
-      await this.forensicLogging.logCriticalEvent('TRADE_CREATED', 'SYSTEM', {
-        tradeId: newTrade.id,
+    // 2. Create Trade Record (Awaiting Fee)
+    const trade = await this.prisma.trade.create({
+      data: {
+        listingId,
         buyerId,
         sellerId: listing.sellerId,
-        offerVP: listing.priceVP,
-        cashOffer
-      }, buyerId);
-
-      return newTrade;
-    });
-  }
-
-  async confirm(id: string, userId: string) {
-    const trade = await this.prisma.trade.findUnique({ where: { id } });
-    if (!trade) throw new BadRequestException('Trade not found');
-
-    // 🏛️ IMMUTABLE STATE CONSTRAINT: Only LOCKED (Escrowed) trades can be confirmed.
-    if (trade.status !== 'LOCKED') {
-      throw new BadRequestException(`Invalid State Transition: Cannot confirm trade in ${trade.status} status.`);
-    }
-
-    const isBuyer = trade.buyerId === userId;
-    const isSeller = trade.sellerId === userId;
-
-    if (!isBuyer && !isSeller) throw new BadRequestException('Not authorized');
-
-    // 🛡️ Security Hook: Trade Confirmation
-    await this.security.assessAndLog(userId, {
-      action: 'TRADE_CONFIRM',
-      userId,
-      details: { tradeId: id, role: isBuyer ? 'BUYER' : 'SELLER' }
-    });
-
-    // Update confirmation flags
-    const updatedTrade = await this.prisma.trade.update({
-      where: { id },
-      data: {
-        buyerConfirmed: isBuyer ? true : undefined,
-        sellerConfirmed: isSeller ? true : undefined,
-      }
-    });
-
-    // Check if BOTH confirmed -> Release Funds
-    if (updatedTrade.buyerConfirmed && updatedTrade.sellerConfirmed) {
-      // For VP trades, release VP. For CASH trades, this might just be a ritual if fees are already paid, 
-      // but we use it to trigger COMPLETED status.
-      return this.prisma.$transaction(async (tx) => {
-        if (trade.exchangeMode === 'VP') {
-          const sellerFee = Math.floor(trade.offerVP * 0.075);
-          const sellerPayout = trade.offerVP - sellerFee;
-
-          await tx.user.update({
-            where: { id: trade.sellerId },
-            data: { walletBalance: { increment: sellerPayout } }
-          });
-        }
-
-        // Update Trade status
-        const finalizedTrade = await tx.trade.update({
-          where: { id },
-          data: { status: 'COMPLETED' }
-        });
-
-        // Notify Buyer (Real-Time)
-        this.notificationsGateway.sendNotification(trade.buyerId, 'TRADE_COMPLETED', {
-          tradeId: id,
-          title: 'Trade Finalized! 🎉'
-        });
-
-        return finalizedTrade;
-      });
-    }
-
-    // Notify counterpart of confirmation
-    this.notificationsGateway.sendNotification(isBuyer ? trade.sellerId : trade.buyerId, 'TRADE_CONFIRMED_PARTIAL', {
-      tradeId: id,
-      by: isBuyer ? 'Buyer' : 'Seller'
-    });
-
-    return updatedTrade;
-  }
-
-  /**
-   * Admin: Reality Check (Physical/Photo verification of item)
-   */
-  async markRealityChecked(id: string, adminId: string, notes: string) {
-    const trade = await this.prisma.trade.findUnique({ where: { id } });
-    if (!trade) throw new BadRequestException('Trade not found');
-
-    const updatedTrade = await this.prisma.trade.update({
-      where: { id },
-      data: {
-        isRealityChecked: true,
-        status: 'LOCKED', // Moves from OFFER_MADE to LOCKED once checked
-        justification: `Reality Check Passed by Admin ${adminId}: ${notes}`
-      }
-    });
-
-    await this.timelineService.addTimelineEvent(id, 'REALITY_CHECK_PASSED', { adminId, notes });
-
-    // Notify users
-    this.notificationsGateway.sendNotification(trade.buyerId, 'REALITY_CHECK_PASSED', { tradeId: id });
-    this.notificationsGateway.sendNotification(trade.sellerId, 'REALITY_CHECK_PASSED', { tradeId: id });
-
-    return updatedTrade;
-  }
-
-  /**
-   * Admin: Verify Whish/OMT Fee Payment
-   */
-  async verifyFeePayment(id: string, adminId: string) {
-    const trade = await this.prisma.trade.findUnique({ where: { id } });
-    if (!trade) throw new BadRequestException('Trade not found');
-
-    // Simplified logic: Once fees are verified, we mark as CONFIRMED_BY_BUYER (or similar intermediate state)
-    // allowing the flow to proceed to final completion.
-    const statusUpdate = 'CONFIRMED_BY_BUYER';
-
-    const updatedTrade = await this.prisma.trade.update({
-      where: { id },
-      data: {
-        status: statusUpdate as any,
-        justification: `Platform Fees Verified by Admin ${adminId}`
-      }
-    });
-
-    await this.timelineService.addTimelineEvent(id, 'FEES_VERIFIED', { adminId });
-
-    return updatedTrade;
-  }
-
-  async verifyTrade(id: string, bucketAllocations: { bucket: string, amountVP: number, justification: string }[], adminId: string) {
-    const trade = await this.prisma.trade.findUnique({
-      where: { id },
-      include: { buyer: true, category: true }
-    }) as any;
-    if (!trade) throw new BadRequestException('Trade not found');
-
-    // Rule 3: Cost-Bucket Constraints (Institutional Integrity)
-    const validBuckets = ['MODERATION_REVIEW', 'DISPUTE_HANDLING', 'VERIFICATION_EFFORT', 'LOGISTICS_COORDINATION'];
-    for (const allocation of bucketAllocations) {
-      if (!validBuckets.includes(allocation.bucket)) {
-        throw new BadRequestException(`Invalid Cost Bucket: ${allocation.bucket}`);
-      }
-      if (!allocation.justification || allocation.justification.length < 10) {
-        throw new BadRequestException(`Mandatory Justification Required for ${allocation.bucket} (Min 10 chars)`);
-      }
-    }
-
-    // Ensure logic: sum(allocations) <= coordinationEscrow
-    const totalActualCost = bucketAllocations.reduce((sum, b) => sum + Number(b.amountVP), 0);
-    if (totalActualCost > trade.coordinationEscrowVP) {
-      throw new BadRequestException(`Actual cost (${totalActualCost} VP) exceeds Coordination Escrow cap (${trade.coordinationEscrowVP} VP)`);
-    }
-
-    return this.prisma.$transaction(async (tx) => {
-      // 1. Create Immutable Cost Records
-      for (const allocation of bucketAllocations) {
-        await tx.tradeOperationCost.create({
-          data: {
-            tradeId: trade.id,
-            bucket: allocation.bucket,
-            amountVP: Number(allocation.amountVP),
-            justification: allocation.justification,
-            adminId
-          }
-        });
-      }
-
-      // 2. Mark Trade as Verified
-      const updatedTrade = await tx.trade.update({
-        where: { id },
-        data: {
-          isVerified: true,
-          justification: `Verified with ${bucketAllocations.length} cost allocations.`
-        }
-      });
-
-      // 3. Process System Contributions (Minted for Protocol Health)
-      // Calculation Base: 15% Reference Value (Virtual Escrow)
-      // We only MINT what is allocated to these funds. Unused "Virtual Escrow" is simply never minted.
-
-      const tradeValue = trade.offerVP;
-      const emergencyShare = Math.floor(tradeValue * 0.04);
-      const ambassadorShare = Math.floor(tradeValue * 0.01);
-      // 10% Admin/Logistics Fee Minting (Operational)
-      const adminBudget = Math.floor(tradeValue * 0.10);
-
-      // Mint to System Funds
-      await tx.systemConfig.update({
-        where: { id: 1 },
-        data: {
-          emergencyFundVP: { increment: emergencyShare },
-          ambassadorFundVP: { increment: ambassadorShare },
-          adminFundVP: { increment: adminBudget }
-        }
-      });
-
-      // Logic: If Escrow > Actual Cost, we theoretically "Refund" the unused portion
-      // Rule 4: Explicit Refund UX Enforcement
-      const unusedEscrow = trade.coordinationEscrowVP - totalActualCost;
-      if (unusedEscrow > 0) {
-        await tx.transaction.create({
-          data: {
-            tradeId: trade.id,
-            toUserId: trade.buyerId,
-            amountVP: unusedEscrow,
-            type: 'ESCROW_REFUND',
-            timestamp: new Date()
-          }
-        });
-      }
-
-      return updatedTrade;
-    });
-  }
-
-  /**
-   * Rule 1: Category-Based Escrow Caps
-   * Protects essentials and regulates high-risk trades.
-   */
-  private getCategoryEscrowCap(categoryName: string): number {
-    const name = categoryName.toLowerCase();
-    if (name.includes('food') || name.includes('medicine')) return 5;
-    if (name.includes('service') || name.includes('labor')) return 10;
-    if (name.includes('tool') || name.includes('machinery')) return 12;
-    return 15; // Global Platform Cap
-  }
-
-  // Phase 1 Trust: Auto-Refund mechanism for expired trades
-  @Cron(CronExpression.EVERY_HOUR)
-  async handleExpiredTrades() {
-    this.logger.log('Checking for expired trades...');
-    const now = new Date();
-    const expiredTrades = await this.prisma.trade.findMany({
-      where: {
-        status: 'LOCKED',
-        expiresAt: { lt: now }
-      }
-    });
-
-    for (const trade of expiredTrades) {
-      this.logger.warn(`Auto-refunding expired trade ${trade.id}`);
-      await this.prisma.$transaction(async (tx) => {
-        // 1. Mark as CANCELLED
-        await tx.trade.update({
-          where: { id: trade.id },
-          data: { status: 'CANCELLED' }
-        });
-
-        // 2. Record ESCROW_REFUND (Non-monetary in zero-pre-mint, but keeps ledger balanced)
-        await tx.transaction.create({
-          data: {
-            tradeId: trade.id,
-            toUserId: trade.buyerId,
-            amountVP: trade.operationalEscrowVP,
-            type: 'ESCROW_REFUND',
-            timestamp: new Date()
-          }
-        });
-
-        // 3. Reactivate Listing
-        await tx.listing.update({
-          where: { id: trade.listingId },
-          data: { status: 'ACTIVE' }
-        });
-
-        await this.timelineService.addTimelineEvent(trade.id, 'TRADE_EXPIRED', { reason: 'Time limit reached' });
-      });
-    }
-  }
-
-  // Phase 1 Trust: Dispute Handling
-  async disputeTrade(id: string, reason: string, userId: string) {
-    const trade = await this.prisma.trade.findUnique({ where: { id } });
-    if (!trade) throw new BadRequestException('Trade not found');
-
-    // 🏛️ IMMUTABLE STATE CONSTRAINT: Cannot dispute finalized trades
-    if (['COMPLETED', 'CANCELLED'].includes(trade.status)) {
-      throw new BadRequestException('Institutional Rule: Finalized trades cannot be disputed.');
-    }
-
-    // Only buyer or seller can trigger dispute in Phase 1
-    if (trade.buyerId !== userId && trade.sellerId !== userId) {
-      throw new BadRequestException('Not authorized');
-    }
-
-    const updatedTrade = await this.prisma.trade.update({
-      where: { id },
-      data: {
-        status: 'DISPUTED',
-        justification: `Dispute opened by ${userId}: ${reason}`
-      }
-    });
-
-    await this.timelineService.addTimelineEvent(id, 'DISPUTE_OPENED', { reason, userId });
-
-    // 🛡️ FORENSIC AUDIT
-    await this.forensicLogging.logCriticalEvent('TRADE_DISPUTED', 'SYSTEM', {
-      tradeId: id,
-      reason,
-      userId
-    }, userId);
-
-    return updatedTrade;
-  }
-
-  async resolveDispute(id: string, action: 'RELEASE' | 'REFUND', notes: string, adminId: string) {
-    const trade = await this.prisma.trade.findUnique({
-      where: { id },
-      include: { listing: true }
-    });
-    if (!trade) throw new BadRequestException('Trade not found');
-    if (trade.status !== 'DISPUTED') throw new BadRequestException('Trade is not in DISPUTED state');
-
-    return this.prisma.$transaction(async (tx) => {
-      // 1. Log to Audit
-      await tx.auditLog.create({
-        data: {
-          action: 'DISPUTE_RESOLVED',
-          adminId,
-          details: JSON.stringify({ tradeId: id, action, notes }),
-          hash: '', // Handled by standard logging later
-          previousHash: ''
-        }
-      });
-
-      if (action === 'RELEASE') {
-        // Release to Seller: Mark COMPLETED
-        await tx.trade.update({
-          where: { id },
-          data: { status: 'COMPLETED', justification: `Dispute released by admin: ${notes}` }
-        });
-
-        // Payout Record
-        await tx.transaction.create({
-          data: {
-            tradeId: id,
-            toUserId: trade.sellerId,
-            amountVP: trade.offerVP,
-            type: 'PAYOUT',
-            timestamp: new Date()
-          }
-        });
-
-        // Update seller wallet
-        await tx.user.update({
-          where: { id: trade.sellerId },
-          data: { walletBalance: { increment: trade.offerVP } }
-        });
-
-      } else {
-        // Refund to Buyer: Mark CANCELLED
-        await tx.trade.update({
-          where: { id },
-          data: { status: 'CANCELLED', justification: `Dispute refunded by admin: ${notes}` }
-        });
-
-        // Reactivate Listing
-        await tx.listing.update({
-          where: { id: trade.listingId },
-          data: { status: 'ACTIVE' }
-        });
-
-        // Refund Record
-        await tx.transaction.create({
-          data: {
-            tradeId: id,
-            toUserId: trade.buyerId,
-            amountVP: trade.operationalEscrowVP,
-            type: 'ESCROW_REFUND',
-            timestamp: new Date()
-          }
-        });
-      }
-
-      await this.timelineService.addTimelineEvent(id, 'DISPUTE_RESOLVED', { action, notes, adminId });
-    });
-  }
-
-  async findAll(userId: string) {
-    return this.prisma.trade.findMany({
-      where: {
-        OR: [{ buyerId: userId }, { sellerId: userId }]
+        categoryId: listing.categoryId,
+        offerVP,
+        status: 'AWAITING_FEE', // Gated state
       },
-      include: {
-        listing: true,
-        buyer: { select: { fullName: true, phoneNumber: true } },
-        seller: { select: { fullName: true, phoneNumber: true } },
-        timeline: { orderBy: { timestamp: 'asc' } }
-      }
     });
+
+    // Return the trade. Conversation is NOT created yet.
+    return { trade, message: "Trade initiated. Please pay brokerage fee to unlock chat." };
   }
 
-  // v1.2: Soft Commitment (non-binding intent)
-  async recordSoftCommitment(tradeId: string, userId: string) {
+  async processTradeFee(tradeId: string, userId: string) {
     const trade = await this.prisma.trade.findUnique({ where: { id: tradeId } });
-    if (!trade) throw new BadRequestException('Trade not found');
+    if (!trade || trade.buyerId !== userId) throw new BadRequestException("Invalid Trade");
 
-    if (trade.buyerId !== userId && trade.sellerId !== userId) {
-      throw new BadRequestException('Not authorized');
+    if (trade.status !== 'AWAITING_FEE') {
+      return { message: "Fee already paid or trade invalid state" };
     }
 
+    // 1. Update Trade Status
     const updatedTrade = await this.prisma.trade.update({
       where: { id: tradeId },
-      data: {
-        intentTimestamp: new Date(),
-        // For CASH trades starting at OFFER_MADE, this commitment transitions them to LOCKED (Agreement Reached)
-        status: trade.status === 'OFFER_MADE' ? 'LOCKED' : undefined
-      }
+      data: { status: 'OFFER_MADE' }
     });
 
-    // Notify Counterparty (Real-Time)
-    this.notificationsGateway.sendNotification(userId === trade.buyerId ? trade.sellerId : trade.buyerId, 'INTENT_RECORDED', {
-      tradeId,
-      message: 'Counterparty has recorded their intent to trade!'
+    // 2. Lock Listing
+    await this.prisma.listing.update({
+      where: { id: trade.listingId },
+      data: { status: 'RESERVED' }
     });
 
-    return updatedTrade;
+    // 3. Create/Find Conversation (Now allowed)
+    const conversation = await this.messagesService.findOrCreateConversation(trade.buyerId, trade.sellerId);
+
+    return { trade: updatedTrade, conversation, message: "Fee Paid. Item Reserved. Chat Unlocked." };
   }
 
-  // v1.2: Submit Pre-Trade Checklist
-  async submitChecklist(
-    tradeId: string,
-    userId: string,
-    checklist: { timeAgreed: boolean; locationAgreed: boolean; conditionAgreed: boolean }
-  ) {
+  async resolveDispute(tradeId: string, action: string, reason: string, adminId: string) {
+    // 1. Validate Trade
     const trade = await this.prisma.trade.findUnique({ where: { id: tradeId } });
-    if (!trade) throw new BadRequestException('Trade not found');
+    if (!trade) throw new BadRequestException("Trade not found");
 
-    if (trade.buyerId !== userId && trade.sellerId !== userId) {
-      throw new BadRequestException('Not authorized');
+    // 2. Determine Outcome
+    let newStatus = 'DISPUTE_RESOLVED';
+    let listingStatus = 'ARCHIVED'; // Default to closed
+
+    if (action === 'REFUND_BUYER') {
+      newStatus = 'CANCELLED';
+      listingStatus = 'ACTIVE'; // Re-list
+    } else if (action === 'RELEASE_FUNDS') {
+      newStatus = 'COMPLETED';
+      listingStatus = 'ARCHIVED';
     }
 
-    if (!checklist.timeAgreed || !checklist.locationAgreed || !checklist.conditionAgreed) {
-      throw new BadRequestException('All checklist items must be agreed to');
-    }
-
+    // 3. Update Trade
     const updatedTrade = await this.prisma.trade.update({
       where: { id: tradeId },
-      data: { preTradeChecklist: JSON.stringify(checklist) }
+      data: { status: newStatus as any }
     });
 
-    await this.timelineService.addTimelineEvent(tradeId, 'MEETUP_AGREED', checklist);
+    // 4. Update Listing
+    await this.prisma.listing.update({
+      where: { id: trade.listingId },
+      data: { status: listingStatus as any }
+    });
 
-    // Notify Counterparty (Real-Time)
-    this.notificationsGateway.sendNotification(userId === trade.buyerId ? trade.sellerId : trade.buyerId, 'MEETUP_AGREED', {
-      tradeId,
-      message: 'Meetup details agreed! Ready for exchange.'
+    // 5. Log Dispute Resolution
+    await this.prisma.tradeTimeline.create({
+      data: {
+        tradeId,
+        state: newStatus,
+        metadata: JSON.stringify({ action, reason, adminId })
+      }
     });
 
     return updatedTrade;
   }
 
-  // v1.2: Get trade with timeline
-  async getTrade(id: string) {
-    const trade = await this.prisma.trade.findUnique({
-      where: { id },
-      include: {
-        listing: true,
-        buyer: { select: { fullName: true, email: true, phoneNumber: true } },
-        seller: { select: { fullName: true, email: true, phoneNumber: true } },
-        timeline: { orderBy: { timestamp: 'asc' } }
-      }
-    });
-
-    if (!trade) throw new BadRequestException('Trade not found');
-
-    // 🔒 PRIVACY GATE: Redact contact info for CASH trades until fees are verified.
-    if (trade.exchangeMode === 'CASH') {
-      // Fees are verified when status moves beyond LOCKED (e.g. CONFIRMED_BY_BUYER/SELLER or COMPLETED)
-      // or if the trade has been explicitly marked as Verified by admin logic (though currently we use status).
-      // The verifyFeePayment method sets status to 'CONFIRMED_BY_BUYER'.
-      const isFeeVerified = ['CONFIRMED_BY_BUYER', 'CONFIRMED_BY_SELLER', 'COMPLETED'].includes(trade.status);
-
-      if (!isFeeVerified) {
-        if (trade.buyer) trade.buyer.phoneNumber = null;
-        if (trade.seller) trade.seller.phoneNumber = null;
-        // We could also redact listing location if it was specific, but currently it's just city/country usually.
-      }
-    }
-
-    return trade;
-  }
-
-  async addCashSweetener(tradeId: string, userId: string, cashOffer: number, cashCurrency: string) {
+  async verifyTrade(tradeId: string, allocations: { bucket: string, amountVP: number, justification: string }[], adminId: string) {
+    // 1. Validate Trade
     const trade = await this.prisma.trade.findUnique({ where: { id: tradeId } });
-    if (!trade) throw new BadRequestException('Trade not found');
+    if (!trade) throw new BadRequestException("Trade not found");
 
-    if (trade.buyerId !== userId) {
-      throw new BadRequestException('Only the buyer can propose a cash sweetener');
+    // 2. Record Operational Costs (Buckets)
+    for (const alloc of allocations) {
+      await this.prisma.tradeOperationCost.create({
+        data: {
+          tradeId,
+          bucket: alloc.bucket,
+          amountVP: alloc.amountVP,
+          justification: alloc.justification,
+          adminId
+        }
+      });
     }
 
-    if (trade.status === 'COMPLETED' || trade.status === 'CANCELLED') {
-      throw new BadRequestException('Trade is already finalized');
-    }
-
-    const updatedTrade = await (this.prisma.trade as any).update({
+    // 3. Mark as Reality Checked
+    const updatedTrade = await this.prisma.trade.update({
       where: { id: tradeId },
-      data: {
-        cashOffer,
-        cashCurrency
-      }
+      data: { isRealityChecked: true }
     });
 
-    // Notify Timeline
-    await this.timelineService.addTimelineEvent(tradeId, 'CASH_PROPOSED', { amount: cashOffer, currency: cashCurrency });
-
-    // Notify Seller (Real-Time)
-    this.notificationsGateway.sendNotification(trade.sellerId, 'CASH_PROPOSED', {
-      tradeId,
-      amount: cashOffer,
-      currency: cashCurrency
+    // 4. Log in Timeline
+    await this.prisma.tradeTimeline.create({
+      data: {
+        tradeId,
+        state: 'TRADE_VERIFIED',
+        metadata: JSON.stringify({ adminId, totalAllocated: allocations.reduce((a, b) => a + b.amountVP, 0) })
+      }
     });
 
     return updatedTrade;
-  }
-
-  /**
-   * Post-Trade: Submit Review
-   */
-  async submitReview(tradeId: string, reviewerId: string, rating: number, comment: string) {
-    const trade = await this.prisma.trade.findUnique({ where: { id: tradeId } });
-    if (!trade || trade.status !== 'COMPLETED') {
-      throw new BadRequestException('Reviews can only be submitted for completed trades');
-    }
-
-    if (trade.buyerId !== reviewerId && trade.sellerId !== reviewerId) {
-      throw new BadRequestException('Not authorized');
-    }
-
-    const revieweeId = trade.buyerId === reviewerId ? trade.sellerId : trade.buyerId;
-
-    return this.prisma.tradeReview.create({
-      data: {
-        tradeId,
-        reviewerId,
-        revieweeId,
-        rating,
-        comment
-      }
-    });
-  }
-
-  /**
-   * Post-Trade: Report Fraud
-   */
-  async reportFraud(tradeId: string, reporterId: string, reason: string, evidence?: string) {
-    const trade = await this.prisma.trade.findUnique({ where: { id: tradeId } });
-    if (!trade) throw new BadRequestException('Trade not found');
-
-    if (trade.buyerId !== reporterId && trade.sellerId !== reporterId) {
-      throw new BadRequestException('Not authorized');
-    }
-
-    const accusedId = trade.buyerId === reporterId ? trade.sellerId : trade.buyerId;
-
-    return this.prisma.fraudReport.create({
-      data: {
-        tradeId,
-        reporterId,
-        accusedId,
-        reason,
-        evidence
-      }
-    });
-  }
-
-  private calculateBrokerageFees(priceCash: number) {
-    if (!priceCash || priceCash <= 0) {
-      return {
-        platformFeeSeller: 0,
-        platformFeeBuyer: 0,
-      };
-    }
-
-    let fee = 0;
-    if (priceCash <= 40) {
-      fee = 1; // Flat $1
-    } else {
-      fee = priceCash * 0.025; // 2.5%
-    }
-
-    return {
-      platformFeeSeller: fee,
-      platformFeeBuyer: fee,
-    };
   }
 }

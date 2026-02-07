@@ -47,6 +47,8 @@ export class AdminController {
     }
 
     @Get('business-registry')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.APPROVE_BUSINESS)
     async getBusinessRegistry() {
         return this.intelligence.getVerifiedBusinessRegistry();
     }
@@ -219,7 +221,11 @@ export class AdminController {
         // EXCLUDE Heir data from public config fetch for discretion
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { heir1, heir1Key, heir2, heir2Key, heir3, heir3Key, heir4, heir4Key, heir5, heir5Key, ...publicConfig } = config as any;
-        return publicConfig;
+        return {
+            ...publicConfig,
+            ambassadorTradeThreshold: (config as any).ambassadorTradeThreshold || 100,
+            legalEntityId: (config as any).legalEntityId
+        };
     }
 
     @Post('config/heirs')
@@ -260,6 +266,9 @@ export class AdminController {
         @Body('heir4Key') heir4Key: string,
         @Body('heir5') heir5: string,
         @Body('heir5Key') heir5Key: string,
+
+        @Body('ambassadorTradeThreshold') ambassadorTradeThreshold: number,
+        @Body('legalEntityId') legalEntityId: string,
         @Body('code1') code1: string,
         @Body('fingerprintCode') fingerprintCode: string,
     ) {
@@ -276,12 +285,17 @@ export class AdminController {
                 heir2, heir2Key,
                 heir3, heir3Key,
                 heir4: heir4 as any, heir4Key: heir4Key as any,
-                heir5: heir5 as any, heir5Key: heir5Key as any
+
+                heir5: heir5 as any, heir5Key: heir5Key as any,
+                ambassadorTradeThreshold: ambassadorTradeThreshold ? Number(ambassadorTradeThreshold) : undefined,
+                legalEntityId: legalEntityId || undefined
             } as any
         });
     }
 
     @Get('trades')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.RESOLVE_DISPUTE)
     async getTrades() {
         return this.prisma.trade.findMany({
             where: {

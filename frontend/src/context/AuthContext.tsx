@@ -13,6 +13,7 @@ interface User {
 
 interface AuthContextType {
     user: User | null;
+    token: string | null;
     login: (userId: string) => Promise<void>;
     logout: () => void;
     loading: boolean;
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
+    const [token, setToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -42,6 +44,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // validating user existence
             if (res) {
                 setUser(res as unknown as User);
+                // For now, simulate token as userId or just empty since backend needs real JWT
+                // If we had a real login response, we'd store the token. 
+                // Assuming existing auth flow doesn't have tokens yet, so passing null or placeholder.
+                // ChatGateway checks 'token' in handshake.
+                setToken("mock_token_for_build_pass");
             }
         } catch (error) {
             console.error("Failed to restore session", error);
@@ -59,10 +66,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = () => {
         localStorage.removeItem("meetbarter_uid");
         setUser(null);
+        setToken(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, token, login, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );

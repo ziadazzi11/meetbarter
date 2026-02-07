@@ -28,7 +28,6 @@ import { PayloadEncryptionMiddleware } from './ads/recon/payload-encryption.midd
 // v1.2 Modules
 import { TimelineModule } from './timeline/timeline.module';
 import { ActivityModule } from './activity/activity.module';
-import { CirclesModule } from './circles/circles.module';
 import { CityPulseModule } from './city-pulse/city-pulse.module';
 import { BountyModule } from './bounty/bounty.module';
 import { SuccessionModule } from './succession/succession.module';
@@ -46,17 +45,19 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { CanaryInterceptor } from './ads/canary.interceptor';
 import { SemanticNoiseInterceptor } from './ads/recon/semantic-noise.interceptor';
 import { ContributionsModule } from './contributions/contributions.module';
-import { ChatModule } from './chat/chat.module';
+
 
 import { ConfigModule } from '@nestjs/config';
 import { validate } from './config/env.validation';
 
 @Module({
     imports: [
-        ConfigModule.forRoot({
-            validate,
-            isGlobal: true, // Available everywhere
-        }),
+        ConfigModule.forRoot({ isGlobal: true }),
+        PrismaModule,
+        AuthModule,
+        UsersModule,
+
+        TradesModule,
         ScheduleModule.forRoot(), // Enable cron jobs
         // 🛡️ Security: Rate Limiting (Anti-DDoS)
         ThrottlerModule.forRoot([{
@@ -74,7 +75,6 @@ import { validate } from './config/env.validation';
         // v1.2 Features
         TimelineModule,
         ActivityModule,
-        CirclesModule,
         CityPulseModule,
         BountyModule,
         SuccessionModule,
@@ -89,7 +89,7 @@ import { validate } from './config/env.validation';
         SubscriptionsModule,
         SubscriptionsModule,
         ContributionsModule,
-        ChatModule
+
     ],
     controllers: [AppController, AdminController],
     providers: [

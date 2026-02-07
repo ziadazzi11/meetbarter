@@ -18,6 +18,7 @@ enum Role {
 
 enum TradeStatus {
   OFFER_MADE
+  AWAITING_FEE
   LOCKED
   CONFIRMED_BY_BUYER
   CONFIRMED_BY_SELLER
@@ -30,6 +31,7 @@ enum ListingStatus {
   ACTIVE
   TRADED
   ARCHIVED
+  RESERVED
 }
 
 enum ModerationStatus {
@@ -127,6 +129,7 @@ model User {
 
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
+  conversations    Conversation[] @relation("UserConversations")
 
   // Social Auth
   authProvider     String?  // GOOGLE, FACEBOOK, OUTLOOK, INSTAGRAM
@@ -147,6 +150,7 @@ model User {
   bounties        Bounty[]
   moderationFlags ContentModerationFlag[]
   successors      Successor[]
+  contributions   Contribution[]
 
   // Universal Succession & Continuity Protocol
   heir1Name       String?
@@ -247,7 +251,6 @@ model Listing {
   // v1.2: Listing enhancements
   listingType     String   @default("OFFER") // OFFER (normal) or REQUEST (reverse listing)
   expiresAt       DateTime? // Optional expiration for time-limited listings
-  circleId        String?  // Optional: listing tagged to a Trade Circle
   
   // Content Moderation
   isActive        Boolean  @default(true)
@@ -260,10 +263,9 @@ model Listing {
   
   category        Category @relation(fields: [categoryId], references: [id])
   seller          User     @relation(fields: [sellerId], references: [id])
-  circle          TradeCircle? @relation(fields: [circleId], references: [id])
   trades          Trade[]
-  messages        Message[]
   moderationFlags ContentModerationFlag[]
+  messages        Message[]
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -321,9 +323,10 @@ model Trade {
   timeline        TradeTimeline[]
   operationCosts  TradeOperationCost[]
   transactions    Transaction[]
-  messages        Message[]
+  conversations   Conversation[]
   reviews         TradeReview[]
   fraudReports    FraudReport[]
+  messages        Message[]
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -412,6 +415,10 @@ model SystemConfig {
   whishPhoneNumber String   @default("0096171023083")
   omtPhoneNumber   String?
   
+  // Dynamic Limits & Legal
+  ambassadorTradeThreshold Int @default(100) // Adjustable via Admin Panel
+  legalEntityId    String?  // For Agricultural/NGO Registration
+  
   updatedAt DateTime @updatedAt
 }
 
@@ -438,18 +445,34 @@ model AuditLog {
 
 model Message {
   id              String   @id @default(uuid())
-  listingId       String
+  content         String
   senderId        String
   receiverId      String
-  templateKey     String   // e.g., "AVAILABILITY", "CONDITION", "PICKUP_COORD"
-  content         String   // The actual formatted message
+  conversationId  String
   isRead          Boolean  @default(false)
+  
+  // Context Fields for Smart Chat
+  tradeId         String?
+  listingId       String?
+  templateKey     String?  @default("CUSTOM")
+  
   createdAt       DateTime @default(now())
 
-  listing         Listing  @relation(fields: [listingId], references: [id])
   sender          User     @relation("SentMessages", fields: [senderId], references: [id])
   receiver        User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  conversation    Conversation @relation(fields: [conversationId], references: [id])
+  trade           Trade?   @relation(fields: [tradeId], references: [id])
+  listing         Listing? @relation(fields: [listingId], references: [id])
+}
+
+model Conversation {
+  id              String   @id @default(uuid())
   tradeId         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  participants    User[]   @relation("UserConversations")
+  messages        Message[]
   trade           Trade?   @relation(fields: [tradeId], references: [id])
 }
 
@@ -503,32 +526,7 @@ model TradeTimeline {
   @@index([tradeId])
 }
 
-// 6. Trade Circles - Community-based trade groups
-model TradeCircle {
-  id              String   @id @default(uuid())
-  name            String
-  description     String?
-  isPublic        Boolean  @default(true)
-  creatorId       String
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  memberships     CircleMembership[]
-  listings        Listing[]
-}
 
-model CircleMembership {
-  id              String   @id @default(uuid())
-  userId          String
-  circleId        String
-  joinedAt        DateTime @default(now())
-  
-  circle          TradeCircle @relation(fields: [circleId], references: [id])
-  
-  @@unique([userId, circleId])
-  @@index([circleId])
-}
 
 // 2. User Activity Metrics - Passive trust signals
 model UserActivityMetric {

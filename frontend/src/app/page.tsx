@@ -9,6 +9,8 @@ import ImageUpload from "@/components/ImageUpload";
 import Link from "next/link";
 import Image from "next/image";
 import { API_BASE_URL } from "@/config/api";
+import { ListingCard } from "@/components/Listings/ListingCard";
+import CreateListingModal from "@/components/Listings/CreateListingModal";
 
 interface Category {
   id: string;
@@ -467,39 +469,7 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {listings.map((item: any) => (
-                <div key={item.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 overflow-hidden flex flex-col h-full">
-                  <div className="h-48 bg-gray-100 flex items-center justify-center text-4xl relative">
-                    {(() => {
-                      try {
-                        const parsed = JSON.parse(item.images);
-                        return parsed[0] ? (
-                          <img src={parsed[0]} alt={item.title} className="w-full h-full object-cover" />
-                        ) : '📦';
-                      } catch { return '📦'; }
-                    })()}
-                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-bold shadow-sm">
-                      {item.priceVP} VP
-                    </div>
-                  </div>
-
-                  <div className="p-4 flex flex-col flex-1">
-                    <h3 className="font-bold text-gray-900 mb-1 line-clamp-1" title={item.title}>{item.title}</h3>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <span className="truncate max-w-[80px]">{item.location || 'Unknown'}</span>
-                      </span>
-                      {item.condition && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${item.condition === 'NEW' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
-                          {item.condition.replace('_', ' ')}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-gray-600 text-sm line-clamp-2 mb-4 flex-1">{item.description}</p>
-                    <a href={`/listings/${item.id}`} className="block text-center w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-2 rounded-lg text-sm font-bold transition-colors">
-                      View Details
-                    </a>
-                  </div>
-                </div>
+                <ListingCard key={item.id} listing={item} />
               ))}
             </div>
           )}
@@ -524,125 +494,21 @@ export default function Home() {
       </main>
 
       {/* CREATE LISTING MODAL */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                {newListing.listingType === 'REQUEST' ? 'Post a Request' : 'List a New Item'}
-              </h2>
-              <form onSubmit={handleCreateListing} className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                    <input
-                      required
-                      className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      value={newListing.title}
-                      onChange={e => setNewListing({ ...newListing, title: e.target.value })}
-                      placeholder={newListing.listingType === 'REQUEST' ? "What do you need?" : "What are you listing?"}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                    <select
-                      required
-                      className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      value={newListing.categoryId}
-                      onChange={e => setNewListing({ ...newListing, categoryId: e.target.value })}
-                    >
-                      <option value="">Select Category</option>
-                      {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                  <textarea
-                    required
-                    className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 min-h-[100px]"
-                    value={newListing.description}
-                    onChange={e => setNewListing({ ...newListing, description: e.target.value })}
-                  />
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">City / Location</label>
-                    <input
-                      required
-                      className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      value={newListing.location}
-                      onChange={e => setNewListing({ ...newListing, location: e.target.value })}
-                      placeholder="e.g. Beirut"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                    <select
-                      required
-                      className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      value={newListing.country}
-                      onChange={e => setNewListing({ ...newListing, country: e.target.value })}
-                    >
-                      <option value="Lebanon">Lebanon</option>
-                      <option value="USA">USA</option>
-                      <option value="France">France</option>
-                      <option value="UAE">UAE</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Value (VP)</label>
-                    <input
-                      type="number"
-                      required
-                      className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      value={newListing.originalPrice}
-                      onChange={e => setNewListing({ ...newListing, originalPrice: Number(e.target.value) })}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
-                    <select
-                      className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      value={newListing.condition}
-                      onChange={e => setNewListing({ ...newListing, condition: e.target.value })}
-                    >
-                      <option value="NEW">New (60%)</option>
-                      <option value="USED_GOOD">Used - Good (30%)</option>
-                      <option value="USED_FAIR">Used - Fair (20%)</option>
-                    </select>
-                  </div>
-                </div>
-
-                {newListing.listingType === 'OFFER' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Photos (Max 5)</label>
-                    <ImageUpload
-                      initialImages={newListing.images}
-                      onUpload={(urls) => setNewListing({ ...newListing, images: urls })}
-                      maxImages={5}
-                    />
-                  </div>
-                )}
-
-                <div className="flex gap-4 pt-4 border-t border-gray-100">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
-                    Cancel
-                  </button>
-                  <button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg transition-colors">
-                    {newListing.listingType === 'REQUEST' ? 'Post Request' : 'Create Listing'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+      <CreateListingModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        userId={userId || ''}
+        categories={categories}
+        initialType={newListing.listingType as 'OFFER' | 'REQUEST'}
+        onSuccess={() => {
+          // Refresh listings
+          const params = new URLSearchParams();
+          if (searchLocation) params.append('location', searchLocation);
+          if (selectedCountry) params.append('country', selectedCountry);
+          const url = params.toString() ? `${API_BASE_URL}/listings?${params.toString()}` : `${API_BASE_URL}/listings`;
+          fetch(url).then(res => res.json()).then(setListings);
+        }}
+      />
 
       <VerificationTiersModal
         isOpen={isTierModalOpen}
@@ -653,6 +519,6 @@ export default function Home() {
       />
 
 
-    </div>
+    </div >
   );
 }

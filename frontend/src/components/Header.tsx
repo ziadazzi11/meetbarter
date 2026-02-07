@@ -32,6 +32,7 @@ export default function Header() {
                 {/* 2. Navigation Actions (Right Aligned) */}
                 <nav className="flex items-center gap-4">
                     <Link href="/about" className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors duration-200">How it Works</Link>
+                    <Link href="/circles" className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors duration-200">Circles</Link>
                     <Link href="/dashboard" className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors duration-200">Dashboard</Link>
 
                     {/* Audio Toggle */}

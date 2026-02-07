@@ -48,6 +48,9 @@ The Association's resources consist of:
     - Weaponized robotics or tactical combat systems.
     - Narcotics, pharmaceutical drugs, and natural psychedelics (e.g., mushrooms).
     - Medical supplies and equipment requiring governmental authorization or professional permits.
+    - **Human Trafficking & Exploitation**: Selling persons, forced labor, or passport retention.
+    - **Human Organs & Tissue**: Trading of any body parts, fluids, or surrogacy services.
+    - **Harmful Occult Rituals**: Items related to "satanic" rituals, black magic, or any materials promoting spiritual harm.
 2. Any attempt to circumvent this prohibition will result in an immediate item block and automatic account suspension upon repeat offenses (Insistence Rule).
 3. This policy is non-negotiable and serves to protect the humanitarian integrity and legal standing of the Association.
 

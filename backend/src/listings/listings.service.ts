@@ -215,7 +215,7 @@ export class ListingsService {
       if (idsToDeactivate.length > 0) {
         await this.prisma.listing.updateMany({
           where: { id: { in: idsToDeactivate } },
-          data: { status: 'INACTIVE' } // Assuming INACTIVE is valid or ARCHIVED if not
+          data: { status: 'ARCHIVED' } // Assuming INACTIVE is valid or ARCHIVED if not
         });
 
         console.log(`[Downgrade] Deactivated ${idsToDeactivate.length} listings for user ${userId}`);

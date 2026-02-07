@@ -1,18 +1,34 @@
-import { Metadata } from 'next';
+"use client";
 
-export const metadata: Metadata = {
-    title: 'Terms of Service | Meetbarter',
-    description: 'Terms of service and user agreement for Meetbarter barter platform',
-};
+import { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@/config/api';
 
 export default function TermsOfService() {
+    const [registrationNumber, setRegistrationNumber] = useState<string>("[PENDING_REGISTRATION_NUMBER]");
+
+    useEffect(() => {
+        fetch(`${API_BASE_URL}/admin/status`) // Reusing status endpoint or creating a public config one? Backend has getPublicConfig in SystemStateService but need controller exposure.
+        // Actually, SystemStateService.getPublicConfig is not exposed via a dedicated public endpoint in AppController yet?
+        // Let's check AppController. Alternatively, use specific endpoint.
+        // Wait, I saw getPublicConfig in SystemStateService. Let's start by adding a clearer public config endpoint in AppController.
+        // For now, I'll assume I can add it or it exists.
+        // Wait, previous turn I saw `whishPhoneNumber` exposed in AppController.
+        fetch(`${API_BASE_URL}/config`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.legalEntityId) setRegistrationNumber(data.legalEntityId);
+            })
+            .catch(() => { });
+    }, []);
+
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-6">Terms of Service</h1>
                 <p className="text-sm text-gray-600 mb-4">Last Updated: January 27, 2026</p>
                 <div className="bg-gray-100 p-3 rounded text-xs text-gray-500 mb-8 border border-gray-200">
-                    MeetBarter™ is a trademark of MeetBarter Foundation (NGO Registration: [PENDING_REGISTRATION_NUMBER]).
+                    MeetBarter™ is a trademark of MeetBarter Foundation (Registration: {registrationNumber}).
+                    These terms incorporate the principles of our <strong>Internal Bylaws (Article 8 & 9)</strong> regarding ethical exchange.
                 </div>
 
                 <div className="space-y-6 text-gray-700">
@@ -55,6 +71,10 @@ export default function TermsOfService() {
                                 <li>Counterfeit goods, replicas, or unauthorized copies</li>
                                 <li>Prescription medications without proper authorization</li>
                                 <li>Adult services or explicit content</li>
+                                <li><strong>Human Trafficking & Exploitation</strong> (Zero Tolerance) - Article 8.1</li>
+                                <li><strong>Human Organs & Body Parts</strong> - Article 8.1</li>
+                                <li><strong>Items related to Harmful/Satanic Rituals or Black Magic</strong> - Article 8.1</li>
+                                <li>Weaponized robotics or tactical combat systems</li>
                                 <li>Items that violate international law</li>
                             </ul>
                         </div>

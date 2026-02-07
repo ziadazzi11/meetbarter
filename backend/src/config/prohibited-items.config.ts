@@ -22,6 +22,9 @@ export const PROHIBITED_CATEGORIES = {
     ALCOHOL: 'alcohol',
     MILITARY: 'military',
     ROBOTICS: 'robotics',
+    HUMAN_TRAFFICKING: 'human_trafficking',
+    HUMAN_ORGANS: 'human_organs',
+    SATANIC_RITUALS: 'satanic_rituals',
 } as const;
 
 /**
@@ -143,6 +146,27 @@ export const GLOBAL_PROHIBITED_KEYWORDS = {
         'weaponized robot', 'combat drone', 'attack drone', 'armed robot',
         'killer robot', 'sentry gun', 'military drone', 'tactical robot',
     ],
+
+    // Human Trafficking & Exploitation
+    [PROHIBITED_CATEGORIES.HUMAN_TRAFFICKING]: [
+        'slave', 'human for sale', 'person for sale', 'domestic helper transfer',
+        'maid for sale', 'passport retention', 'kafala transfer', 'forced labor',
+        'trafficking', 'sex slave', 'selling people',
+    ],
+
+    // Human Organs & Tissue
+    [PROHIBITED_CATEGORIES.HUMAN_ORGANS]: [
+        'kidney', 'lung', 'liver', 'heart', 'cornea', 'blood', 'plasma',
+        'human organ', 'human tissue', 'body part', 'selling kidney',
+        'organ transplant', 'surrogacy',
+    ],
+
+    // Satanic Rituals & Occult Harm
+    [PROHIBITED_CATEGORIES.SATANIC_RITUALS]: [
+        'satanic ritual', 'black magic', 'voodoo doll', 'cursed item',
+        'spell casting', 'hex', 'occult sacrifice', 'demon summoning',
+        'witchcraft supplies', 'satanist', 'ritual blood',
+    ],
 };
 
 /**
@@ -175,6 +199,9 @@ export const CATEGORY_SEVERITY_MAP = {
     [PROHIBITED_CATEGORIES.ROBOTICS]: MODERATION_SEVERITY.AUTO_REJECT,
     [PROHIBITED_CATEGORIES.ALCOHOL]: MODERATION_SEVERITY.AUTO_REJECT,
     [PROHIBITED_CATEGORIES.TOBACCO]: MODERATION_SEVERITY.MEDIUM_RISK,
+    [PROHIBITED_CATEGORIES.HUMAN_TRAFFICKING]: MODERATION_SEVERITY.AUTO_REJECT,
+    [PROHIBITED_CATEGORIES.HUMAN_ORGANS]: MODERATION_SEVERITY.AUTO_REJECT,
+    [PROHIBITED_CATEGORIES.SATANIC_RITUALS]: MODERATION_SEVERITY.AUTO_REJECT,
 } as const;
 
 /**
