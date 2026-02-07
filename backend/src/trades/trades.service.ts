@@ -32,6 +32,12 @@ export class TradesService {
         categoryId: listing.categoryId,
         offerVP,
         status: 'AWAITING_FEE', // Gated state
+        timeline: {
+          create: {
+            state: 'AWAITING_FEE',
+            metadata: JSON.stringify({ offerVP })
+          }
+        }
       },
     });
 
@@ -57,6 +63,15 @@ export class TradesService {
     await this.prisma.listing.update({
       where: { id: trade.listingId },
       data: { status: 'RESERVED' }
+    });
+
+    // 3. Log Timeline
+    await this.prisma.tradeTimeline.create({
+      data: {
+        tradeId,
+        state: 'OFFER_MADE',
+        metadata: JSON.stringify({ userId })
+      }
     });
 
     // 3. Create/Find Conversation (Now allowed)

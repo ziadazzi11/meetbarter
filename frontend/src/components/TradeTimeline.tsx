@@ -13,12 +13,13 @@ interface TradeTimelineProps {
 }
 
 const TIMELINE_STATES = [
-    { key: 'OFFER_SENT', label: 'Offer Sent', icon: '📨' },
+    { key: 'AWAITING_FEE', label: 'Fee Pending', icon: '⏳' },
+    { key: 'OFFER_MADE', label: 'Offer Sent', icon: '📨' },
     { key: 'OFFER_ACCEPTED', label: 'Accepted', icon: '✅' },
     { key: 'ITEMS_LOCKED', label: 'Items Locked', icon: '🔒' },
+    { key: 'TRADE_VERIFIED', label: 'Verified', icon: '✨' },
     { key: 'MEETUP_AGREED', label: 'Meetup Set', icon: '📍' },
-    { key: 'TRADE_COMPLETED', label: 'Completed', icon: '🤝' },
-    { key: 'TRADE_VERIFIED', label: 'Verified', icon: '✨' }
+    { key: 'TRADE_COMPLETED', label: 'Completed', icon: '🤝' }
 ];
 
 export default function TradeTimeline({ timeline, variant = 'horizontal' }: TradeTimelineProps) {

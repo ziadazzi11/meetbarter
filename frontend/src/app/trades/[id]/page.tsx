@@ -220,7 +220,7 @@ export default function TradeDetails() {
         </div>
     );
 
-    const lastState = trade.timeline?.[trade.timeline.length - 1]?.state || 'OFFER_SENT';
+    const lastState = trade.timeline?.[trade.timeline.length - 1]?.state || 'OFFER_MADE';
     const isBuyer = trade.buyerId === DEMO_USER_ID;
     // const isSeller = trade.sellerId === DEMO_USER_ID;
     const otherParty = isBuyer ? trade.seller : trade.buyer;
