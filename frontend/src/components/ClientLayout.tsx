@@ -23,15 +23,19 @@ import { ToastProvider, ToastContainer } from "@/context/ToastContext";
 import BackgroundAudio from "@/components/BackgroundAudio";
 
 import { AuthProvider } from "@/context/AuthContext";
+import { SocketProvider } from "@/context/SocketContext";
+import ChatWidget from "@/components/Chat/ChatWidget";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
     return (
         <ThemeProvider>
             <AuthProvider>
                 <AudioProvider>
-                    <ToastProvider>
-                        <ThemedContent>{children}</ThemedContent>
-                    </ToastProvider>
+                    <SocketProvider>
+                        <ToastProvider>
+                            <ThemedContent>{children}</ThemedContent>
+                        </ToastProvider>
+                    </SocketProvider>
                 </AudioProvider>
             </AuthProvider>
         </ThemeProvider>
@@ -48,6 +52,7 @@ function ThemedContent({ children }: { children: React.ReactNode }) {
             <RouteThemeController />
             <BackgroundAudio />
             <SacredGeometryOverlay />
+            <ChatWidget />
             <div className="flex-grow">
                 {children}
             </div>
