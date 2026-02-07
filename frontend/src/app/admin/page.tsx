@@ -29,22 +29,6 @@ interface Trade {
     justification: string;
 }
 
-interface AuditLog {
-    id: string;
-    action: string;
-    details: string;
-    adminId: string;
-    createdAt: string;
-}
-
-interface SuccessorStatus {
-    fullName: string;
-    isUnlocked: boolean;
-    unlockDate: string;
-    isEligibleTime: boolean;
-    timeRemainingMs: number;
-}
-
 interface BusinessRequest {
     id: string;
     fullName: string;
@@ -113,6 +97,44 @@ interface LicenseRequest {
 
 type Protocol = "COMMAND_CENTER" | "TECHNICAL" | "COMPLIANCE" | "LEGAL" | "BOARD" | "AUDITOR" | "STRATEGIC";
 
+interface AdminConfig {
+    feePercentage: number;
+    laborBaseline: number;
+    ambassadorTradeThreshold?: number;
+    legalEntityId?: string;
+    [key: string]: string | number | undefined;
+}
+
+interface Intelligence {
+    anomaliesDetected: boolean;
+    topSearches: { intentVector: string; _count: { _all: number } }[];
+    opportunityCategories: { category: { name: string }; opportunityIndex: number }[];
+    liquidityHealth: { category: { name: string }; tradeVelocity: number }[];
+    trustRisk: { fullName: string; userId: string; totalTrades: number; riskScore: number }[];
+    economicPulse: { velocity: number; totalVolumeVP: number; circulationVP: number };
+}
+
+interface CityPulse {
+    city: string;
+    country: string;
+    isCrisisActive: boolean;
+}
+
+interface BusinessRegistryEntry {
+    id: string;
+    businessName: string;
+    fullName: string;
+    verificationLevel: number;
+    globalTrustScore: number;
+    createdAt: string;
+}
+
+interface ForensicResults {
+    userId: string;
+    auditLogs: { action: string; createdAt: string; ipAddress: string }[];
+    tradeActivity: { id: string; status: string; operationCosts: unknown[] }[];
+}
+
 export default function AdminPage() {
     const [protocol, setProtocol] = useState<Protocol>("COMMAND_CENTER");
     const [loading, setLoading] = useState(true);
@@ -128,10 +150,9 @@ export default function AdminPage() {
     const [newFingerprint, setNewFingerprint] = useState("");
 
     // Data State
-    const [logs, setLogs] = useState<AuditLog[]>([]);
+    const [logs, setLogs] = useState<{ id: string; action: string; details: string; adminId: string; createdAt: string }[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
-    const [config, setConfig] = useState<any>({ feePercentage: 15, laborBaseline: 6 });
-    const [pendingTrades, setPendingTrades] = useState<Trade[]>([]);
+    const [config, setConfig] = useState<AdminConfig & Record<string, string | number | undefined>>({ feePercentage: 15, laborBaseline: 6 });
     const [disputedTrades, setDisputedTrades] = useState<Trade[]>([]);
     const [pendingBusinesses, setPendingBusinesses] = useState<BusinessRequest[]>([]);
     const [pendingCommunity, setPendingCommunity] = useState<CommunityRequest[]>([]);
@@ -140,13 +161,11 @@ export default function AdminPage() {
     const [pendingLicenses, setPendingLicenses] = useState<LicenseRequest[]>([]);
     const [submittedBounties, setSubmittedBounties] = useState<Bounty[]>([]);
     const [moderationFlags, setModerationFlags] = useState<ModerationFlag[]>([]);
-    const [cityPulse, setCityPulse] = useState<any[]>([]);
-    const [intelligence, setIntelligence] = useState<any>(null);
-    const [allocations, setAllocations] = useState<{ [tradeId: string]: { bucket: string; amountVP: number; justification: string }[] }>({});
+    const [cityPulse, setCityPulse] = useState<CityPulse[]>([]);
+    const [intelligence, setIntelligence] = useState<Intelligence | null>(null);
     const [perfLogs, setPerfLogs] = useState<{ method: string; url: string; duration: number; timestamp: Date }[]>([]);
-    const [businessRegistry, setBusinessRegistry] = useState<any[]>([]);
-    const [forensicResults, setForensicResults] = useState<any>(null);
-    const [forensicSearchTerm, setForensicSearchTerm] = useState("");
+    const [businessRegistry, setBusinessRegistry] = useState<BusinessRegistryEntry[]>([]);
+    const [forensicResults, setForensicResults] = useState<ForensicResults | null>(null);
     const socketRef = useRef<Socket | null>(null);
 
     // Grant State
@@ -178,7 +197,7 @@ export default function AdminPage() {
     const fetchConfig = useCallback(() => {
         fetch(`${API_BASE_URL}/admin/config`)
             .then(res => res.json())
-            .then(data => setConfig((prev: any) => ({ ...prev, ...data })));
+            .then(data => setConfig(prev => ({ ...prev, ...data })));
     }, []);
 
     const fetchHeirConfig = async () => {
@@ -194,9 +213,9 @@ export default function AdminPage() {
             });
             if (res.ok) {
                 const data = await res.json();
-                setConfig((prev: any) => ({ ...prev, ...data }));
+                setConfig((prev: AdminConfig) => ({ ...prev, ...data }));
             }
-        } catch (err) { }
+        } catch { }
     };
 
     const fetchCityPulse = useCallback(() => {
@@ -204,12 +223,6 @@ export default function AdminPage() {
             .then(res => res.json())
             .then(setCityPulse)
             .catch(() => { });
-    }, []);
-
-    const fetchPendingTrades = useCallback(() => {
-        fetch(`${API_BASE_URL}/admin/trades`)
-            .then(res => res.json())
-            .then(setPendingTrades);
     }, []);
 
     const fetchDisputes = useCallback(() => {
@@ -285,7 +298,7 @@ export default function AdminPage() {
                 setForensicResults(data);
                 setProtocol("STRATEGIC"); // Focus on tactical view
             }
-        } catch (err) { }
+        } catch { }
         setLoading(false);
     };
 
@@ -317,7 +330,6 @@ export default function AdminPage() {
             .finally(() => setLoading(false));
 
         fetchAuditLogs();
-        fetchPendingTrades();
         fetchConfig();
         fetchCategories();
         fetchCityPulse();
@@ -331,7 +343,7 @@ export default function AdminPage() {
         fetchDisputes();
         fetchIntelligence();
         fetchBusinessRegistry();
-    }, [fetchAuditLogs, fetchPendingTrades, fetchConfig, fetchCategories, fetchCityPulse, fetchPendingBusinesses, fetchPendingCommunity, fetchPendingAmbassadors, fetchPendingLicenses, fetchBounties, fetchModerationFlags, fetchDisputes, fetchIntelligence, fetchBusinessRegistry]);
+    }, [fetchAuditLogs, fetchConfig, fetchCategories, fetchCityPulse, fetchPendingBusinesses, fetchPendingCommunity, fetchPendingAmbassadors, fetchPendingSubscriptions, fetchPendingLicenses, fetchBounties, fetchModerationFlags, fetchDisputes, fetchIntelligence, fetchBusinessRegistry]);
 
     // --- ACTION HANDLERS ---
 
@@ -347,7 +359,8 @@ export default function AdminPage() {
             setFrozen(newStatus);
             setMessage(`System is now ${newStatus ? "FROZEN ❄️" : "ACTIVE ✅"}`);
             fetchAuditLogs();
-        } catch (err: any) { alert(err.message); }
+            alert("Success!");
+        } catch (err: unknown) { alert(err instanceof Error ? err.message : "Action Failed"); }
     };
 
     const handleRotateCodes = async () => {
@@ -360,7 +373,7 @@ export default function AdminPage() {
             });
             if (!res.ok) throw new Error("Key Rotation Failed");
             alert("Success!");
-        } catch (err: any) { alert(err.message); }
+        } catch (err: unknown) { alert(err instanceof Error ? err.message : "Action Failed"); }
     };
 
     const handleSaveCategory = async (cat: Category) => {
@@ -371,14 +384,19 @@ export default function AdminPage() {
                 body: JSON.stringify({ ...cat, code1, fingerprintCode })
             });
             if (res.ok) alert("Category updated.");
-        } catch (err) { alert("Error."); }
+        } catch { alert("Error."); }
     };
 
     const handleUpdateCat = (catId: string, field: keyof Category, value: string) => {
         const next = [...categories];
         const i = next.findIndex(c => c.id === catId);
         if (i !== -1) {
-            (next[i] as any)[field] = field === 'escrowPercentage' ? parseFloat(value) : parseInt(value);
+            if (field === 'escrowPercentage') {
+                next[i][field] = parseFloat(value);
+            } else {
+                // TypeScript limitation: numeric fields need explicit casting
+                (next[i][field] as number) = parseInt(value);
+            }
             setCategories(next);
         }
     };
@@ -392,7 +410,7 @@ export default function AdminPage() {
                 body: JSON.stringify({ city, country, active: !currentStatus, code1, fingerprintCode })
             });
             if (res.ok) fetchCityPulse();
-        } catch (err) { }
+        } catch { }
     };
 
     const handleApproveBusiness = async (userId: string, name: string) => {
@@ -407,7 +425,7 @@ export default function AdminPage() {
             if (!res.ok) throw new Error("Approval Failed: Security Codes possibly invalid.");
             fetchPendingBusinesses();
             alert("Business Approved & Referrer Rewarded.");
-        } catch (err: any) { alert(err.message); }
+        } catch (err: unknown) { alert(err instanceof Error ? err.message : "Action Failed"); }
     };
 
     const handleApproveCommunity = async (req: CommunityRequest) => {
@@ -415,7 +433,7 @@ export default function AdminPage() {
         try {
             await fetch(`${API_BASE_URL}/users/${req.id}/approve-community`, { method: "PUT" });
             fetchPendingCommunity();
-        } catch (err) { }
+        } catch { }
     };
 
     const handleApproveAmbassador = async (user: AmbassadorRequest) => {
@@ -429,7 +447,7 @@ export default function AdminPage() {
             if (!res.ok) throw new Error("Ambassador Onboarding Failed");
             fetchPendingAmbassadors();
             alert("Ambassador Protocol Activated.");
-        } catch (err: any) { alert(err.message); }
+        } catch (err: unknown) { alert(err instanceof Error ? err.message : "Action Failed"); }
     };
 
     const handleResolveDispute = async (tradeId: string, action: "RELEASE" | "REFUND") => {
@@ -443,7 +461,7 @@ export default function AdminPage() {
             });
             fetchDisputes();
             fetchAuditLogs();
-        } catch (err) { }
+        } catch { }
     };
 
     const handleFlagAction = async (flagId: string, action: "approve" | "reject") => {
@@ -454,7 +472,7 @@ export default function AdminPage() {
                 body: JSON.stringify({ code1, fingerprintCode })
             });
             fetchModerationFlags();
-        } catch (err) { }
+        } catch { }
     };
 
     const handleGrant = async () => {
@@ -465,7 +483,7 @@ export default function AdminPage() {
                 body: JSON.stringify({ email: grantEmail, amount: grantAmount, reason: grantReason, code1, fingerprintCode })
             });
             if (res.ok) { alert("Grant Issued."); fetchAuditLogs(); }
-        } catch (err) { }
+        } catch { }
     };
 
     const handleVerifySubscription = async (subId: string) => {
@@ -479,7 +497,7 @@ export default function AdminPage() {
             });
             alert("Subscription Verified!");
             fetchPendingSubscriptions();
-        } catch (err: any) { alert(err.message); }
+        } catch (err: unknown) { alert(err instanceof Error ? err.message : "Action Failed"); }
     };
 
     const handleVerifyLicense = async (licenseId: string) => {
@@ -494,7 +512,7 @@ export default function AdminPage() {
             if (!res.ok) throw new Error("Verification Failed");
             alert("License Verified! User upgraded to Level 3.");
             fetchPendingLicenses();
-        } catch (err: any) { alert(err.message); }
+        } catch (err: unknown) { alert(err instanceof Error ? err.message : "Action Failed"); }
     };
 
     const handleApproveBounty = async (id: string) => {
@@ -505,7 +523,7 @@ export default function AdminPage() {
                 body: JSON.stringify({ code1, fingerprintCode })
             });
             fetchBounties();
-        } catch (err) { }
+        } catch { }
     };
 
     const handleExportVault = async () => {
@@ -522,17 +540,7 @@ export default function AdminPage() {
             a.href = url;
             a.download = "vault_export.json";
             a.click();
-        } catch (err) { }
-    };
-
-    const handleExportAudit = () => {
-        const csvRows = ["ID,Action,Admin,Date", ...logs.map(l => `${l.id},${l.action},${l.adminId},${l.createdAt}`)];
-        const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "audit.csv";
-        a.click();
+        } catch { }
     };
 
     const handleUpdateConfig = async () => {
@@ -543,7 +551,7 @@ export default function AdminPage() {
                 body: JSON.stringify({ ...config, code1, fingerprintCode })
             });
             alert("Updated.");
-        } catch (err) { }
+        } catch { }
     };
 
     // --- RENDER HELPERS ---
@@ -590,7 +598,7 @@ export default function AdminPage() {
                 <div className="admin-notice">
                     <strong>Notice:</strong> All administrative actions are recorded in the tamper-evident SHA-256 Audit Ledger.
                 </div>
-                
+
                 <div className="mb-8">
                     <OtpQueueWidget />
                 </div>
@@ -636,8 +644,9 @@ export default function AdminPage() {
                     <h2>⚙️ System Configuration</h2>
                     <div className="admin-grid mb-4">
                         <div className="admin-input-group">
-                            <label>Ambassador Trade Threshold</label>
+                            <label htmlFor="ambassador-threshold">Ambassador Trade Threshold</label>
                             <input
+                                id="ambassador-threshold"
                                 type="number"
                                 className="admin-input"
                                 value={config.ambassadorTradeThreshold || 100}
@@ -645,8 +654,9 @@ export default function AdminPage() {
                             />
                         </div>
                         <div className="admin-input-group">
-                            <label>Legal Entity ID (NGO/Agricultural)</label>
+                            <label htmlFor="legal-entity-id">Legal Entity ID (NGO/Agricultural)</label>
                             <input
+                                id="legal-entity-id"
                                 type="text"
                                 className="admin-input"
                                 value={config.legalEntityId || ""}
@@ -842,8 +852,8 @@ export default function AdminPage() {
                     </table>
                 </section>
 
-                <section className="admin-section section-green" style={{ borderColor: "#16a34a" }}>
-                    <h2 style={{ color: "#15803d" }}>🏢 Verified Business Registry</h2>
+                <section className="admin-section section-green border-[#16a34a]">
+                    <h2 className="text-[#15803d]">🏢 Verified Business Registry</h2>
                     <p className="text-[10px] text-gray-400 mb-4 italic">Public transparency list for Ambassadors and Users.</p>
                     <div className="space-y-1">
                         {businessRegistry.map(b => (
@@ -917,14 +927,14 @@ export default function AdminPage() {
                                 <input
                                     className="admin-input mb-2 text-sm"
                                     placeholder={`Full Name of Heir ${nu}`}
-                                    value={(config as any)[`heir${nu}`] || ""}
+                                    value={String(config[`heir${nu}`] || "")}
                                     onChange={e => setConfig({ ...config, [`heir${nu}`]: e.target.value })}
                                 />
                                 <input
                                     className="admin-input text-sm"
                                     type="password"
                                     placeholder={`Emergency Key ${nu}`}
-                                    value={(config as any)[`heir${nu}Key`] || ""}
+                                    value={String(config[`heir${nu}Key`] || "")}
                                     onChange={e => setConfig({ ...config, [`heir${nu}Key`]: e.target.value })}
                                 />
                             </div>
@@ -979,7 +989,7 @@ export default function AdminPage() {
                                 } else {
                                     alert(data.message);
                                 }
-                            } catch (err) { alert("Failed to connect to protocol handler."); }
+                            } catch { alert("Failed to connect to protocol handler."); }
                         }}
                         className="admin-button bg-black text-white w-full py-3 font-bold"
                     >
@@ -1041,7 +1051,7 @@ export default function AdminPage() {
                     <section className="admin-section">
                         <h2 className="flex items-center gap-2">🔍 Top Intent Clusters</h2>
                         <div className="space-y-3 mt-4">
-                            {intelligence?.topSearches?.map((s: any, i: number) => {
+                            {intelligence?.topSearches?.map((s, i: number) => {
                                 const vector = s.intentVector ? JSON.parse(s.intentVector) : {};
                                 const label = Object.keys(vector).join(', ') || 'General Interest';
                                 return (
@@ -1066,7 +1076,9 @@ export default function AdminPage() {
                                         <span className="text-orange-600 font-black">{cat.opportunityIndex}/100</span>
                                     </div>
                                     <div className="w-full bg-orange-200 h-1.5 rounded-full overflow-hidden">
-                                        <div className="bg-orange-600 h-full" style={{ width: `${cat.opportunityIndex}%` }}></div>
+                                        <svg className="w-full h-full text-orange-600 fill-current">
+                                            <rect width={`${cat.opportunityIndex}%`} height="100%" rx="999" />
+                                        </svg>
                                     </div>
                                 </div>
                             ))}
@@ -1085,7 +1097,9 @@ export default function AdminPage() {
                                         <span className="text-green-600 font-bold">{(cat.tradeVelocity * 100).toFixed(1)}%</span>
                                     </div>
                                     <div className="w-full bg-green-200 h-1.5 rounded-full overflow-hidden">
-                                        <div className="bg-green-600 h-full" style={{ width: `${Math.min(cat.tradeVelocity * 100, 100)}%` }}></div>
+                                        <svg className="w-full h-full text-green-600 fill-current">
+                                            <rect width={`${Math.min(cat.tradeVelocity * 100, 100)}%`} height="100%" rx="999" />
+                                        </svg>
                                     </div>
                                 </div>
                             ))}
@@ -1147,53 +1161,55 @@ export default function AdminPage() {
                         </div>
                         <div className="p-4 border border-slate-700 rounded-lg">
                             <div className="text-slate-500 text-[10px] uppercase font-bold mb-1">Total Circulation</div>
-                            <div className="text-2xl font-black text-indigo-400">{(intelligence?.economicPulse?.circulationVP / 1000)?.toFixed(1) || '0'}k VP</div>
+                            <div className="text-2xl font-black text-indigo-400">{((intelligence?.economicPulse?.circulationVP ?? 0) / 1000).toFixed(1)}k VP</div>
                         </div>
                         <div className="p-4 border border-slate-700 rounded-lg">
                             <div className="text-slate-500 text-[10px] uppercase font-bold mb-1">System Stagnation</div>
-                            <div className="text-2xl font-black text-red-500">{(intelligence?.economicPulse?.velocity < 0.1) ? 'HIGH' : 'LOW'}</div>
+                            <div className="text-2xl font-black text-red-500">{((intelligence?.economicPulse?.velocity ?? 1) < 0.1) ? 'HIGH' : 'LOW'}</div>
                         </div>
                     </div>
                 </section>
 
-                {forensicResults && (
-                    <section className="admin-section forensic-lab mt-8">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-slate-800">🔬 Forensic Investigation: {forensicResults.userId}</h2>
-                            <button onClick={() => setForensicResults(null)} className="text-xs text-gray-400">Close Scan</button>
-                        </div>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <div>
-                                <h3 className="text-xs font-bold uppercase text-gray-400 mb-4">Audit Ledger Matches</h3>
-                                <div className="space-y-2">
-                                    {forensicResults.auditLogs.map((log: any, i: number) => (
-                                        <div key={i} className="text-[11px] p-2 bg-white border border-gray-100 rounded">
-                                            <span className="font-bold text-blue-600">{log.action}</span> - {new Date(log.createdAt).toLocaleString()}
-                                            <div className="text-gray-400 italic mt-1 font-mono">{log.ipAddress}</div>
-                                        </div>
-                                    ))}
+                {
+                    forensicResults && (
+                        <section className="admin-section forensic-lab mt-8">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-slate-800">🔬 Forensic Investigation: {forensicResults.userId}</h2>
+                                <button onClick={() => setForensicResults(null)} className="text-xs text-gray-400">Close Scan</button>
+                            </div>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <div>
+                                    <h3 className="text-xs font-bold uppercase text-gray-400 mb-4">Audit Ledger Matches</h3>
+                                    <div className="space-y-2">
+                                        {forensicResults.auditLogs.map((log, i: number) => (
+                                            <div key={i} className="text-[11px] p-2 bg-white border border-gray-100 rounded">
+                                                <span className="font-bold text-blue-600">{log.action}</span> - {new Date(log.createdAt).toLocaleString()}
+                                                <div className="text-gray-400 italic mt-1 font-mono">{log.ipAddress}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 className="text-xs font-bold uppercase text-gray-400 mb-4">Recent Trade Behavior</h3>
+                                    <div className="space-y-4">
+                                        {forensicResults.tradeActivity.map((trade, i: number) => (
+                                            <div key={i} className="forensic-activity-card">
+                                                <div className="flex justify-between text-xs font-bold mb-2">
+                                                    <span>Trade {trade.id.slice(0, 8)}</span>
+                                                    <span className="text-blue-600">{trade.status}</span>
+                                                </div>
+                                                <div className="text-[10px] text-gray-500">
+                                                    {trade.operationCosts.length} Security Checkpoints Triggered.
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
-                            <div>
-                                <h3 className="text-xs font-bold uppercase text-gray-400 mb-4">Recent Trade Behavior</h3>
-                                <div className="space-y-4">
-                                    {forensicResults.tradeActivity.map((trade: any, i: number) => (
-                                        <div key={i} className="forensic-activity-card">
-                                            <div className="flex justify-between text-xs font-bold mb-2">
-                                                <span>Trade {trade.id.slice(0, 8)}</span>
-                                                <span className="text-blue-600">{trade.status}</span>
-                                            </div>
-                                            <div className="text-[10px] text-gray-500">
-                                                {trade.operationCosts.length} Security Checkpoints Triggered.
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                )}
-            </div>
+                        </section>
+                    )
+                }
+            </div >
         );
     }
 
