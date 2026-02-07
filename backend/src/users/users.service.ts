@@ -119,7 +119,8 @@ export class UsersService {
                 data: {
                     status,
                     adminNotes,
-                    lastVerifiedAt: new Date()
+                    lastVerifiedAt: new Date(),
+                    updatedAt: new Date()
                 }
             });
 
@@ -128,14 +129,17 @@ export class UsersService {
                     where: { id: license.userId },
                     data: {
                         businessVerificationStatus: 'VERIFIED',
-                        isBusiness: true
+                        isBusiness: true,
+                        verificationLevel: 3, // Level 3: Institutional
+                        subscriptionTier: 'INSTITUTIONAL' // Auto-upgrade to Institutional tier if verified
                     }
                 });
             } else if (status === 'REVOKED' || status === 'REJECTED') {
                 await tx.user.update({
                     where: { id: license.userId },
                     data: {
-                        businessVerificationStatus: status === 'REVOKED' ? 'REVOKED' : 'REJECTED'
+                        businessVerificationStatus: status === 'REVOKED' ? 'REVOKED' : 'REJECTED',
+                        verificationLevel: status === 'REVOKED' ? 1 : undefined // Downgrade if revoked
                     }
                 });
             }

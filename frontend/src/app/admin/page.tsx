@@ -100,6 +100,16 @@ interface SubscriptionRequest {
     status: string;
 }
 
+interface LicenseRequest {
+    id: string;
+    status: string;
+    evidence: string;
+    businessName: string;
+    registrationNumber: string;
+    permitType: string;
+    user: { fullName: string; email: string };
+}
+
 type Protocol = "COMMAND_CENTER" | "TECHNICAL" | "COMPLIANCE" | "LEGAL" | "BOARD" | "AUDITOR" | "STRATEGIC";
 
 export default function AdminPage() {
@@ -125,7 +135,9 @@ export default function AdminPage() {
     const [pendingBusinesses, setPendingBusinesses] = useState<BusinessRequest[]>([]);
     const [pendingCommunity, setPendingCommunity] = useState<CommunityRequest[]>([]);
     const [pendingAmbassadors, setPendingAmbassadors] = useState<AmbassadorRequest[]>([]);
+    const [pendingAmbassadors, setPendingAmbassadors] = useState<AmbassadorRequest[]>([]);
     const [pendingSubscriptions, setPendingSubscriptions] = useState<SubscriptionRequest[]>([]);
+    const [pendingLicenses, setPendingLicenses] = useState<LicenseRequest[]>([]);
     const [submittedBounties, setSubmittedBounties] = useState<Bounty[]>([]);
     const [moderationFlags, setModerationFlags] = useState<ModerationFlag[]>([]);
     const [cityPulse, setCityPulse] = useState<any[]>([]);
@@ -231,6 +243,13 @@ export default function AdminPage() {
             .catch(() => { });
     }, []);
 
+    const fetchPendingLicenses = useCallback(() => {
+        fetch(`${API_BASE_URL}/users/pending-licenses`)
+            .then(res => res.json())
+            .then(setPendingLicenses)
+            .catch(() => { });
+    }, []);
+
     const fetchBounties = useCallback(() => {
         fetch(`${API_BASE_URL}/bounties`)
             .then(res => res.json())
@@ -306,12 +325,13 @@ export default function AdminPage() {
         fetchPendingCommunity();
         fetchPendingAmbassadors();
         fetchPendingSubscriptions();
+        fetchPendingLicenses();
         fetchBounties();
         fetchModerationFlags();
         fetchDisputes();
         fetchIntelligence();
         fetchBusinessRegistry();
-    }, [fetchAuditLogs, fetchPendingTrades, fetchConfig, fetchCategories, fetchCityPulse, fetchPendingBusinesses, fetchPendingCommunity, fetchPendingAmbassadors, fetchBounties, fetchModerationFlags, fetchDisputes, fetchIntelligence, fetchBusinessRegistry]);
+    }, [fetchAuditLogs, fetchPendingTrades, fetchConfig, fetchCategories, fetchCityPulse, fetchPendingBusinesses, fetchPendingCommunity, fetchPendingAmbassadors, fetchPendingLicenses, fetchBounties, fetchModerationFlags, fetchDisputes, fetchIntelligence, fetchBusinessRegistry]);
 
     // --- ACTION HANDLERS ---
 
@@ -457,6 +477,21 @@ export default function AdminPage() {
             });
             alert("Subscription Verified!");
             fetchPendingSubscriptions();
+        } catch (err: any) { alert(err.message); }
+    };
+
+    const handleVerifyLicense = async (licenseId: string) => {
+        if (!confirm("Verify this Institutional License? This grants Level 3 status.")) return;
+        try {
+            const adminId = "9d2c7649-9cf0-48fb-889a-1369e20615a6";
+            const res = await fetch(`${API_BASE_URL}/users/${licenseId}/verify-license`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ adminId, status: "VERIFIED", notes: "Verified via Admin Panel" })
+            });
+            if (!res.ok) throw new Error("Verification Failed");
+            alert("License Verified! User upgraded to Level 3.");
+            fetchPendingLicenses();
         } catch (err: any) { alert(err.message); }
     };
 
@@ -639,6 +674,38 @@ export default function AdminPage() {
                                     <td><button onClick={() => handleApproveBusiness(biz.id, biz.businessName)} className="admin-button-small">Approve</button></td>
                                 </tr>
                             ))}
+                        </tbody>
+                    </table>
+                </section>
+
+                <section className="admin-section">
+                    <h2>📜 Institutional Licenses (Level 3)</h2>
+                    <table className="admin-table">
+                        <thead><tr><th>Business</th><th>License Details</th><th>Evidence</th><th>Action</th></tr></thead>
+                        <tbody>
+                            {pendingLicenses.map(lic => (
+                                <tr key={lic.id}>
+                                    <td>
+                                        <div className="font-bold">{lic.businessName}</div>
+                                        <div className="text-xs text-gray-500">{lic.user.fullName}</div>
+                                    </td>
+                                    <td>
+                                        <div className="text-xs">
+                                            <div><strong>Reg:</strong> {lic.registrationNumber}</div>
+                                            <div><strong>Type:</strong> {lic.permitType}</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="text-xs truncate max-w-[150px]">{lic.evidence}</div>
+                                    </td>
+                                    <td>
+                                        <button onClick={() => handleVerifyLicense(lic.id)} className="admin-button-small bg-green-600 text-white">Verify Level 3</button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {pendingLicenses.length === 0 && (
+                                <tr><td colSpan={4} className="text-center text-gray-400 italic py-4">No pending licenses</td></tr>
+                            )}
                         </tbody>
                     </table>
                 </section>

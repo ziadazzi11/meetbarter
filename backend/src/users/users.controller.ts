@@ -57,6 +57,16 @@ export class UsersController {
         return this.usersService.findPendingCommunityVerifications();
     }
 
+    @Get('pending-licenses')
+    getPendingLicenses() {
+        return this.usersService.findPendingLicenses();
+    }
+
+    @Put(':id/verify-license')
+    verifyLicense(@Param('id') id: string, @Body() body: { adminId: string; status: 'VERIFIED' | 'REJECTED' | 'REVOKED'; notes?: string }) {
+        return this.usersService.verifyBusinessLicense(id, body.adminId, body.status, body.notes);
+    }
+
     @Get('pending-ambassadors')
     getPendingAmbassadors() {
         return this.usersService.findPendingAmbassadors();
