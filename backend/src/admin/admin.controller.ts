@@ -339,15 +339,7 @@ export class AdminController {
         return this.tradesService.resolveDispute(id, action, reason, 'SYSTEM_ADMIN');
     }
 
-    @Get('audit-logs')
-    @UseGuards(JwtAuthGuard, PermissionGuard)
-    @Permissions(Permission.EXPORT_AUDIT)
-    async getAuditLogs() {
-        return this.prisma.auditLog.findMany({
-            orderBy: { createdAt: 'desc' },
-            take: 50
-        });
-    }
+
 
     @Get('pending-businesses')
     @UseGuards(JwtAuthGuard, PermissionGuard)
@@ -620,5 +612,25 @@ export class AdminController {
             where: { id: 1 },
             data: { lastAdminActivity: new Date() } as any
         });
+    }
+
+    @Get('otp-queue')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.VIEW_AUDITS)
+    getOtpQueue() {
+        return this.usersService.getOtpQueue();
+    }
+
+    @Get('audit-logs')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.VIEW_AUDITS)
+
+    async getAuditLogs() {
+        const logs = await this.prisma.auditLog.findMany({
+            take: 50,
+            orderBy: { createdAt: 'desc' },
+        });
+        const count = await this.prisma.auditLog.count();
+        return { logs, count };
     }
 }

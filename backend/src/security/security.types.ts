@@ -43,6 +43,7 @@ export enum Permission {
     VERIFY_LEDGER = 'VERIFY_LEDGER',
     MONITOR_HEARTBEAT = 'MONITOR_HEARTBEAT',
     EXPORT_AUDIT = 'EXPORT_AUDIT',
+    VIEW_AUDITS = 'VIEW_AUDITS', // Dashboard access
     ACCESS_INTEL = 'ACCESS_INTEL',       // Strategic dashboard access
     MANAGE_FINANCE = 'MANAGE_FINANCE',     // VP credits and grant adjustments
     BAN_USER = 'BAN_USER',                 // Suspend user accounts

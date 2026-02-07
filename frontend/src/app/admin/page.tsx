@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import Link from "next/link";
 import { API_BASE_URL } from "@/config/api";
+import OtpQueueWidget from "@/components/admin/OtpQueueWidget";
 import "./admin.css";
 
 interface Category {
@@ -589,6 +590,11 @@ export default function AdminPage() {
                 <div className="admin-notice">
                     <strong>Notice:</strong> All administrative actions are recorded in the tamper-evident SHA-256 Audit Ledger.
                 </div>
+                
+                <div className="mb-8">
+                    <OtpQueueWidget />
+                </div>
+
                 <div className="admin-portal-grid">
                     {renderProtocolCard("TECHNICAL", "Technical Handover (CTO)", "Lead Developer focus: server maintenance, master key security.", "🛠️", "portal-tech")}
                     {renderProtocolCard("COMPLIANCE", "Compliance Verification", "Operations Lead focus: NGO registration and Level 2/3 verification.", "📋", "portal-compliance")}
@@ -1195,23 +1201,14 @@ export default function AdminPage() {
         return (
             <div className="admin-container">
                 {renderPortalHeader("Audit Logs", "Monitoring & Transparency")}
-                <section className="admin-section">
-                    <div className="flex justify-between mb-4">
-                        <h2>📊 Audit Feed</h2>
-                        <button onClick={handleExportAudit} className="admin-button-small bg-amber-600">Export CSV</button>
-                    </div>
-                    <table className="admin-table">
-                        <thead><tr><th>Action</th><th>Date</th></tr></thead>
-                        <tbody>
-                            {logs.slice(0, 50).map(l => (
-                                <tr key={l.id}>
-                                    <td>{l.action}</td>
-                                    <td className="text-xs">{new Date(l.createdAt).toLocaleString()}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </section>
+                <div className="admin-section text-center py-12">
+                    <h2 className="text-2xl font-bold text-gray-700 mb-4">security Audit Logs</h2>
+                    <p className="text-gray-500 mb-8">View detailed system logs and security events in the dedicated dashboard.</p>
+                    <Link href="/admin/audits" className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition-colors">
+                        Open Audit Dashboard
+                    </Link>
+                </div>
+
 
                 <section className="admin-section border-t-4 border-blue-500">
                     <div className="flex justify-between items-center mb-4">
@@ -1239,7 +1236,7 @@ export default function AdminPage() {
                         )}
                     </div>
                 </section>
-            </div>
+            </div >
         );
     }
 

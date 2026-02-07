@@ -13,14 +13,24 @@ interface UserProfile {
     createdAt: string;
     completedTrades: number;
     activeListing: number;
+    phoneNumber?: string;
+    phoneVerified: boolean;
 }
+
+import { API_BASE_URL } from '@/config/api';
+import { useAuth } from '@/context/AuthContext';
+import { PhoneVerificationModal } from '@/components/PhoneVerificationModal';
+
+// ... interface UserProfile ...
 
 export default function ProfilePage() {
     const params = useParams();
     const userId = params.id as string;
+    const { user } = useAuth();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [listings, setListings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
 
     useEffect(() => {
         fetchProfile();
@@ -28,7 +38,7 @@ export default function ProfilePage() {
 
     const fetchProfile = async () => {
         try {
-            const response = await fetch(`/api/users/${userId}/profile`);
+            const response = await fetch(`${API_BASE_URL}/users/${userId}/profile`);
             const data = await response.json();
             setProfile(data.profile);
             setListings(data.listings || []);
@@ -91,6 +101,33 @@ export default function ProfilePage() {
                             <p className="text-sm text-gray-500 mt-1">
                                 Member since {new Date(profile.createdAt).toLocaleDateString()}
                             </p>
+
+                            {user?.id === userId && (
+                                <div className="mt-3">
+                                    {profile.phoneVerified ? (
+                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            ✓ Phone Verified
+                                        </span>
+                                    ) : (
+                                        <button
+                                            onClick={() => setIsPhoneModalOpen(true)}
+                                            className="text-sm text-indigo-600 hover:text-indigo-800 font-semibold underline decoration-dotted"
+                                        >
+                                            Verify Phone Number
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+
+                            <PhoneVerificationModal
+                                isOpen={isPhoneModalOpen}
+                                onClose={() => setIsPhoneModalOpen(false)}
+                                userId={userId}
+                                currentPhoneNumber={profile.phoneNumber}
+                                onVerified={() => {
+                                    fetchProfile(); // Refresh to show verified status
+                                }}
+                            />
                         </div>
 
                         {/* Trust Score Badge */}

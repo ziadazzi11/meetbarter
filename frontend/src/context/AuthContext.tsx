@@ -9,6 +9,7 @@ interface User {
     email: string;
     avatarUrl?: string;
     subscriptionTier: string;
+    phoneVerified?: boolean;
 }
 
 interface AuthContextType {

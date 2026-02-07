@@ -20,6 +20,11 @@ export class UsersController {
         return this.usersService.findOne(id);
     }
 
+    @Get(':id/profile')
+    getProfile(@Param('id') id: string) {
+        return this.usersService.getPublicProfile(id);
+    }
+
     @Put(':id/profile')
     @UseGuards(JwtAuthGuard)
     updateProfile(@Param('id') id: string, @Body() body: { bannerUrl?: string; themePreferences?: string; fullName?: string; avatarUrl?: string }) {
@@ -91,6 +96,18 @@ export class UsersController {
     @Permissions(Permission.APPROVE_BUSINESS)
     verifyLicense(@Param('id') id: string, @Body() body: { adminId: string; status: 'VERIFIED' | 'REJECTED' | 'REVOKED'; notes?: string }) {
         return this.usersService.verifyBusinessLicense(id, body.adminId, body.status, body.notes);
+    }
+
+    @Post(':id/verify-phone/request')
+    @UseGuards(JwtAuthGuard)
+    async requestPhoneVerification(@Param('id') id: string, @Body('phoneNumber') phoneNumber: string) {
+        return this.usersService.requestPhoneVerification(id, phoneNumber);
+    }
+
+    @Post(':id/verify-phone/confirm')
+    @UseGuards(JwtAuthGuard)
+    async confirmPhoneVerification(@Param('id') id: string, @Body('phoneNumber') phoneNumber: string, @Body('code') code: string) {
+        return this.usersService.confirmPhoneVerification(id, phoneNumber, code);
     }
 
     @Get('pending-ambassadors')

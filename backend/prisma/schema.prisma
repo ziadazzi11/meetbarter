@@ -80,7 +80,7 @@ model User {
   globalTrustScore Float   @default(1.0) // Base trust multiplier
   walletBalance   Int      @default(0)   // Value Points (VP)
   isSupporter     Boolean  @default(false) // Donations (Badge only)
-  phoneNumber     String?  // Privacy-protected contact info
+
   country         String   @default("Lebanon")
   subscriptionTier String  @default("FREE") // FREE, BUSINESS, PREMIUM
   
@@ -137,6 +137,10 @@ model User {
   avatarUrl        String?
   bannerUrl        String?  // Custom profile background
   themePreferences String?  // JSON: { font: "Inter", cardColor: "#ffffff", textColor: "#000000" }
+
+  // Phone Verification
+  phoneNumber     String?  @unique
+  phoneVerified   Boolean  @default(false)
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -780,4 +784,12 @@ model Contribution {
   createdAt       DateTime @default(now())
   
   @@index([userId])
+}
+
+model OtpCode {
+  id        String   @id @default(uuid())
+  phoneNumber String @unique
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }

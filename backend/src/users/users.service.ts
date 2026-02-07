@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { SecurityService } from '../security/security.service';
 import { EncryptionService } from '../security/encryption.service';
 import { VaultStorageService } from '../security/vault-storage.service';
+import { OtpService } from '../auth/otp.service';
 
 @Injectable()
 export class UsersService {
@@ -10,7 +11,8 @@ export class UsersService {
         private prisma: PrismaService,
         private security: SecurityService,
         private encryption: EncryptionService,
-        private vault: VaultStorageService
+        private vault: VaultStorageService,
+        private otpService: OtpService
     ) { }
 
     // Hardcoded to fetch the 'Demo' user for now
@@ -24,6 +26,97 @@ export class UsersService {
         return this.prisma.user.findUnique({
             where: { id },
         });
+    }
+
+    async getPublicProfile(id: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { id },
+            include: { listings: { where: { status: 'ACTIVE' } } }
+        });
+
+        if (!user) return null;
+
+        const { listings, ...profile } = user;
+        return { profile, listings };
+    }
+
+    async getOtpQueue() {
+        const codes = await this.prisma.otpCode.findMany({
+            orderBy: { createdAt: 'desc' },
+            take: 50
+        });
+
+        const phoneNumbers = codes.map(c => c.phoneNumber);
+        const users = await this.prisma.user.findMany({
+            where: { phoneNumber: { in: phoneNumbers } },
+            select: { id: true, fullName: true, phoneNumber: true, email: true, avatarUrl: true }
+        });
+
+        return codes.map(code => {
+            const user = users.find(u => u.phoneNumber === code.phoneNumber);
+            return {
+                ...code,
+                user: user || null
+            };
+        });
+    }
+
+    async requestPhoneVerification(userId: string, phoneNumber: string) {
+        // Validate phone number format (basic check)
+        if (!phoneNumber || phoneNumber.length < 8) {
+            throw new BadRequestException('Invalid phone number format');
+        }
+
+        // Check if phone is already used by another verified user
+        const existing = await this.prisma.user.findFirst({
+            where: { phoneNumber, phoneVerified: true, NOT: { id: userId } }
+        });
+
+        if (existing) {
+            throw new BadRequestException('This phone number is already verified by another account.');
+        }
+
+        // 🛡️ Log the request
+        await this.security.assessAndLog(userId, {
+            action: 'OTP_REQUESTED',
+            userId,
+            details: { phoneNumber: '***' + phoneNumber.slice(-4) }
+        });
+
+        // Generate OTP
+        await this.otpService.generateOtp(phoneNumber);
+
+        // Update user's phone number (unverified)
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { phoneNumber, phoneVerified: false }
+        });
+
+        return { success: true, message: 'OTP sent successfully' };
+    }
+
+    async confirmPhoneVerification(userId: string, phoneNumber: string, code: string) {
+        // Verify OTP
+        const isValid = await this.otpService.verifyOtp(phoneNumber, code);
+
+        if (isValid) {
+            // Mark user as verified
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: { phoneVerified: true }
+            });
+
+            // Log security event
+            await this.security.assessAndLog(userId, {
+                action: 'PHONE_VERIFIED',
+                userId,
+                details: { phoneNumber: '***' + phoneNumber.slice(-4) }
+            });
+
+            return { success: true, message: 'Phone number verified successfully.' };
+        }
+
+        throw new BadRequestException('Verification failed.');
     }
 
     async requestBusinessVerification(userId: string, businessName: string, evidence: any, referralCode?: string) {
