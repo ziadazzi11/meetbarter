@@ -25,6 +25,7 @@ enum TradeStatus {
   COMPLETED
   DISPUTED
   CANCELLED
+  DISPUTE_RESOLVED
 }
 
 enum ListingStatus {

@@ -4,18 +4,29 @@ import { API_BASE_URL } from "@/config/api";
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
+interface Category {
+    id: string;
+    name: string;
+}
+
+interface CommunityEvent {
+    id: string;
+    title: string;
+    status: string;
+}
+
 interface CreateListingModalProps {
     isOpen: boolean;
     onClose: () => void;
     userId: string;
     onSuccess: () => void;
-    categories: any[];
+    categories: Category[];
     initialType?: 'OFFER' | 'REQUEST';
 }
 
 export default function CreateListingModal({ isOpen, onClose, userId, onSuccess, categories, initialType = 'OFFER' }: CreateListingModalProps) {
     const [loading, setLoading] = useState(false);
-    const [events, setEvents] = useState<{ id: string, title: string }[]>([]);
+    const [events, setEvents] = useState<CommunityEvent[]>([]);
     const [selectedEventId, setSelectedEventId] = useState("");
     const { user, token } = useAuth();
     const router = useRouter();
@@ -34,16 +45,9 @@ export default function CreateListingModal({ isOpen, onClose, userId, onSuccess,
 
     useEffect(() => {
         if (isOpen) {
-            // fetchCategories(); // Categories are passed as a prop, no need to fetch again unless desired
             fetchEvents();
         }
     }, [isOpen]);
-
-    // const fetchCategories = async () => { // This function is not needed if categories are passed as a prop
-    //     const res = await fetch('http://localhost:3000/categories');
-    //     const data = await res.json();
-    //     // setCategories(data); // This would require categories to be a state variable
-    // };
 
     const fetchEvents = async () => {
         try {
@@ -56,7 +60,7 @@ export default function CreateListingModal({ isOpen, onClose, userId, onSuccess,
                 throw new Error('Failed to fetch events');
             }
             const data = await res.json();
-            setEvents(data.filter((e: any) => e.status !== 'COMPLETED'));
+            setEvents(data.filter((e: CommunityEvent) => e.status !== 'COMPLETED'));
         } catch (error) {
             console.error("Error fetching events:", error);
             alert("Failed to load events.");
@@ -127,8 +131,9 @@ export default function CreateListingModal({ isOpen, onClose, userId, onSuccess,
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                                 <input
+                                    id="title"
                                     required
                                     className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                     value={formData.title}
@@ -137,36 +142,39 @@ export default function CreateListingModal({ isOpen, onClose, userId, onSuccess,
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                                 <select
+                                    id="category"
                                     required
                                     className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                                     value={formData.categoryId}
                                     onChange={e => setFormData({ ...formData, categoryId: e.target.value })}
                                 >
                                     <option value="">Select Category</option>
-                                    {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                    {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
                             </div>
 
                             {events.length > 0 && (
                                 <div className="col-span-2 md:col-span-1">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Participate in Event (Optional)</label>
+                                    <label htmlFor="event" className="block text-sm font-medium text-gray-700 mb-1">Participate in Event (Optional)</label>
                                     <select
+                                        id="event"
                                         className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                                         value={selectedEventId}
                                         onChange={e => setSelectedEventId(e.target.value)}
                                     >
                                         <option value="">None</option>
-                                        {events.map((e: any) => <option key={e.id} value={e.id}>{e.title}</option>)}
+                                        {events.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}
                                     </select>
                                 </div>
                             )}
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                             <textarea
+                                id="description"
                                 required
                                 className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 min-h-[100px]"
                                 value={formData.description}
@@ -176,8 +184,9 @@ export default function CreateListingModal({ isOpen, onClose, userId, onSuccess,
 
                         <div className="grid md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">City / Location</label>
+                                <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">City / Location</label>
                                 <input
+                                    id="location"
                                     required
                                     className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                                     value={formData.location}
@@ -186,8 +195,9 @@ export default function CreateListingModal({ isOpen, onClose, userId, onSuccess,
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                                <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">Country</label>
                                 <select
+                                    id="country"
                                     required
                                     className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                                     value={formData.country}
@@ -203,8 +213,9 @@ export default function CreateListingModal({ isOpen, onClose, userId, onSuccess,
 
                         <div className="grid md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Value (VP)</label>
+                                <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">Value (VP)</label>
                                 <input
+                                    id="price"
                                     type="number"
                                     required
                                     className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
@@ -213,8 +224,9 @@ export default function CreateListingModal({ isOpen, onClose, userId, onSuccess,
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
+                                <label htmlFor="condition" className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
                                 <select
+                                    id="condition"
                                     className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                                     value={formData.condition}
                                     onChange={e => setFormData({ ...formData, condition: e.target.value })}

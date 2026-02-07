@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MessagesService } from '../messages/messages.service';
+import { TradeStatus, ListingStatus } from '@prisma/client';
 
 @Injectable()
 export class TradesService {
@@ -86,27 +87,27 @@ export class TradesService {
     if (!trade) throw new BadRequestException("Trade not found");
 
     // 2. Determine Outcome
-    let newStatus = 'DISPUTE_RESOLVED';
-    let listingStatus = 'ARCHIVED'; // Default to closed
+    let newStatus: TradeStatus = TradeStatus.DISPUTE_RESOLVED;
+    let listingStatus: ListingStatus = ListingStatus.ARCHIVED; // Default to closed
 
     if (action === 'REFUND_BUYER') {
-      newStatus = 'CANCELLED';
-      listingStatus = 'ACTIVE'; // Re-list
+      newStatus = TradeStatus.CANCELLED;
+      listingStatus = ListingStatus.ACTIVE; // Re-list
     } else if (action === 'RELEASE_FUNDS') {
-      newStatus = 'COMPLETED';
-      listingStatus = 'ARCHIVED';
+      newStatus = TradeStatus.COMPLETED;
+      listingStatus = ListingStatus.ARCHIVED;
     }
 
     // 3. Update Trade
     const updatedTrade = await this.prisma.trade.update({
       where: { id: tradeId },
-      data: { status: newStatus as any }
+      data: { status: newStatus }
     });
 
     // 4. Update Listing
     await this.prisma.listing.update({
       where: { id: trade.listingId },
-      data: { status: listingStatus as any }
+      data: { status: listingStatus }
     });
 
     // 5. Log Dispute Resolution

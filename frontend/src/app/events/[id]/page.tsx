@@ -1,9 +1,20 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { API_BASE_URL } from '@/config/api';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import { ListingCard } from '@/components/Listings/ListingCard';
-import { useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
+
+interface Listing {
+    id: string;
+    title: string;
+    description: string;
+    priceVP: number;
+    images: string;
+    location: string;
+    condition?: string;
+}
 
 interface EventDetail {
     id: string;
@@ -14,20 +25,24 @@ interface EventDetail {
     endDate: string;
     imageUrl?: string;
     status: 'UPCOMING' | 'ACTIVE' | 'COMPLETED';
-    eventListings: any[];
+    eventListings: Listing[];
     organizer: { fullName: string };
 }
 
-export default function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
+export default function EventDetailPage() {
+    const params = useParams();
+    const id = params?.id as string;
     const [event, setEvent] = useState<EventDetail | null>(null);
     const [loading, setLoading] = useState(true);
-    const router = useRouter();
 
     useEffect(() => {
+        if (!id) {
+            setLoading(false);
+            return;
+        }
         const fetchEvent = async () => {
             try {
-                const res = await fetch(`http://localhost:3000/events/${id}`);
+                const res = await fetch(`${API_BASE_URL}/events/${id}`);
                 if (res.ok) {
                     const data = await res.json();
                     setEvent(data);
