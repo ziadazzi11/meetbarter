@@ -104,6 +104,11 @@ export class ListingsController {
     return this.listingsService.generateDescription(file, body.title);
   }
 
+  @Get('categories')
+  getCategories() {
+    return this.listingsService.getCategories();
+  }
+
   @Get()
   @Throttle({ default: { limit: 30, ttl: 60000 } }) // Stricter limit for search signals
   findAll(@Query() query: any) {

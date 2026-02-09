@@ -260,6 +260,10 @@ export class ListingsService {
     return this.prisma.listing.delete({ where: { id } });
   }
 
+  async getCategories() {
+    return this.prisma.category.findMany();
+  }
+
   // Phase 7: Subscription Downgrade Logic
   async handleDowngrade(userId: string) {
     // 1. Get all active listings ordered by creation (oldest first)

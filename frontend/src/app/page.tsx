@@ -68,7 +68,7 @@ export default function Home() {
     } else {
       setLoading(false);
     }
-    fetch(`${API_BASE_URL}/categories`)
+    fetch(`${API_BASE_URL}/listings/categories`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setCategories(data);
@@ -430,7 +430,7 @@ export default function Home() {
 
         {/* TRENDING CATEGORIES */}
         <section>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
             Trending Categories
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
