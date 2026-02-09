@@ -335,14 +335,13 @@ export default function Home() {
             {user?.ambassadorStatus === 'PENDING' && <div className="text-orange-600 text-sm font-medium bg-orange-50 p-2 rounded border border-orange-200 text-center mt-2">Application Under Review...</div>}
             {user?.ambassadorStatus === 'ACTIVE' && <div className="text-green-700 text-sm font-medium bg-green-50 p-2 rounded border border-green-200 text-center mt-2">You are a Verified Ambassador!</div>}
           </div>
-        </div>
-    </div>
-      </section >
+      </div>
+      </section>
 
-    {/* QUICK ACTIONS HERO */ }
-    < section className = "bg-white border-b border-gray-200 py-8" >
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* QUICK ACTIONS HERO */}
+      <section className="bg-white border-b border-gray-200 py-8">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <button
             onClick={() => {
               setNewListing({ ...newListing, listingType: 'OFFER', title: '', description: '', images: [] });
