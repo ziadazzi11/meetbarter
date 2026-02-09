@@ -37,7 +37,7 @@ export class ActivityInterceptor implements NestInterceptor {
                             where: { email: userEmail as string },
                             data: { lastActivity: new Date() },
                         });
-                    } catch (e) {
+                    } catch {
                         // Silently fail if user not found (e.g. login attempt)
                     }
                 }

@@ -12,6 +12,7 @@ export interface SecurityEvent {
     ipAddress?: string;
     details?: any;
     userAgent?: string;
+    adminId?: string;
 }
 
 export interface RiskAssessment {

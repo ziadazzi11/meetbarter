@@ -19,9 +19,19 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        'meetbarter-black': '#0a0a0a',
+        'meetbarter-dark-gray': '#1a1a1a',
+        'meetbarter-neon-blue': '#00f3ff',
+        'meetbarter-blue': '#4F46E5',
+        'meetbarter-red': '#EF4444',
+      },
+      fontFamily: {
+        sans: ['var(--font-geist-sans)'],
+        mono: ['var(--font-geist-mono)'],
       },
     },
   },
   plugins: [],
+  darkMode: 'class',
 };
 export default config;

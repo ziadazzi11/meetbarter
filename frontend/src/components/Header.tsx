@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+
 // import { usePathname } from "next/navigation";
 
 import Image from "next/image";
-import { useAudio } from "@/components/AudioContext";
-import PersonalizationModal from "./PersonalizationModal";
+import { useTheme } from "./ThemeContext";
+import { useAuth } from "@/context/AuthContext";
+// import PersonalizationModal from "./PersonalizationModal";
 
 export default function Header() {
-    const [isPersonalizeOpen, setIsPersonalizeOpen] = useState(false);
-    const { isPlaying, togglePlay, isMuted, toggleMute } = useAudio();
+    // const [isPersonalizeOpen, setIsPersonalizeOpen] = useState(false);
+    const { darkMode, setDarkMode } = useTheme();
+    const { user } = useAuth();
 
     return (
         <header className="w-full z-50 transition-all duration-300 bg-white border-b border-gray-100 shadow-sm">
@@ -35,43 +37,50 @@ export default function Header() {
                     <Link href="/events" className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors duration-200">Events</Link>
                     <Link href="/dashboard" className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors duration-200">Dashboard</Link>
 
-                    {/* Audio Toggle */}
+                    {/* Dark/Light Mode Toggle */}
                     <button
-                        onClick={togglePlay}
-                        className="text-gray-400 hover:text-indigo-600 transition-colors p-2 rounded-full hover:bg-gray-50"
-                        title={isPlaying ? "Mute Ambient Sound" : "Play Ambient Sound"}
+                        onClick={() => setDarkMode(!darkMode)}
+                        className="p-2 rounded-full text-gray-500 hover:bg-gray-100 transition-colors"
+                        title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
                     >
-                        {isPlaying ? (
+                        {darkMode ? (
+                            // Sun Icon (for Dark Mode)
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                             </svg>
                         ) : (
+                            // Moon Icon (for Light Mode)
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                             </svg>
                         )}
                     </button>
 
-                    <button
-                        onClick={() => setIsPersonalizeOpen(true)}
-                        className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors duration-200 flex items-center gap-1"
-                    >
-                        Personalize
-                    </button>
-
                     <div className="h-5 w-[1px] bg-gray-200 mx-2"></div>
+
+                    <button className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-meetbarter-black hover:bg-gray-900 border border-gray-800 text-meetbarter-neon-blue font-bold text-xs uppercase tracking-wider transition-all shadow-sm hover:shadow-md hover:scale-105 active:scale-95 group">
+                        <svg className="w-4 h-4 text-meetbarter-neon-blue group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Get App
+                    </button>
 
                     <Link href="/login" className="px-4 py-2 rounded-full bg-indigo-600 text-white font-semibold text-sm shadow-md hover:bg-indigo-700 hover:shadow-lg transition-all duration-300 active:scale-95">
                         Sign In / Join
                     </Link>
+
+                    {/* Bulk Upload Trigger - Businesses & Institutions & Farmers Only */}
+                    {/* Access Rule: isBusiness=true OR verificationLevel >= 3 OR communityRole='FARMER' */}
+                    {(user?.isBusiness || (user?.verificationLevel && user.verificationLevel >= 3) || user?.communityRole === 'FARMER') && (
+                        <button
+                            onClick={() => window.dispatchEvent(new CustomEvent('openBulkUpload'))}
+                            className="hidden md:block px-3 py-1 text-xs font-bold text-cyan-500 border border-cyan-500 rounded hover:bg-cyan-500 hover:text-black transition-colors"
+                        >
+                            BULK IMPORT
+                        </button>
+                    )}
                 </nav>
             </div>
 
-            <PersonalizationModal
-                isOpen={isPersonalizeOpen}
-                onClose={() => setIsPersonalizeOpen(false)}
-            />
+
         </header>
     );
 }

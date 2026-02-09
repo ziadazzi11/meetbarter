@@ -21,7 +21,7 @@ export const useSocket = () => {
 };
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
-    const { user, token } = useAuth(); // Assuming AuthContext provides token
+    const { user } = useAuth(); // Assuming AuthContext provides token
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
 

@@ -29,9 +29,28 @@ export class UsersService {
     }
 
     async getPublicProfile(id: string) {
+        // SECURE: Explicitly select only public fields
         const user = await this.prisma.user.findUnique({
             where: { id },
-            include: { listings: { where: { status: 'ACTIVE' } } }
+            select: {
+                id: true,
+                fullName: true,
+                avatarUrl: true,
+                globalTrustScore: true,
+                verificationLevel: true,
+                createdAt: true,
+                listings: {
+                    where: { status: 'ACTIVE' },
+                    select: {
+                        id: true,
+                        title: true,
+                        description: true,
+                        images: true,
+                        priceVP: true,
+                        category: { select: { name: true } }
+                    }
+                }
+            }
         });
 
         if (!user) return null;
@@ -163,6 +182,7 @@ export class UsersService {
             });
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { businessName: _, ...licenseData } = data; // Exclude businessName from license data logic below if needed, though spreading is fine if model ignores it
 
         return this.prisma.businessLicense.upsert({

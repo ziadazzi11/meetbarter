@@ -86,7 +86,8 @@ export class GovernanceService {
         }
     }
 
-    private async executeLogic(actionType: string, payload: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    private async executeLogic(actionType: string, _payload: any) {
         switch (actionType) {
             case 'FREEZE_SYSTEM':
                 // In real app, this would update SystemConfig

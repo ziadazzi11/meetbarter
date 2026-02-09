@@ -8,5 +8,6 @@ import { MessagesModule } from '../messages/messages.module';
   imports: [PrismaModule, MessagesModule],
   controllers: [TradesController],
   providers: [TradesService],
+  exports: [TradesService],
 })
 export class TradesModule { }

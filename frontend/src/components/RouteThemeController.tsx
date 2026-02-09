@@ -11,7 +11,7 @@ import { useTheme, Theme } from './ThemeContext';
  */
 export default function RouteThemeController() {
     const pathname = usePathname();
-    const { setIsAutoMode, isAutoMode, setTheme } = useTheme();
+    const { isAutoMode, setTheme } = useTheme();
 
     useEffect(() => {
         if (!isAutoMode) return;

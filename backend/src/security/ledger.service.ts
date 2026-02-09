@@ -23,7 +23,8 @@ export class LedgerService {
     /**
      * Verifies the integrity of a chain segment.
      */
-    verifyLink(prevHash: string, currentData: any, currentHash: string): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    verifyLink(_prevHash: string, _currentData: any, _currentHash: string): boolean {
         // Note: For full verification we'd need the exact timestamp from the original log.
         // For now, this is a placeholder for more advanced ledger verification.
         return true;

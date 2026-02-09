@@ -273,13 +273,13 @@ export default function TradeDetails() {
                                         <div className="text-right">
                                             <div className="text-sm text-gray-500">Contact</div>
                                             {/* Privacy Gate Logic */}
-                                            {((trade.exchangeMode === 'VP' && !trade.intentTimestamp) || (trade.exchangeMode === 'CASH' && !otherParty.phoneNumber)) ? (
-                                                <div className="flex items-center justify-end gap-1 text-orange-500 font-bold text-sm">
-                                                    <span>🔒</span> Locked
+                                            {otherParty.phoneNumber ? (
+                                                <div className="font-mono text-gray-900 bg-green-50 px-2 py-1 rounded border border-green-200">
+                                                    📞 {otherParty.phoneNumber}
                                                 </div>
                                             ) : (
-                                                <div className="font-mono text-gray-900">
-                                                    {otherParty.phoneNumber || 'N/A'}
+                                                <div className="flex items-center justify-end gap-1 text-orange-500 font-bold text-sm" title="Contact info is revealed only after trade approval & fee payment.">
+                                                    <span>🔒</span> Hidden
                                                 </div>
                                             )}
                                         </div>

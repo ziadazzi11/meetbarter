@@ -32,7 +32,7 @@ async function bootstrap() {
     // 🛡️ Security: Strict CORS
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     app.enableCors({
-        origin: [frontendUrl, 'https://meetbarter.com', 'http://localhost:3000'],
+        origin: [frontendUrl, 'https://meetbarter.com', 'http://localhost:3000', 'http://localhost:3002'],
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         credentials: true,
     });
@@ -54,6 +54,6 @@ async function bootstrap() {
     const deceptionMiddleware = new HeaderDeceptionMiddleware();
     app.use((req, res, next) => deceptionMiddleware.use(req, res, next));
 
-    await app.listen(3001);
+    await app.listen(4000);
 }
 bootstrap();

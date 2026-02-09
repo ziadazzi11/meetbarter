@@ -10,6 +10,45 @@ export class TradesService {
     private messagesService: MessagesService,
   ) { }
 
+  async getTradeDetails(tradeId: string, userId: string) {
+    const trade = await this.prisma.trade.findUnique({
+      where: { id: tradeId },
+      include: {
+        listing: { include: { category: true } },
+        buyer: { select: { id: true, fullName: true, avatarUrl: true, phoneNumber: true, email: true } },
+        seller: { select: { id: true, fullName: true, avatarUrl: true, phoneNumber: true, email: true } }
+      }
+    });
+
+    if (!trade) throw new BadRequestException('Trade not found');
+
+    // Access Control
+    if (trade.buyerId !== userId && trade.sellerId !== userId) {
+      throw new BadRequestException('Access Denied');
+    }
+
+    // Conditional Revelation Logic
+    // Statuses where contact info IS shared:
+    const REVEAL_STATUSES = ['OFFER_ACCEPTED', 'ITEMS_LOCKED', 'TRADE_VERIFIED', 'MEETUP_AGREED', 'COMPLETED'];
+    const shouldReveal = REVEAL_STATUSES.includes(trade.status as string);
+
+    // Masking Function
+    const maskUser = (userObj: any) => {
+      if (shouldReveal) return userObj; // Return full info including phone/email
+      const publicProfile = { ...userObj };
+      delete publicProfile.phoneNumber;
+      delete publicProfile.email;
+      return publicProfile; // Exclude private info
+    };
+
+    return {
+      ...trade,
+      buyer: maskUser(trade.buyer),
+      seller: maskUser(trade.seller),
+      contactInfoRevealed: shouldReveal
+    };
+  }
+
   async initiateTrade(buyerId: string, listingId: string, offerVP: number) {
     // 1. Check Listing Status
     const listing = await this.prisma.listing.findUnique({
@@ -90,10 +129,10 @@ export class TradesService {
     let newStatus: TradeStatus = TradeStatus.DISPUTE_RESOLVED;
     let listingStatus: ListingStatus = ListingStatus.ARCHIVED; // Default to closed
 
-    if (action === 'REFUND_BUYER') {
+    if (action === 'REFUND' || action === 'REFUND_BUYER') {
       newStatus = TradeStatus.CANCELLED;
       listingStatus = ListingStatus.ACTIVE; // Re-list
-    } else if (action === 'RELEASE_FUNDS') {
+    } else if (action === 'RELEASE' || action === 'RELEASE_FUNDS') {
       newStatus = TradeStatus.COMPLETED;
       listingStatus = ListingStatus.ARCHIVED;
     }

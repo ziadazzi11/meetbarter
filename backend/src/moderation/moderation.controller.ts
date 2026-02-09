@@ -54,7 +54,7 @@ export class ModerationController {
     @Get('flags/pending')
     @UseGuards(JwtAuthGuard, PermissionGuard)
     @Permissions(Permission.FLAG_CONTENT)
-    async getPendingFlags(@Request() req) {
+    async getPendingFlags() {
         return this.moderationService.getPendingFlags();
     }
 

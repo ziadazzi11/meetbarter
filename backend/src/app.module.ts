@@ -24,6 +24,7 @@ import { SystemStateGuard } from './common/guards/system-state.guard';
 import { ShadowbanGuard } from './common/guards/shadowban.guard';
 import { LegitimacyMiddleware } from './common/middleware/legitimacy.middleware';
 import { PayloadEncryptionMiddleware } from './ads/recon/payload-encryption.middleware';
+import { BannedUserGuard } from './common/guards/banned-user.guard';
 
 // v1.2 Modules
 import { TimelineModule } from './timeline/timeline.module';
@@ -142,6 +143,11 @@ import { validate } from './config/env.validation';
         {
             provide: APP_INTERCEPTOR,
             useClass: SemanticNoiseInterceptor,
+        },
+        // 🛡️ Security: Global Ban Enforcement
+        {
+            provide: APP_GUARD,
+            useClass: BannedUserGuard,
         },
     ],
 })

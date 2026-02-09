@@ -31,7 +31,7 @@ export class CloudinaryService {
     async uploadImage(
         file: Buffer | string,
         folder: string = 'listings',
-    ): Promise<CloudinaryUploadResponse> {
+    ): Promise<CloudinaryUploadResponse & { detectedText?: string }> {
         const formData = new FormData();
 
         // Convert buffer to base64 if needed
@@ -42,6 +42,9 @@ export class CloudinaryService {
         formData.append('file', base64Image);
         formData.append('upload_preset', this.uploadPreset);
         formData.append('folder', folder);
+
+        // Enable OCR
+        formData.append('ocr', 'adv_ocr');
 
         try {
             const response = await fetch(
@@ -57,12 +60,21 @@ export class CloudinaryService {
             }
 
             const data = await response.json();
+
+            // Extract text from OCR result
+            // Cloudinary returns info.ocr.adv_ocr.data[0].textAnnotations[0].description usually
+            let detectedText = '';
+            if (data.info && data.info.ocr && data.info.ocr.adv_ocr && data.info.ocr.adv_ocr.data && data.info.ocr.adv_ocr.data.length > 0) {
+                detectedText = data.info.ocr.adv_ocr.data[0].textAnnotations?.[0]?.description || '';
+            }
+
             return {
                 secure_url: data.secure_url,
                 public_id: data.public_id,
                 format: data.format,
                 width: data.width,
                 height: data.height,
+                detectedText
             };
         } catch (error) {
             console.error('Cloudinary upload error:', error);

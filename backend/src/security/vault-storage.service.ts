@@ -28,7 +28,7 @@ export class VaultStorageService {
             const filePath = path.join(this.vaultDir, uniqueName);
             await fs.promises.writeFile(filePath, content);
             return filePath;
-        } catch (error) {
+        } catch {
             throw new InternalServerErrorException('Failed to save document to vault');
         }
     }
@@ -36,7 +36,7 @@ export class VaultStorageService {
     async getDocument(filePath: string): Promise<Buffer> {
         try {
             return await fs.promises.readFile(filePath);
-        } catch (error) {
+        } catch {
             throw new InternalServerErrorException('Failed to read document from vault');
         }
     }
@@ -46,7 +46,7 @@ export class VaultStorageService {
             if (fs.existsSync(filePath)) {
                 await fs.promises.unlink(filePath);
             }
-        } catch (error) {
+        } catch {
             // Log but don't throw for deletion errors in prototype
         }
     }
@@ -55,7 +55,7 @@ export class VaultStorageService {
         try {
             const files = await fs.promises.readdir(this.vaultDir);
             return files.map(file => path.join(this.vaultDir, file));
-        } catch (error) {
+        } catch {
             throw new InternalServerErrorException('Failed to list vault documents');
         }
     }

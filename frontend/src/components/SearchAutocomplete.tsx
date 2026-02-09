@@ -13,10 +13,7 @@ export default function SearchAutocomplete({ onSelect }: SearchAutocompleteProps
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (query.length < 2) {
-            setSuggestions([]);
-            return;
-        }
+        if (query.length < 2) return;
 
         // Fetch suggestions from API
         const fetchSuggestions = async () => {
@@ -46,7 +43,9 @@ export default function SearchAutocomplete({ onSelect }: SearchAutocompleteProps
                 type="text"
                 value={query}
                 onChange={(e) => {
-                    setQuery(e.target.value);
+                    const val = e.target.value;
+                    setQuery(val);
+                    if (val.length < 2) setSuggestions([]);
                     setShowSuggestions(true);
                 }}
                 onFocus={() => setShowSuggestions(true)}

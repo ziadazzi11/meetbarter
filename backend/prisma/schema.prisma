@@ -112,6 +112,8 @@ model User {
   isBanned        Boolean  @default(false)
   banReason       String?
   bannedAt        DateTime?
+  banExpiresAt    DateTime? // Null = Permanent if isBanned=true
+  moderationStrikes Int    @default(0)
   
   // ADS: Shadowban Protocol
   isShadowbanned  Boolean  @default(false)
@@ -526,21 +528,23 @@ model CommunityGrant {
 }
 
 model ContentModerationFlag {
+
   id              String   @id @default(uuid())
-  listingId       String
+  listingId       String?  // Optional: might be flagged during upload before listing exists
   reportedByUserId String?
   
   reason          String   // Matched prohibited keyword or user report reason
-  category        String   // DRUGS, WEAPONS, STOLEN, COUNTERFEIT, etc.
+  category        String   // DRUGS, WEAPONS, STOLEN, COUNTERFEIT, PRIVACY_VIOLATION
   severity        String   // AUTO_REJECT, HIGH_RISK, MEDIUM_RISK, LOW_RISK
   matchedKeywords String?  // JSON array of keywords that triggered flag
+  evidenceUrl     String?  // URL of the flagged content (e.g. image with phone number)
   
   status          ModerationStatus   @default(PENDING)
   reviewedBy      String?
   reviewNotes     String?
   reviewedAt      DateTime?
   
-  listing         Listing  @relation(fields: [listingId], references: [id])
+  listing         Listing?  @relation(fields: [listingId], references: [id])
   reportedBy      User?    @relation(fields: [reportedByUserId], references: [id])
   
   createdAt       DateTime @default(now())

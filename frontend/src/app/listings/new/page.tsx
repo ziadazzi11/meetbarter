@@ -173,8 +173,9 @@ export default function CreateListing() {
 
                     <div className="space-y-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                            <label htmlFor="listing-title" className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                             <input
+                                id="listing-title"
                                 type="text"
                                 value={title}
                                 onChange={e => setTitle(e.target.value)}
@@ -185,8 +186,9 @@ export default function CreateListing() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                            <label htmlFor="listing-category" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                             <select
+                                id="listing-category"
                                 value={categoryId}
                                 onChange={e => setCategoryId(e.target.value)}
                                 required
@@ -200,8 +202,9 @@ export default function CreateListing() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {listingType === 'OFFER' && (
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
+                                    <label htmlFor="listing-condition" className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
                                     <select
+                                        id="listing-condition"
                                         value={condition}
                                         onChange={e => setCondition(e.target.value)}
                                         required
@@ -215,13 +218,14 @@ export default function CreateListing() {
                                 </div>
                             )}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="listing-price" className="block text-sm font-medium text-gray-700 mb-1">
                                     {listingType === 'OFFER' ? 'Reference Value (VP)' : 'Budget Range (VP)'}
                                     <span className="ml-1 text-xs text-gray-400 font-normal block">
                                         (Priced in Virtual Points. Free to barter.)
                                     </span>
                                 </label>
                                 <input
+                                    id="listing-price"
                                     type="number"
                                     value={originalPrice}
                                     onChange={e => setOriginalPrice(e.target.value)}
@@ -238,13 +242,14 @@ export default function CreateListing() {
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-green-700 mb-1">
+                                    <label htmlFor="cash-price" className="block text-sm font-medium text-green-700 mb-1">
                                         Cash Price (Optional)
                                         <span className="ml-1 text-xs text-green-600 block font-normal">
                                             Enable "Buy Now" for this item.
                                         </span>
                                     </label>
                                     <input
+                                        id="cash-price"
                                         type="number"
                                         value={priceCash}
                                         onChange={e => setPriceCash(e.target.value)}
@@ -253,8 +258,9 @@ export default function CreateListing() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-green-700 mb-1">Currency</label>
+                                    <label htmlFor="listing-currency" className="block text-sm font-medium text-green-700 mb-1">Currency</label>
                                     <select
+                                        id="listing-currency"
                                         value={priceCurrency}
                                         onChange={e => setPriceCurrency(e.target.value)}
                                         className="block w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
@@ -272,8 +278,9 @@ export default function CreateListing() {
                         {listingType === 'OFFER' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-50">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Origin Type</label>
+                                    <label htmlFor="origin-type" className="block text-sm font-medium text-gray-700 mb-1">Origin Type</label>
                                     <select
+                                        id="origin-type"
                                         value={originType}
                                         onChange={e => setOriginType(e.target.value)}
                                         className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
@@ -285,8 +292,9 @@ export default function CreateListing() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Authenticity</label>
+                                    <label htmlFor="authenticity-status" className="block text-sm font-medium text-gray-700 mb-1">Authenticity</label>
                                     <select
+                                        id="authenticity-status"
                                         value={authenticityStatus}
                                         onChange={e => setAuthenticityStatus(e.target.value)}
                                         className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
@@ -327,8 +335,9 @@ export default function CreateListing() {
                         )}
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <label htmlFor="listing-description-main" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                             <textarea
+                                id="listing-description-main"
                                 value={description}
                                 onChange={e => setDescription(e.target.value)}
                                 rows={5}
@@ -341,8 +350,9 @@ export default function CreateListing() {
                         {/* Location */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                <label htmlFor="listing-location" className="block text-sm font-medium text-gray-700 mb-1">City</label>
                                 <input
+                                    id="listing-location"
                                     type="text"
                                     value={location}
                                     onChange={e => setLocation(e.target.value)}
@@ -351,8 +361,9 @@ export default function CreateListing() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                                <label htmlFor="listing-country" className="block text-sm font-medium text-gray-700 mb-1">Country</label>
                                 <input
+                                    id="listing-country"
                                     type="text"
                                     value={country}
                                     onChange={e => setCountry(e.target.value)}
@@ -368,8 +379,9 @@ export default function CreateListing() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Listing Duration</label>
+                                    <label htmlFor="listing-duration" className="block text-sm font-medium text-gray-700 mb-1">Listing Duration</label>
                                     <select
+                                        id="listing-duration"
                                         value={expirationDuration}
                                         onChange={e => setExpirationDuration(e.target.value)}
                                         className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"

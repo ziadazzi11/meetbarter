@@ -93,6 +93,7 @@ export default function TipJarModal({ isOpen, onClose, tradeId, estimatedSavings
                                     <span className="text-gray-500 text-sm">or custom: $</span>
                                     <input
                                         type="number"
+                                        aria-label="Custom Tip Amount"
                                         value={amount}
                                         onChange={(e) => setAmount(parseFloat(e.target.value))}
                                         className="w-20 border-b border-gray-300 focus:border-purple-500 outline-none text-center py-1"

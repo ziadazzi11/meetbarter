@@ -2,8 +2,14 @@
 
 import { useState } from 'react';
 
+interface RecentItem {
+    id: string;
+    title: string;
+    priceVP: number;
+}
+
 export default function RecentlyViewed() {
-    const [recentItems, _] = useState<any[]>([]);
+    const [recentItems] = useState<RecentItem[]>([]);
 
     // This would load from localStorage in a real implementation
     // useEffect(() => {

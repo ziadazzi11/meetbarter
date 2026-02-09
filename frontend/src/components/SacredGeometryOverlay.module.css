@@ -44,3 +44,25 @@
         transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg) scale(0.8);
     }
 }
+
+:global(.particle) {
+    position: absolute;
+    left: var(--particle-left);
+    top: var(--particle-top);
+    width: var(--particle-width);
+    height: var(--particle-height);
+    background: #fbbf24;
+    border-radius: 50%;
+    opacity: 0.3;
+    animation: float var(--particle-duration) ease-in-out infinite alternate;
+    animation-delay: var(--particle-delay);
+}
+
+@keyframes float {
+    from {
+        transform: translateY(0) translateX(0);
+    }
+    to {
+        transform: translateY(-20px) translateX(10px);
+    }
+}

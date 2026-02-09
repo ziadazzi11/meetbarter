@@ -1,12 +1,51 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as crypto from 'crypto';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 @Injectable()
 export class IntelligenceService {
     private readonly logger = new Logger(IntelligenceService.name);
+    private genAI: GoogleGenerativeAI;
 
-    constructor(private prisma: PrismaService) { }
+    constructor(private prisma: PrismaService) {
+        // Initialize Gemini with API Key from Env
+        // For MVP, we assume GOOGLE_API_KEY is set.
+        // If not, we should fail gracefully or log warning.
+        const apiKey = process.env.GOOGLE_API_KEY;
+        if (apiKey) {
+            this.genAI = new GoogleGenerativeAI(apiKey);
+        } else {
+            this.logger.warn('GOOGLE_API_KEY not set. AI features disabled.');
+        }
+    }
+
+    /**
+     * Generate a listing description using Gemini Vision.
+     */
+    async generateListingDescription(imageBuffer: Buffer, mimeType: string, title: string): Promise<string> {
+        if (!this.genAI) return 'AI Description Unavailable (Missing Key)';
+
+        try {
+            const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Use efficient model
+
+            const prompt = `Describe this item (${title}) for a barter listing. Keep it concise, engaging, and highlight key features. Max 50 words. Do not include price.`;
+
+            const imagePart = {
+                inlineData: {
+                    data: imageBuffer.toString('base64'),
+                    mimeType
+                }
+            };
+
+            const result = await model.generateContent([prompt, imagePart]);
+            const response = await result.response;
+            return response.text().trim();
+        } catch (error) {
+            this.logger.error(`Gemini Generation Failed: ${error.message}`);
+            return `Failed to generate description for ${title}.`;
+        }
+    }
 
     /**
      * Log an anonymized search query for strategic intelligence.

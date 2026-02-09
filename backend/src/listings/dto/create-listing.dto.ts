@@ -1,12 +1,14 @@
-import { IsString, IsNotEmpty, IsOptional, IsInt, Min, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsInt, Min, Matches } from 'class-validator';
 
 export class CreateListingDto {
     @IsString()
     @IsNotEmpty()
+    @Matches(/^(?:(?!(?:\d[\s-]*){8,}).)*$/, { message: 'Title cannot contain phone numbers. Contact info is shared after trade approval.' })
     title: string;
 
     @IsString()
     @IsNotEmpty()
+    @Matches(/^(?:(?!(?:\d[\s-]*){8,}).)*$/, { message: 'Description cannot contain phone numbers. Contact info is shared after trade approval.' })
     description: string;
 
     @IsInt()

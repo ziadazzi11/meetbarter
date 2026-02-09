@@ -81,7 +81,7 @@ export default function VerificationTiersModal({ isOpen, onClose, userId, curren
                 const err = await response.json();
                 alert(`Failed to submit request: ${err.message || 'Unknown error'}`);
             }
-        } catch (err) {
+        } catch {
             alert("Connection error.");
         } finally {
             setLoading(false);
@@ -119,8 +119,8 @@ export default function VerificationTiersModal({ isOpen, onClose, userId, curren
                                 &quot;Community trust is the heartbeat of MeetBarter. Confirm your role to help others find you.&quot;
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Your Community Role</label>
-                                <select className="w-full p-2.5 border border-gray-300 rounded-lg" value={role} onChange={e => setRole(e.target.value)}>
+                                <label htmlFor="community-role" className="block text-sm font-medium text-gray-700 mb-1">Your Community Role</label>
+                                <select id="community-role" className="w-full p-2.5 border border-gray-300 rounded-lg" value={role} onChange={e => setRole(e.target.value)}>
                                     <option value="GARDENER">Gardener</option>
                                     <option value="TEACHER">Teacher</option>
                                     <option value="DOCTOR">Doctor</option>
@@ -141,8 +141,9 @@ export default function VerificationTiersModal({ isOpen, onClose, userId, curren
                                 <strong>Professional Verification:</strong> Required for businesses and high-value traders. Requires valid ID.
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Business / Professional Name</label>
+                                <label htmlFor="business-name" className="block text-sm font-medium text-gray-700 mb-1">Business / Professional Name</label>
                                 <input
+                                    id="business-name"
                                     className="w-full p-2.5 border border-gray-300 rounded-lg"
                                     placeholder="e.g. Acme Services"
                                     value={bizName}
@@ -196,8 +197,9 @@ export default function VerificationTiersModal({ isOpen, onClose, userId, curren
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Organization Name</label>
+                                    <label htmlFor="inst-org-name" className="block text-sm font-medium text-gray-700 mb-1">Organization Name</label>
                                     <input
+                                        id="inst-org-name"
                                         title="Organization Name"
                                         className="w-full p-2.5 border border-gray-300 rounded-lg"
                                         placeholder="e.g. Green Peace Lebanon"
@@ -206,16 +208,18 @@ export default function VerificationTiersModal({ isOpen, onClose, userId, curren
                                     />
                                 </div>
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Commercial Register / Tax ID</label>
+                                    <label htmlFor="inst-reg-number" className="block text-sm font-medium text-gray-700 mb-1">Commercial Register / Tax ID</label>
                                     <input
+                                        id="inst-reg-number"
                                         className="w-full p-2.5 border border-gray-300 rounded-lg"
                                         value={regNumber}
                                         onChange={e => setRegNumber(e.target.value)}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Permit Type</label>
+                                    <label htmlFor="inst-permit-type" className="block text-sm font-medium text-gray-700 mb-1">Permit Type</label>
                                     <select
+                                        id="inst-permit-type"
                                         className="w-full p-2.5 border border-gray-300 rounded-lg"
                                         value={permitType}
                                         onChange={e => setPermitType(e.target.value)}
@@ -227,8 +231,9 @@ export default function VerificationTiersModal({ isOpen, onClose, userId, curren
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Issuing Authority</label>
+                                    <label htmlFor="inst-authority" className="block text-sm font-medium text-gray-700 mb-1">Issuing Authority</label>
                                     <input
+                                        id="inst-authority"
                                         className="w-full p-2.5 border border-gray-300 rounded-lg"
                                         placeholder="Min. of Industry"
                                         value={authority}
@@ -236,8 +241,9 @@ export default function VerificationTiersModal({ isOpen, onClose, userId, curren
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Issue Date</label>
+                                    <label htmlFor="inst-issue-date" className="block text-sm font-medium text-gray-700 mb-1">Issue Date</label>
                                     <input
+                                        id="inst-issue-date"
                                         type="date"
                                         className="w-full p-2.5 border border-gray-300 rounded-lg"
                                         value={issuedAt}
@@ -245,8 +251,9 @@ export default function VerificationTiersModal({ isOpen, onClose, userId, curren
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
+                                    <label htmlFor="inst-expiry-date" className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
                                     <input
+                                        id="inst-expiry-date"
                                         type="date"
                                         className="w-full p-2.5 border border-gray-300 rounded-lg"
                                         value={expiresAt}

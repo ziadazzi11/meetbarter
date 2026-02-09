@@ -5,7 +5,6 @@ import {
     BadRequestException,
 } from '@nestjs/common';
 import { ContentModerationService } from '../../moderation/content-moderation.service';
-import { MODERATION_SEVERITY } from '../../config/prohibited-items.config';
 
 @Injectable()
 export class ContentModerationGuard implements CanActivate {

@@ -74,8 +74,9 @@ export default function InstitutionalVerificationPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Business Name */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Business Name</label>
+                            <label htmlFor="business-name" className="block text-sm font-medium text-gray-700">Business Name</label>
                             <input
+                                id="business-name"
                                 type="text"
                                 required
                                 aria-label="Business Name"
@@ -87,8 +88,9 @@ export default function InstitutionalVerificationPage() {
 
                         {/* Registration Number */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Registration / Tax ID</label>
+                            <label htmlFor="registration-number" className="block text-sm font-medium text-gray-700">Registration / Tax ID</label>
                             <input
+                                id="registration-number"
                                 type="text"
                                 required
                                 aria-label="Registration or Tax ID"
@@ -100,8 +102,9 @@ export default function InstitutionalVerificationPage() {
 
                         {/* Permit Type */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Permit Type</label>
+                            <label htmlFor="permit-type" className="block text-sm font-medium text-gray-700">Permit Type</label>
                             <select
+                                id="permit-type"
                                 aria-label="Permit Type"
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
                                 value={formData.permitType}
@@ -116,8 +119,9 @@ export default function InstitutionalVerificationPage() {
 
                         {/* Issuing Authority */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Issuing Authority</label>
+                            <label htmlFor="issuing-authority" className="block text-sm font-medium text-gray-700">Issuing Authority</label>
                             <input
+                                id="issuing-authority"
                                 type="text"
                                 placeholder="e.g. Ministry of Economy"
                                 required
@@ -129,8 +133,9 @@ export default function InstitutionalVerificationPage() {
 
                         {/* Dates */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Issued At</label>
+                            <label htmlFor="issued-at" className="block text-sm font-medium text-gray-700">Issued At</label>
                             <input
+                                id="issued-at"
                                 type="date"
                                 required
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
@@ -140,8 +145,9 @@ export default function InstitutionalVerificationPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Expires At</label>
+                            <label htmlFor="expires-at" className="block text-sm font-medium text-gray-700">Expires At</label>
                             <input
+                                id="expires-at"
                                 type="date"
                                 required
                                 aria-label="Permit Expiry Date"
@@ -157,8 +163,9 @@ export default function InstitutionalVerificationPage() {
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Document URL (PDF/Image)</label>
+                                <label htmlFor="evidence-url" className="block text-sm font-medium text-gray-700">Document URL (PDF/Image)</label>
                                 <input
+                                    id="evidence-url"
                                     type="url"
                                     placeholder="https://..."
                                     required
@@ -170,8 +177,9 @@ export default function InstitutionalVerificationPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Photo Evidence (Optional)</label>
+                                <label htmlFor="evidence-photo-url" className="block text-sm font-medium text-gray-700">Photo Evidence (Optional)</label>
                                 <input
+                                    id="evidence-photo-url"
                                     type="url"
                                     placeholder="https://..."
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"

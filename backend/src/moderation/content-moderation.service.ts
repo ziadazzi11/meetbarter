@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../notifications/email.service';
 import {
-    PROHIBITED_CATEGORIES,
     REGION_PROHIBITED_ITEMS,
     GLOBAL_PROHIBITED_KEYWORDS,
     DEFAULT_PROHIBITED_ITEMS,
@@ -106,7 +105,8 @@ export class ContentModerationService {
     /**
      * Handle auto-rejection (for AUTO_REJECT severity)
      */
-    async autoRejectListing(listingId: string, reason: string) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async autoRejectListing(listingId: string, _reason: string) {
         await this.prisma.listing.update({
             where: { id: listingId },
             data: {

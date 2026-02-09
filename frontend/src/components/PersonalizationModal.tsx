@@ -11,7 +11,7 @@ interface PersonalizationModalProps {
 }
 
 export default function PersonalizationModal({ isOpen, onClose }: PersonalizationModalProps) {
-    const { theme: currentTheme, setTheme, isAutoMode, setIsAutoMode } = useTheme();
+    const { theme: currentTheme, setTheme, isAutoMode, setIsAutoMode, darkMode, setDarkMode } = useTheme();
     const [userId, setUserId] = useState<string | null>(null);
     const [bannerUrl, setBannerUrl] = useState('');
     const [themeConfig, setThemeConfig] = useState({
@@ -71,8 +71,8 @@ export default function PersonalizationModal({ isOpen, onClose }: Personalizatio
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
-                    <h2 className="text-xl font-bold text-gray-900">Customize Your Experience</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Customize Your Experience</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close Modal" title="Close">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -82,7 +82,7 @@ export default function PersonalizationModal({ isOpen, onClose }: Personalizatio
                 <div className="p-6">
                     {/* Banner Upload */}
                     <div className="mb-8">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Profile Banner</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Profile Banner</label>
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
                             {bannerUrl ? (
                                 <div className="relative">
@@ -104,9 +104,9 @@ export default function PersonalizationModal({ isOpen, onClose }: Personalizatio
 
                     {/* Typography */}
                     <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Typography</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Typography</label>
                         <select
-                            className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black"
                             value={themeConfig.font}
                             onChange={(e) => setThemeConfig({ ...themeConfig, font: e.target.value })}
                             title="Font Selection"
@@ -119,11 +119,11 @@ export default function PersonalizationModal({ isOpen, onClose }: Personalizatio
                     </div>
 
                     {/* Background Scenery (New) */}
-                    <div className="mb-6 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                    <div className="mb-6 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 dark:bg-gray-800 dark:border-gray-700">
                         <div className="flex justify-between items-center mb-4">
                             <div>
-                                <label className="text-sm font-bold text-gray-900 block">Background Scenery</label>
-                                <p className="text-xs text-gray-500">
+                                <label className="text-sm font-bold text-gray-900 dark:text-white block">Background Scenery</label>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
                                     {isAutoMode ? 'Dynamic theme based on your journey' : 'You are in control'}
                                 </p>
                             </div>
@@ -136,7 +136,7 @@ export default function PersonalizationModal({ isOpen, onClose }: Personalizatio
                                     className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isAutoMode ? 'bg-indigo-600' : 'bg-gray-200'
                                         }`}
                                     role="switch"
-                                    aria-checked={isAutoMode}
+                                    aria-checked={String(isAutoMode)}
                                 >
                                     <span
                                         aria-hidden="true"
@@ -166,6 +166,7 @@ export default function PersonalizationModal({ isOpen, onClose }: Personalizatio
                                 { id: 'sacred_geometry', label: 'Sacred Geo' },
                                 { id: 'farm_night', label: 'Farm Night' },
                                 { id: 'sacred_geometry_4d', label: '4D Dimension' },
+                                { id: 'neon-blue', label: 'Neon Blue (Xtribe)' },
                             ].map((scenery) => (
                                 <button
                                     key={scenery.id}
@@ -185,6 +186,36 @@ export default function PersonalizationModal({ isOpen, onClose }: Personalizatio
                                 Switch to "Manual Control" to select a specific background.
                             </p>
                         )}
+                    </div>
+
+                    {/* App Appearance (Dark/Light Mode) */}
+                    <div className="mb-6 bg-gray-50 p-4 rounded-xl border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <label className="text-sm font-bold text-gray-900 dark:text-white block">Appearance</label>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    {darkMode ? 'Dark Mode Active' : 'Light Mode Active'}
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <span className={`text-xs font-medium ${darkMode ? 'text-indigo-400' : 'text-gray-500'}`}>
+                                    {darkMode ? 'Dark' : 'Light'}
+                                </span>
+                                <button
+                                    onClick={() => setDarkMode(!darkMode)}
+                                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${darkMode ? 'bg-indigo-600' : 'bg-gray-200'
+                                        }`}
+                                    role="switch"
+                                    aria-checked={darkMode}
+                                >
+                                    <span
+                                        aria-hidden="true"
+                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${darkMode ? 'translate-x-5' : 'translate-x-0'
+                                            }`}
+                                    />
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Colors */}

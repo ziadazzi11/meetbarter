@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, ServiceUnavailableException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, ServiceUnavailableException, UseInterceptors, UploadedFiles } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { ListingsService } from './listings.service';
 import { SystemStateService } from '../system-state/system-state.service';
 import { ContentModerationGuard } from '../common/guards/content-moderation.guard';
@@ -67,6 +68,40 @@ export class ListingsController {
       throw new ServiceUnavailableException('Listing creation is currently disabled.');
     }
     return this.listingsService.create(createListingDto);
+  }
+
+  @Post('bulk')
+  @UseGuards(ContentModerationGuard)
+  @UseInterceptors(FilesInterceptor('files'))
+  async createBulk(
+    @UploadedFiles() files: Array<Express.Multer.File>,
+    @Body() body: any
+  ) {
+    if (this.systemState.getKillSwitches().disableUploads) {
+      throw new ServiceUnavailableException('Listing creation is currently disabled.');
+    }
+    return this.listingsService.createBulk(files, body);
+  }
+
+  @Post('ai-description')
+  @UseGuards(ContentModerationGuard)
+  @UseInterceptors(FilesInterceptor('image'))
+  async generateDescription(
+    @UploadedFiles() files: Array<Express.Multer.File>,
+    @Body() body: { title: string }
+  ) {
+    if (this.systemState.getKillSwitches().disableUploads) {
+      throw new ServiceUnavailableException('AI features currently disabled.');
+    }
+    // We expect a single file 'image'
+    const file = files[0];
+    if (!file) throw new Error('No image provided');
+
+    // Delegate to ListingsService -> IntelligenceService
+    // Since ListingsService has IntelligenceService injected, we can add a wrapper there
+    // OR we can inject IntelligenceService here.
+    // ListingsService is already injected. Let's add a wrapper method in ListingsService.
+    return this.listingsService.generateDescription(file, body.title);
   }
 
   @Get()

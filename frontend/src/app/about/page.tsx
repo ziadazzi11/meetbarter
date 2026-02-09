@@ -97,11 +97,11 @@ export default function AboutPage() {
                             { phase: '03', title: 'Fulfillment', desc: 'Meet in person. Inspect the goods. Use the secure in-app messaging.' },
                             { phase: '04', title: 'Settlement', desc: 'Verify the meet. VP is minted and transferred instantly to the seller.' },
                         ].map((p, idx) => (
-                            <div key={idx} className="p-8 rounded-2xl bg-gray-50 border border-gray-100 hover:border-indigo-200 hover:shadow-lg transition-all group">
-                                <div className="flex justify-between items-start mb-4">
-                                    <h3 className="text-xl font-bold text-gray-900">{p.title}</h3>
-                                    <div className="text-3xl font-black text-indigo-100 group-hover:text-indigo-200 transition-colors">{p.phase}</div>
+                            <div key={idx} className="p-8 rounded-2xl bg-gray-50 border border-gray-100 hover:border-indigo-200 hover:shadow-lg transition-all group flex flex-col items-center text-center">
+                                <div className="mb-4 w-16 h-16 rounded-full bg-indigo-50 group-hover:bg-indigo-100 flex items-center justify-center transition-colors">
+                                    <span className="text-2xl font-black text-indigo-600 group-hover:text-indigo-700">{p.phase}</span>
                                 </div>
+                                <h3 className="text-xl font-bold text-gray-900 mb-3">{p.title}</h3>
                                 <p className="text-gray-600 text-sm leading-relaxed">{p.desc}</p>
                             </div>
                         ))}
@@ -110,31 +110,31 @@ export default function AboutPage() {
             </section>
 
             {/* Trust Engine */}
-            <section id="trust" className="py-24 bg-indigo-900 text-white">
+            <section id="trust" className="py-24 bg-gradient-to-br from-indigo-50 to-white text-gray-900">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-16">
-                        <h2 className="text-4xl font-bold mb-4">A Zero-Trust Economy</h2>
-                        <p className="text-xl text-indigo-300">We don't expect you to trust strangers; we expect you to trust the data.</p>
+                        <h2 className="text-4xl font-bold mb-4 text-gray-900">A Zero-Trust Economy</h2>
+                        <p className="text-xl text-gray-600 max-w-2xl mx-auto">We don't expect you to trust strangers; we build systems that verify the data so you don't have to.</p>
                     </div>
                     <div className="grid md:grid-cols-3 gap-12">
-                        <div className="text-center space-y-4">
-                            <div className="w-20 h-20 bg-indigo-800 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-6">📊</div>
-                            <h3 className="text-2xl font-bold">Global Trust Score (GTS)</h3>
-                            <p className="text-indigo-200 leading-relaxed">
+                        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow text-center space-y-4 group">
+                            <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 group-hover:scale-110 transition-transform">📊</div>
+                            <h3 className="text-2xl font-bold text-gray-900">Global Trust Score</h3>
+                            <p className="text-gray-600 leading-relaxed">
                                 Calculated based on trade history, verified reviews, and referral quality. Range: 1.0 (New) to 5.0 (Legend).
                             </p>
                         </div>
-                        <div className="text-center space-y-4">
-                            <div className="w-20 h-20 bg-indigo-800 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-6">👁️</div>
-                            <h3 className="text-2xl font-bold">Collusion Protection</h3>
-                            <p className="text-indigo-200 leading-relaxed">
+                        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow text-center space-y-4 group">
+                            <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 group-hover:scale-110 transition-transform">👁️</div>
+                            <h3 className="text-2xl font-bold text-gray-900">Collusion Protection</h3>
+                            <p className="text-gray-600 leading-relaxed">
                                 Our algorithm detects patterns of circular trading. Real value must change hands for scores to rise.
                             </p>
                         </div>
-                        <div className="text-center space-y-4">
-                            <div className="w-20 h-20 bg-indigo-800 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-6">🛡️</div>
-                            <h3 className="text-2xl font-bold">Privacy Masking</h3>
-                            <p className="text-indigo-200 leading-relaxed">
+                        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow text-center space-y-4 group">
+                            <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 group-hover:scale-110 transition-transform">🛡️</div>
+                            <h3 className="text-2xl font-bold text-gray-900">Privacy Masking</h3>
+                            <p className="text-gray-600 leading-relaxed">
                                 In-app messaging automatically masks phone numbers and emails to keep trades secure and on-platform.
                             </p>
                         </div>

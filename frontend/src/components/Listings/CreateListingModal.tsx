@@ -49,6 +49,11 @@ export default function CreateListingModal({ isOpen, onClose, userId, onSuccess,
         }
     }, [isOpen]);
 
+    const handleBulkOpen = () => {
+        // We need to trigger this from parent or use context. 
+        // Since CreateListingModal is for single, we need a new state in page.tsx for BulkModal.
+    };
+
     const fetchEvents = async () => {
         try {
             const res = await fetch(`${API_BASE_URL}/events`, {
@@ -69,8 +74,17 @@ export default function CreateListingModal({ isOpen, onClose, userId, onSuccess,
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Safety Check: Max Photos
         if (formData.images.length > 5) {
             alert("Maximum 5 photos allowed.");
+            return;
+        }
+
+        // Safety Check: No Phone Numbers
+        const phonePattern = /(?:\d[\s-]*){8,}/;
+        if (phonePattern.test(formData.title) || phonePattern.test(formData.description)) {
+            alert("For your safety & privacy, please do not include phone numbers in public listings.\n\nContact details are automatically revealed to the other party once a trade is approved.");
             return;
         }
 

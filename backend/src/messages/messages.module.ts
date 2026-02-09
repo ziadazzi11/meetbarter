@@ -20,5 +20,6 @@ import { SecurityModule } from '../security/security.module';
     ],
     providers: [MessagesService, ChatGateway],
     controllers: [MessagesController],
+    exports: [MessagesService],
 })
 export class MessagesModule { }

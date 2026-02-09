@@ -6,10 +6,10 @@ import { CategoriesModule } from '../categories/categories.module';
 import { IntelligenceModule } from '../intelligence/intelligence.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { ValuationModule } from '../valuation/valuation.module';
-import { ModerationModule } from '../moderation/moderation.module';
+import { UploadModule } from '../upload/upload.module';
 
 @Module({
-  imports: [PrismaModule, CategoriesModule, IntelligenceModule, ValuationModule, ModerationModule],
+  imports: [PrismaModule, CategoriesModule, IntelligenceModule, ValuationModule, ModerationModule, UploadModule],
   controllers: [ListingsController],
   providers: [ListingsService, AiPricingService],
   exports: [ListingsService, AiPricingService],

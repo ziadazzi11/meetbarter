@@ -14,7 +14,7 @@ export class IntelligenceInterceptor implements NestInterceptor {
 
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         const request = context.switchToHttp().getRequest();
-        const { method, url, query, user } = request;
+        const { method, url, user } = request;
 
         return next.handle().pipe(
             tap(() => {

@@ -10,6 +10,9 @@ interface User {
     avatarUrl?: string;
     subscriptionTier: string;
     phoneVerified?: boolean;
+    isBusiness?: boolean;
+    verificationLevel?: number;
+    communityRole?: string;
 }
 
 interface AuthContextType {
@@ -36,11 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    const fetchUser = async (id: string) => {
+    const fetchUser = async (userId: string) => {
         try {
             // Check if we have the endpoint, otherwise fallback to demo user for now if simple setup
             // In real app: GET /users/me or /users/:id
-            const res = await adsClient.get(`/users/me`); // Assuming this exists or we use /users/:id
+            const res = await adsClient.get(`/users/${userId}`); // Assuming this exists or we use /users/:id
             // If /users/me isn't implemented, we might need to fetch by ID if we trust localStorage (weak security but MVP ok)
             // validating user existence
             if (res) {

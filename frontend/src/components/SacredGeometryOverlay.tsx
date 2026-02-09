@@ -87,14 +87,26 @@ function Particles({ count }: { count: number }) {
     }, [count]);
 
     return (
-        <>
-            {particles.map((style, i) => (
-                <div
+        <svg className="absolute inset-0 w-full h-full pointer-events-none">
+            {particles.map((p, i) => (
+                <circle
                     key={i}
-                    className="particle"
-                    style={style}
-                />
+                    cx={p.left}
+                    cy={p.top}
+                    r={parseFloat(p.width) / 2}
+                    fill="#fbbf24"
+                    opacity="0.3"
+                >
+                    <animate
+                        attributeName="cy"
+                        from={p.top}
+                        to={`${parseFloat(p.top) - 5}%`}
+                        dur={p.animationDuration}
+                        begin={p.animationDelay}
+                        repeatCount="indefinite"
+                    />
+                </circle>
             ))}
-        </>
+        </svg>
     );
 }

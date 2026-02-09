@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 
+import StorefrontProfile from '@/components/StorefrontProfile';
+
 interface UserProfile {
     id: string;
     fullName: string;
@@ -15,13 +17,14 @@ interface UserProfile {
     activeListing: number;
     phoneNumber?: string;
     phoneVerified: boolean;
+    verificationLevel: number;
+    bannerUrl?: string;
+    profilePicture?: string;
 }
 
 import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/AuthContext';
 import { PhoneVerificationModal } from '@/components/PhoneVerificationModal';
-
-// ... interface UserProfile ...
 
 export default function ProfilePage() {
     const params = useParams();
@@ -82,6 +85,11 @@ export default function ProfilePage() {
                 </div>
             </div>
         );
+    }
+
+    // CONDITIONAL RENDERING: Check for Institutional Verification Level (>= 3)
+    if (profile.verificationLevel >= 3) {
+        return <StorefrontProfile profile={profile} listings={listings} />;
     }
 
     return (

@@ -43,9 +43,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 }
 
 function ThemedContent({ children }: { children: React.ReactNode }) {
-    const { theme } = useTheme();
+    const { theme, darkMode } = useTheme();
     return (
-        <body className={`${geistSans.variable} ${geistMono.variable} flex flex-col min-h-screen theme-${theme}`} suppressHydrationWarning={true}>
+        <body className={`${geistSans.variable} ${geistMono.variable} flex flex-col min-h-screen theme-${theme} ${darkMode ? 'dark' : ''}`} suppressHydrationWarning={true}>
             <ToastContainer />
             <Header />
             <ThemeManager />

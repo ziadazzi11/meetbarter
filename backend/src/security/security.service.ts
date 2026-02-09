@@ -5,6 +5,7 @@ import { FraudDetector } from './fraud.detector';
 import { RiskLevel, SecurityEvent } from './security.types';
 import { BehaviorAnalyzer } from './behavior.analyzer';
 import { IpIntel } from './ip.intel';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class SecurityService {
@@ -15,7 +16,8 @@ export class SecurityService {
         private riskEngine: RiskEngine,
         private fraudDetector: FraudDetector,
         private behaviorAnalyzer: BehaviorAnalyzer,
-        private ipIntel: IpIntel
+        private ipIntel: IpIntel,
+        private prisma: PrismaService
     ) { }
 
     /**
@@ -80,5 +82,76 @@ export class SecurityService {
         }
 
         return true; // Allow action
+    }
+    async flagContentForReview(userId: string, type: 'PHONE_NUMBER_IN_IMAGE' | 'PROHIBITED_CONTENT', evidenceUrl: string, detectedText?: string): Promise<void> {
+        // Create a Moderation Flag for Admin Review
+        await this.prisma.contentModerationFlag.create({
+            data: {
+                reportedByUserId: userId, // User reported themselves via auto-detection
+                reason: `AI Detection: ${type}`,
+                category: 'PRIVACY_VIOLATION',
+                severity: 'HIGH_RISK',
+                evidenceUrl: evidenceUrl,
+                matchedKeywords: detectedText ? JSON.stringify({ detectedText }) : null,
+                status: 'PENDING'
+            }
+        });
+
+        this.logger.warn(`Content flagged for review: User ${userId}, Type ${type}`);
+    }
+
+    // Called by Admin to confirm the ban
+    async executeBanForFlag(flagId: string, adminId: string): Promise<void> {
+        const flag = await this.prisma.contentModerationFlag.findUnique({ where: { id: flagId } });
+        if (!flag || !flag.reportedByUserId) return;
+
+        const userId = flag.reportedByUserId;
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) return;
+
+        const newStrikeCount = user.moderationStrikes + 1;
+        let banDurationHours = 0;
+        let banReason = '';
+        let isPermaBan = false;
+
+        if (newStrikeCount === 1) {
+            banDurationHours = 24;
+            banReason = 'First Warning: Posting personal contact info (phone numbers) in public images is prohibited. 24-hour suspension.';
+        } else if (newStrikeCount >= 2) {
+            isPermaBan = true;
+            banReason = 'Final Warning Ignored: Permanent ban for repeated safety violations.';
+        }
+
+        const banExpiresAt = isPermaBan ? null : new Date(Date.now() + banDurationHours * 60 * 60 * 1000);
+
+        // Update User
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                moderationStrikes: newStrikeCount,
+                isBanned: true,
+                bannedAt: new Date(),
+                banReason,
+                banExpiresAt
+            }
+        });
+
+        // Update Flag Status
+        await this.prisma.contentModerationFlag.update({
+            where: { id: flagId },
+            data: {
+                status: 'REJECTED', // Content rejected, user punished
+                reviewedBy: adminId,
+                reviewedAt: new Date(),
+                reviewNotes: `Ban Confirmed. Strike ${newStrikeCount}.`
+            }
+        });
+
+        await this.auditLogger.log({
+            action: 'USER_BANNED',
+            userId,
+            adminId,
+            details: { flagId, strikes: newStrikeCount, duration: isPermaBan ? 'PERMANENT' : banDurationHours + 'h' }
+        }, 100);
     }
 }

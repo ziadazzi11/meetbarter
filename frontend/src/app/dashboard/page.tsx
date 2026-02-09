@@ -367,21 +367,21 @@ export default function DashboardPage() {
                                 <h2 className="text-2xl font-bold text-gray-900 mb-6">{editingListing ? 'Edit Listing' : 'Create New Listing'}</h2>
                                 <form onSubmit={handleSaveListing} className="space-y-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                                        <input required className="w-full p-2 border rounded" value={listingFormData.title} onChange={e => setListingFormData({ ...listingFormData, title: e.target.value })} />
+                                        <label htmlFor="listing-title" className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                                        <input id="listing-title" required className="w-full p-2 border rounded" value={listingFormData.title} onChange={e => setListingFormData({ ...listingFormData, title: e.target.value })} />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                        <textarea required className="w-full p-2 border rounded min-h-[100px]" value={listingFormData.description} onChange={e => setListingFormData({ ...listingFormData, description: e.target.value })} />
+                                        <label htmlFor="listing-description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                        <textarea id="listing-description" required className="w-full p-2 border rounded min-h-[100px]" value={listingFormData.description} onChange={e => setListingFormData({ ...listingFormData, description: e.target.value })} />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Original Price (Value)</label>
-                                            <input type="number" required className="w-full p-2 border rounded" value={listingFormData.originalPrice} onChange={e => setListingFormData({ ...listingFormData, originalPrice: Number(e.target.value) })} />
+                                            <label htmlFor="listing-original-price" className="block text-sm font-medium text-gray-700 mb-1">Original Price (Value)</label>
+                                            <input id="listing-original-price" type="number" required className="w-full p-2 border rounded" value={listingFormData.originalPrice} onChange={e => setListingFormData({ ...listingFormData, originalPrice: Number(e.target.value) })} />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
-                                            <select className="w-full p-2 border rounded" value={listingFormData.condition} onChange={e => setListingFormData({ ...listingFormData, condition: e.target.value })}>
+                                            <label htmlFor="listing-condition" className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
+                                            <select id="listing-condition" className="w-full p-2 border rounded" value={listingFormData.condition} onChange={e => setListingFormData({ ...listingFormData, condition: e.target.value })}>
                                                 <option value="NEW">New</option>
                                                 <option value="USED_GOOD">Used - Good</option>
                                                 <option value="USED_FAIR">Used - Fair</option>
@@ -390,15 +390,15 @@ export default function DashboardPage() {
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                                            <select required className="w-full p-2 border rounded" value={listingFormData.categoryId} onChange={e => setListingFormData({ ...listingFormData, categoryId: e.target.value })}>
+                                            <label htmlFor="listing-category" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                            <select id="listing-category" required className="w-full p-2 border rounded" value={listingFormData.categoryId} onChange={e => setListingFormData({ ...listingFormData, categoryId: e.target.value })}>
                                                 <option value="">Select Category</option>
                                                 {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                                            <input required className="w-full p-2 border rounded" value={listingFormData.location} onChange={e => setListingFormData({ ...listingFormData, location: e.target.value })} />
+                                            <label htmlFor="listing-location" className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                            <input id="listing-location" required className="w-full p-2 border rounded" value={listingFormData.location} onChange={e => setListingFormData({ ...listingFormData, location: e.target.value })} />
                                         </div>
                                     </div>
                                     <div>

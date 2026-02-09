@@ -162,6 +162,8 @@ async function main() {
     await prisma.trade.deleteMany({ where: { sellerId: sellerUser.id } });
     await prisma.listing.deleteMany({ where: { sellerId: sellerUser.id } });
 
+    // Commented out to provide a clean slate for the user
+    /*
     for (const p of productList) {
         await prisma.listing.create({
             data: {
@@ -173,6 +175,23 @@ async function main() {
             }
         });
     }
+    */
+
+    // Create an Admin User
+    await prisma.user.upsert({
+        where: { email: 'admin@meetbarter.com' },
+        update: { passwordHash },
+        create: {
+            email: 'admin@meetbarter.com',
+            passwordHash,
+            fullName: 'System Admin',
+            role: 'ADMIN',
+            walletBalance: 100000,
+            phoneNumber: '+961 71 999999',
+            verificationLevel: 3,
+            isBusiness: true
+        },
+    });
 
     // v1.2: System Configuration (Phase 1 Baseline)
     await prisma.systemConfig.upsert({

@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SecurityEvent } from './security.types';
 import { LedgerService } from './ledger.service';
-import * as crypto from 'crypto';
 
 @Injectable()
 export class AuditLogger {
@@ -24,14 +23,8 @@ export class AuditLogger {
             });
             const prevHash = lastLog?.hash || 'GENESIS_HASH';
 
-            // 2. Prepare payload
-            const dataToHash = {
-                prevHash,
-                action: event.action,
-                userId: event.userId,
-                details: JSON.stringify(event.details),
-                timestamp: new Date().toISOString()
-            };
+            // 2. Prepare payload (log only, not used for hash calculation here as ledger service handles it)
+            // const dataToHash = { ... };
 
             // 3. Calculate Integrity Hash via Ledger Service
             const hash = this.ledger.calculateHash(prevHash, {

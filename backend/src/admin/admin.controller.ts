@@ -1,11 +1,13 @@
-// FORCE_REBUILD
-import { Controller, Post, Body, Get, UnauthorizedException, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Get, UnauthorizedException, Param, UseGuards, Query, Req } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { SecurityService } from '../security/security.service';
 import { TradesService } from '../trades/trades.service';
 import { UsersService } from '../users/users.service';
 import { ContentModerationService } from '../moderation/content-moderation.service';
 import { IntelligenceService } from '../intelligence/intelligence.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 import { PermissionGuard } from '../common/guards/permission.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../security/security.types';
@@ -20,6 +22,7 @@ export class AdminController {
         private readonly tradesService: TradesService,
         private readonly moderationService: ContentModerationService,
         private readonly usersService: UsersService,
+        private readonly securityService: SecurityService, // Added this line
         private readonly vaultStorage: VaultStorageService,
         private readonly intelligence: IntelligenceService
     ) { }
@@ -377,6 +380,41 @@ export class AdminController {
     @Permissions(Permission.APPROVE_AMBASSADOR)
     async getPendingAmbassadors() {
         return this.usersService.findPendingAmbassadors();
+    }
+
+    @Get('moderation/flags')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN', 'MODERATOR')
+    async getModerationFlags(@Query('status') status: string) {
+        return this.prisma.contentModerationFlag.findMany({
+            where: { status: status as any || 'PENDING' },
+            include: { reportedBy: { select: { fullName: true, email: true, id: true } } },
+            orderBy: { createdAt: 'desc' }
+        });
+    }
+
+    @Post('moderation/flags/:id/ban')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    async banUserForFlag(@Param('id') id: string, @Req() req) {
+        await this.securityService.executeBanForFlag(id, req.user.userId);
+        return { status: 'success', message: 'User banned and flag resolved.' };
+    }
+
+    @Post('moderation/flags/:id/dismiss')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN', 'MODERATOR')
+    async dismissFlag(@Param('id') id: string, @Req() req) {
+        await this.prisma.contentModerationFlag.update({
+            where: { id },
+            data: {
+                status: 'REJECTED', // Rejected the FLAG, meaning content is OK (or at least forgiven)
+                reviewedBy: req.user.userId,
+                reviewedAt: new Date(),
+                reviewNotes: 'Flag dismissed by admin.'
+            }
+        });
+        return { status: 'success', message: 'Flag dismissed.' };
     }
 
     @Post('users/:id/approve-ambassador')
