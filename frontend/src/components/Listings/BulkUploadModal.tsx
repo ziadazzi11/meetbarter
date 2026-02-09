@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import Image from 'next/image';
 import { API_BASE_URL } from "@/config/api";
 import { useAuth } from '@/context/AuthContext';
 import * as XLSX from 'xlsx';
@@ -8,7 +9,7 @@ interface RowData {
     Title?: string;
     Price?: string;
     Description?: string;
-    [key: string]: any;
+    [key: string]: string | number | undefined;
 }
 
 interface BulkItem {
@@ -135,9 +136,9 @@ export default function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUplo
         setLoading(true);
 
         const formData = new FormData();
-        // @ts-ignore
+        // @ts-expect-error
         if (token && parseJwt(token).sub) {
-            // @ts-ignore
+            // @ts-expect-error
             formData.append('sellerId', parseJwt(token).sub);
         }
 
@@ -166,8 +167,9 @@ export default function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUplo
             alert(`Successfully uploaded ${items.length} items!`);
             onSuccess();
             onClose();
-        } catch (err: any) {
-            alert('Upload failed: ' + err.message);
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : String(err);
+            alert('Upload failed: ' + message);
         } finally {
             setLoading(false);
         }
@@ -207,12 +209,13 @@ export default function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUplo
                     <input
                         type="file"
                         ref={folderInputRef}
-                        // @ts-ignore
+                        // @ts-expect-error
                         webkitdirectory=""
                         directory=""
                         multiple
                         className="hidden"
                         onChange={handleFolderSelect}
+                        aria-label="Upload Folder"
                     />
 
                     <button
@@ -227,6 +230,7 @@ export default function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUplo
                         accept=".xlsx, .xls"
                         className="hidden"
                         onChange={handleExcelSelect}
+                        aria-label="Upload Excel"
                     />
 
                     <div className="flex-1"></div>
@@ -247,7 +251,15 @@ export default function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUplo
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                             {items.map(item => (
                                 <div key={item.id} className="bg-gray-800 rounded-lg p-3 flex gap-3 border border-gray-700 hover:border-cyan-500/50 transition-colors">
-                                    <img src={item.previewUrl} alt={item.title} title={item.title} className="w-20 h-20 object-cover rounded bg-gray-900" />
+                                    <Image 
+                                        src={item.previewUrl} 
+                                        alt={item.title} 
+                                        title={item.title} 
+                                        width={80} 
+                                        height={80} 
+                                        className="object-cover rounded bg-gray-900" 
+                                        unoptimized
+                                    />
                                     <div className="flex-1 min-w-0 flex flex-col gap-1">
                                         <input
                                             value={item.title}

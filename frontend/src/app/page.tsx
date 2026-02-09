@@ -83,9 +83,21 @@ export default function Home() {
   }, []);   // Listen for Bulk Upload trigger from Header
 
 
-  const fetchUserData = (uid: string) => {
-    fetchActiveTrades(uid);
-    fetch(`${API_BASE_URL}/users/me`).then(res => res.json()).then(setUser);
+  const fetchUserData = async (uid: string) => {
+    try {
+      // Parallel fetch for speed
+      await Promise.all([
+        fetchActiveTrades(uid),
+        fetch(`${API_BASE_URL}/users/me`).then(res => {
+          if (res.ok) return res.json();
+          throw new Error('User fetch failed');
+        }).then(setUser)
+      ]);
+    } catch (e) {
+      console.error("Fetch User Data Error:", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
