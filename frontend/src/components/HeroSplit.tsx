@@ -10,65 +10,74 @@ interface HeroSplitProps {
 
 export default function HeroSplit({ onPost, onRequest }: HeroSplitProps) {
     return (
-        <section className="relative w-full min-h-[500px] flex flex-col md:flex-row bg-meetbarter-black overflow-hidden">
-            {/* Left Content - 50% */}
-            <div className="w-full md:w-1/2 flex flex-col justify-center px-6 md:px-16 py-12 z-10 relative">
-                {/* Decorative Elements */}
-                <div className="absolute top-0 left-0 w-32 h-32 bg-meetbarter-neon-blue blur-[80px] opacity-20"></div>
+        <section className="relative w-full min-h-[550px] flex flex-col md:flex-row bg-[#030712] overflow-hidden border-b border-white/5">
+            {/* Ambient Background Glows */}
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/20 blur-[120px] rounded-full"></div>
+            <div className="absolute bottom-[-10%] right-[10%] w-[30%] h-[30%] bg-emerald-600/10 blur-[100px] rounded-full"></div>
 
-                <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter leading-tight mb-4">
-                    BARTER <span className="text-meetbarter-neon-blue">NEARBY</span>
-                </h1>
-
-                <p className="text-lg text-gray-400 mb-8 max-w-md">
-                    Exchange what you want with other users nearby.
-                    <strong className="text-white"> Zero Commission. Zero Waste. Total Trust.</strong>
-                </p>
-
-                <div className="flex flex-wrap gap-4">
-                    <button
-                        onClick={onPost}
-                        className="px-8 py-4 bg-meetbarter-neon-blue text-meetbarter-black font-bold uppercase tracking-wide hover:bg-white hover:scale-105 transition-all shadow-[0_0_20px_rgba(0,243,255,0.3)]"
-                    >
-                        Start Barter
-                    </button>
-                    <button
-                        onClick={onRequest}
-                        className="px-8 py-4 bg-transparent border-2 border-white text-white font-bold uppercase tracking-wide hover:bg-white hover:text-meetbarter-black hover:scale-105 transition-all"
-                    >
-                        Request Item
-                    </button>
+            {/* Left Content - 55% */}
+            <div className="w-full md:w-[55%] flex flex-col justify-center px-6 md:px-20 py-16 z-10 relative">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 w-fit mb-6 backdrop-blur-md">
+                    <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Live Barter Network • Lebanon</span>
                 </div>
 
-                {/* Search Bar / Location (Mini) */}
-                <div className="mt-8 flex items-center gap-2 text-sm text-gray-500">
-                    <svg className="w-4 h-4 text-meetbarter-neon-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    <span>Your Neighborhood in Your Pocket</span>
+                <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-6">
+                    TRADE <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-emerald-400">EVERYTHING</span> <br />
+                    OWN <span className="inline-block hover:scale-105 transition-transform duration-500 cursor-default">ANYTHING</span>
+                </h1>
+
+                <p className="text-lg md:text-xl text-gray-400 mb-10 max-w-xl leading-relaxed">
+                    The trust-first marketplace for modern trade.
+                    <span className="text-white font-medium"> No intermediaries. No junk fees.</span> Just pure peer-to-peer exchange.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-5">
+                    <button
+                        onClick={onPost}
+                        className="group relative px-10 py-5 bg-white text-black font-black uppercase tracking-widest text-sm rounded-2xl hover:bg-indigo-600 hover:text-white transition-all duration-500 shadow-2xl hover:shadow-indigo-500/50 active:scale-95 overflow-hidden"
+                    >
+                        <span className="relative z-10">Initiate Barter</span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    </button>
+
+                    <button
+                        onClick={onRequest}
+                        className="px-10 py-5 bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-sm rounded-2xl hover:bg-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-md active:scale-95"
+                    >
+                        Post Request
+                    </button>
                 </div>
             </div>
 
-            {/* Right Image - 50% */}
-            <div className="w-full md:w-1/2 relative bg-meetbarter-dark-gray h-[400px] md:h-auto overflow-hidden group">
-                {/* Background Pattern */}
-                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-700 via-gray-900 to-black"></div>
+            {/* Right Image/Visual - 45% */}
+            <div className="w-full md:w-[45%] relative min-h-[400px] md:h-auto overflow-hidden group">
+                {/* Geometrical Decorative Shapes */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] pointer-events-none">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] border border-white/5 rounded-full animate-[spin_20s_linear_infinite]"></div>
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] border border-white/5 rounded-full animate-[spin_35s_linear_infinite_reverse]"></div>
+                </div>
 
-                {/* Circle Glow */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-meetbarter-neon-blue rounded-full blur-[100px] opacity-20 group-hover:opacity-30 transition-opacity duration-700"></div>
-
-                {/* Floating Image (Placeholder for now, using a generic 'lifestyle' or abstract 3D element) */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="relative w-full h-full max-w-md max-h-md animate-float">
+                <div className="absolute inset-0 flex items-center justify-center p-12">
+                    <div className="relative w-full h-full max-w-lg animate-float-premium">
+                        <div className="absolute inset-0 bg-indigo-500/20 blur-[100px] rounded-full group-hover:bg-indigo-500/30 transition-colors duration-700"></div>
                         <Image
-                            src="/assets/xtribe_analysis_1770581509194.webp" // Using an existing artifact as placeholder if available, or just a logo
-                            alt="Barter Lifestyle"
+                            src="/assets/xtribe_analysis_1770581509194.webp"
+                            alt="Premium Barter Experience"
                             fill
-                            className="object-cover md:object-contain opacity-80 mix-blend-overlay hover:mix-blend-normal transition-all duration-700"
+                            className="object-contain drop-shadow-[0_0_50px_rgba(79,70,229,0.3)] group-hover:drop-shadow-[0_0_80px_rgba(79,70,229,0.5)] transition-all duration-700 brightness-110"
+                            priority
                         />
-                        {/* Fallback Text if image fails/is purely decorative */}
-                        <div className="absolute inset-0 flex items-center justify-center text-meetbarter-dark-gray font-black text-9xl opacity-5 select-none uppercase">
-                            Trade
-                        </div>
                     </div>
+                </div>
+
+                {/* Subtext info */}
+                <div className="absolute bottom-8 right-12 text-right hidden lg:block">
+                    <div className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 mb-1">Architecture v4.2</div>
+                    <div className="text-xs font-medium text-white/10">ANTI-RECONNAISSANCE PROTECTED</div>
                 </div>
             </div>
         </section>

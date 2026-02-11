@@ -2,149 +2,125 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111827;
+  /* Gray 900 */
   --primary-color: #f59e0b;
   /* Amber 500 */
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --neon-blue: #00f3ff;
+  --neon-purple: #bc13fe;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --accent-glow: 0 0 20px rgba(0, 243, 255, 0.4);
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #030712;
+  /* Gray 950 */
+  --foreground: #f3f4f6;
+  /* Gray 100 */
+  --glass-bg: rgba(17, 24, 39, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.1);
 }
 
 html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
-  transition: background 0.8s ease-in-out;
+  transition: background 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  scroll-behavior: smooth;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Inter, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Glassmorphism Classes */
+.glass-card {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+}
+
+.glass-nav {
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.premium-shadow {
+  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.neon-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.neon-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: 0.5s;
+}
+
+.neon-btn:hover::before {
+  left: 100%;
+}
+
 /* Theme Backgrounds */
 body.theme-jungle {
-  background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/assets/jungle.png');
-  background-size: cover;
-  background-position: center;
+  background: radial-gradient(circle at top, rgba(5, 150, 105, 0.1), transparent), #030712;
   background-attachment: fixed;
 }
 
 body.theme-beach {
-  background-image: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)), url('/assets/beach.png');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-}
-
-body.theme-himalaya {
-  background-image: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)), url('/assets/himalaya.png');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-}
-
-body.theme-sacred_geometry,
-body.theme-sacred_geometry_4d {
-  background: black;
-}
-
-body.theme-farm_night {
-  background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('/assets/farm_night.png');
-  background-size: cover;
-  background-position: center;
+  background: radial-gradient(circle at top, rgba(245, 158, 11, 0.1), transparent), #ffffff;
   background-attachment: fixed;
 }
 
 /* Animations */
-@keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes pulse-slow {
+@keyframes float {
 
   0%,
   100% {
-    opacity: 0.2;
-    transform: scale(1);
+    transform: translateY(0);
   }
 
   50% {
-    opacity: 0.5;
-    transform: scale(1.05);
+    transform: translateY(-10px);
   }
 }
 
-@keyframes drift {
-  0% {
-    transform: translate(0, 0);
-  }
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
 
-  50% {
-    transform: translate(10px, 10px);
-  }
+@keyframes pulse-neon {
 
+  0%,
   100% {
-    transform: translate(0, 0);
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 25px rgba(0, 243, 255, 0.8);
   }
 }
 
-.animate-spin-slow {
-  animation: spin-slow 60s linear infinite;
-}
-
-.animate-pulse-slow {
-  animation: pulse-slow 10s ease-in-out infinite;
-}
-
-.animate-drift {
-  animation: drift 20s ease-in-out infinite;
-}
-
-/* Sacred Geometry Specifics */
-.sacred-geometry-svg {
-  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.3));
-}
-
-.particle {
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  background: white;
-  border-radius: 50%;
-  opacity: 0.3;
-  pointer-events: none;
-  animation: float 20s linear infinite;
-}
-
-@keyframes float {
-  from {
-    transform: translateY(100vh) rotate(0deg);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateY(-10vh) rotate(360deg);
-    opacity: 0.3;
-  }
+.pulse-neon {
+  animation: pulse-neon 4s ease-in-out infinite;
 }
 
 * {
@@ -156,10 +132,4 @@ body.theme-farm_night {
 a {
   color: inherit;
   text-decoration: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
 }

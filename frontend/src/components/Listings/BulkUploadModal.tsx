@@ -136,10 +136,10 @@ export default function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUplo
         setLoading(true);
 
         const formData = new FormData();
-        // @ts-expect-error
-        if (token && parseJwt(token).sub) {
-            // @ts-expect-error
-            formData.append('sellerId', parseJwt(token).sub);
+
+        const decoded = token ? parseJwt(token) as any : null;
+        if (decoded && decoded.sub) {
+            formData.append('sellerId', decoded.sub);
         }
 
         items.forEach((item, index) => {
@@ -251,13 +251,13 @@ export default function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUplo
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                             {items.map(item => (
                                 <div key={item.id} className="bg-gray-800 rounded-lg p-3 flex gap-3 border border-gray-700 hover:border-cyan-500/50 transition-colors">
-                                    <Image 
-                                        src={item.previewUrl} 
-                                        alt={item.title} 
-                                        title={item.title} 
-                                        width={80} 
-                                        height={80} 
-                                        className="object-cover rounded bg-gray-900" 
+                                    <Image
+                                        src={item.previewUrl}
+                                        alt={item.title}
+                                        title={item.title}
+                                        width={80}
+                                        height={80}
+                                        className="object-cover rounded bg-gray-900"
                                         unoptimized
                                     />
                                     <div className="flex-1 min-w-0 flex flex-col gap-1">

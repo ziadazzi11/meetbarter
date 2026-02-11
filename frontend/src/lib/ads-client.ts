@@ -44,31 +44,33 @@ export class AdsClient {
         const cacheKey = sessionId || 'default';
         const cached = this.tokenCache.get(cacheKey);
 
-        // Return cached token if still valid
-        if (cached && Date.now() < cached.expiresAt - 10000) { // 10s buffer
+        if (cached && Date.now() < cached.expiresAt - 10000) {
             return cached.tokenId;
         }
 
-        // Perform handshake
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
         try {
             // Step 1: Get challenge
             const challengeRes = await fetch(`${this.baseUrl}/v1/auth-sync/init`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ sessionId }),
+                signal: controller.signal,
             });
 
+            clearTimeout(timeoutId);
+
             if (!challengeRes.ok) {
-                console.error('Failed to initialize handshake');
+                console.warn('ADS: Handshake init failed, skipping token');
                 return null;
             }
 
             const challenge: ChallengeResponse = await challengeRes.json();
-
-            // Step 2: Hash nonce (SHA256)
             const signature = await this.hashNonce(challenge.nonce);
 
-            // Step 3: Verify and get token
+            // Step 2: Verify
             const tokenRes = await fetch(`${this.baseUrl}/v1/auth-sync/verify`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -80,18 +82,15 @@ export class AdsClient {
             });
 
             if (!tokenRes.ok) {
-                console.error('Failed to verify handshake');
+                console.warn('ADS: Handshake verification failed, skipping token');
                 return null;
             }
 
             const tokenData: TokenResponse = await tokenRes.json();
-
             if (!tokenData.success || !tokenData.tokenId) {
-                console.error('Handshake verification failed:', tokenData.error);
                 return null;
             }
 
-            // Cache token
             this.tokenCache.set(cacheKey, {
                 tokenId: tokenData.tokenId,
                 expiresAt: tokenData.expiresAt || Date.now() + 300000,
@@ -99,8 +98,9 @@ export class AdsClient {
 
             return tokenData.tokenId;
         } catch (error) {
-            console.error('Handshake error:', error);
-            return null;
+            clearTimeout(timeoutId);
+            console.error('ADS: Handshake resilience triggered (network/timeout error):', error);
+            return null; // Graceful degradation
         }
     }
 

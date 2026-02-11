@@ -44,7 +44,7 @@ import { SystemStateModule } from './system-state/system-state.module';
 import { AdsModule } from './ads/ads.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { CanaryInterceptor } from './ads/canary.interceptor';
-import { SemanticNoiseInterceptor } from './ads/recon/semantic-noise.interceptor';
+
 import { ContributionsModule } from './contributions/contributions.module';
 import { EventsModule } from './events/events.module';
 
@@ -57,9 +57,6 @@ import { validate } from './config/env.validation';
         ConfigModule.forRoot({ isGlobal: true, validate }),
         PrismaModule,
         AuthModule,
-        UsersModule,
-
-        TradesModule,
         ScheduleModule.forRoot(), // Enable cron jobs
         // 🛡️ Security: Rate Limiting (Anti-DDoS)
         ThrottlerModule.forRoot([{
@@ -68,12 +65,11 @@ import { validate } from './config/env.validation';
         }]),
         CategoriesModule,
         UsersModule,
-        PrismaModule,
         ListingsModule,
         TradesModule,
         MessagesModule,
         EventsModule,
-        ModerationModule,
+        // ModerationModule, // Disabled for debugging
         NotificationsModule,
         // v1.2 Features
         TimelineModule,
@@ -82,17 +78,13 @@ import { validate } from './config/env.validation';
         BountyModule,
         SuccessionModule,
         SecurityModule,
-        AuthModule,
         IntelligenceModule,
         ValuationModule,
-        GovernanceModule,
         GovernanceModule,
         SystemStateModule,
         AdsModule,
         SubscriptionsModule,
-        SubscriptionsModule,
         ContributionsModule,
-
     ],
     controllers: [AppController, AdminController],
     providers: [
@@ -140,10 +132,7 @@ import { validate } from './config/env.validation';
             provide: APP_INTERCEPTOR,
             useClass: CanaryInterceptor,
         },
-        {
-            provide: APP_INTERCEPTOR,
-            useClass: SemanticNoiseInterceptor,
-        },
+
         // 🛡️ Security: Global Ban Enforcement
         {
             provide: APP_GUARD,

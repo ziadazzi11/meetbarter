@@ -238,345 +238,306 @@ export default function Home() {
       <HeroSplit onPost={handlePostOffer} onRequest={handlePostRequest} />
 
       {/* QUICK STATS SECTION */}
-      <section className="bg-white border-b border-gray-200 py-6 px-4 shadow-sm">
+      <section className="bg-transparent py-10 px-4 -mt-12 relative z-20">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between gap-4 md:items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
 
-            {/* Left Column: Stats & Actions */}
-            <div className="flex-1 md:max-w-md flex flex-col gap-4">
+            {/* Left Column: Stats Card */}
+            <div className="lg:col-span-2 glass-card rounded-3xl p-8 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                <svg className="w-32 h-32 text-indigo-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.82v-1.91c-1.84-.44-3.56-1.57-4.46-3.26l2.49-1.04c.54 1.1 1.54 1.91 2.97 2.21v-3.72l-3.39-.83c-2.02-.49-3.46-1.84-3.46-3.66 0-1.74 1.34-3.14 3.34-3.6V3h2.82v1.94c1.47.33 2.87 1.2 3.61 2.54l-2.36 1.18c-.46-.86-1.12-1.42-2.25-1.72v3.4l3.65.89c2.04.49 3.48 1.95 3.48 3.79-.02 2.37-2.01 3.73-4.28 4.14z" /></svg>
+              </div>
 
-              {/* 1. Pure Stats Card (Isolated) */}
-              <div className="bg-gradient-to-br from-indigo-600 to-blue-500 rounded-xl p-6 text-white shadow-lg relative overflow-hidden group hover:shadow-xl transition-shadow">
-                {/* Background Decoration */}
-                {/* Trust Score (Left) */}
-                <div className="flex flex-col gap-1">
-                  <div className="text-xs uppercase tracking-wider opacity-80 font-semibold">Trust Score</div>
-                  <div className="font-bold text-2xl bg-white/20 px-4 py-1.5 rounded-lg w-fit backdrop-blur-sm border border-white/10 shadow-sm">
-                    {user?.globalTrustScore}
+              <div className="flex flex-col md:flex-row justify-between gap-12 relative z-10">
+                <div className="space-y-6">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400 mb-2 block">Available Capital</span>
+                    <div className="text-5xl font-black tracking-tighter text-gray-900 dark:text-white">
+                      {user?.walletBalance.toLocaleString()} <span className="text-xl font-medium text-gray-400">VP</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-6">
+                    <div className="bg-white/50 dark:bg-black/20 px-4 py-2 rounded-xl border border-white/50 dark:border-white/5">
+                      <span className="text-[10px] font-bold uppercase text-gray-400 block mb-0.5">Trust Score</span>
+                      <span className="font-extrabold text-indigo-600">{user?.globalTrustScore}</span>
+                    </div>
+                    <div className="bg-white/50 dark:bg-black/20 px-4 py-2 rounded-xl border border-white/50 dark:border-white/5">
+                      <span className="text-[10px] font-bold uppercase text-gray-400 block mb-0.5">Clearance</span>
+                      <span className="font-extrabold text-indigo-600">Tier {user?.verificationLevel || 1}</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Credits/VP (Right) */}
-                <div className="text-left md:text-right">
-                  <div className="text-xs uppercase tracking-wider opacity-80 font-semibold mb-1">Administrative Credits</div>
-                  <div className={`text-4xl font-extrabold tracking-tight filter drop-shadow-sm ${user && user.walletBalance < 100 ? 'text-red-200' : 'text-white'}`}>
-                    {user?.walletBalance.toLocaleString()} <span className="text-xl opacity-80 font-normal">VP</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 2. Detached Actions (Separate Row) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button onClick={() => setIsTierModalOpen(true)} className="flex items-center justify-center gap-2 p-3 bg-white border border-indigo-100 text-indigo-700 rounded-xl font-semibold shadow-sm hover:bg-indigo-50 hover:border-indigo-200 hover:shadow-md transition-all active:scale-95 group">
-                <span className="text-sm">
-                  {user && user.verificationLevel >= 3 ? 'Institutional Member' : `Upgrade to Level ${user ? user.verificationLevel + 1 : 1}`}
-                </span>
-              </button>
-              <div className="flex items-center justify-center p-3 bg-indigo-50 rounded-xl border border-indigo-100">
-                <span className="text-xs font-bold text-indigo-600">Tier {user?.verificationLevel || 1} Trust</span>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Ambassador Progress */}
-          <div className="flex-1 md:max-w-lg bg-white rounded-xl border border-indigo-100 p-4 shadow-sm">
-            <div className="flex justify-between items-center mb-2">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-gray-900">Ambassador Path</span>
-                {trades.filter((t: any) => t.status === 'COMPLETED').length >= 5 && (
-                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium border border-green-200">
-                    Verified Trader
-                  </span>
-                )}
-              </div>
-              <span className="text-indigo-600 font-bold text-sm bg-indigo-50 px-2 py-1 rounded">{user?.ambassadorStatus || 'NONE'}</span>
-            </div>
-
-            {user?.ambassadorStatus === 'NONE' && (
-              <>
-                <div className="w-full bg-gray-100 rounded-full h-2 mb-3">
-                  <svg className="w-full h-full text-indigo-600 fill-current">
-                    <rect width={`${Math.min(100, (trades.filter((t: any) => t.status === 'COMPLETED').length / 100) * 100)}%`} height="100%" rx="999" />
-                  </svg>
-                </div>
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-xs text-gray-500 font-medium">{trades.filter((t: any) => t.status === 'COMPLETED').length} / 100 Trades</span>
-                  <button
-                    onClick={handleApplyAmbassador}
-                    disabled={trades.filter((t: any) => t.status === 'COMPLETED').length < 100}
-                    className={`text-xs px-3 py-1.5 rounded font-bold transition-all ${trades.filter((t: any) => t.status === 'COMPLETED').length >= 100
-                      ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md'
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      }`}
-                  >
-                    Apply Now
+                <div className="flex flex-col justify-end items-start md:items-end gap-4">
+                  <button onClick={() => setIsTierModalOpen(true)} className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all active:scale-95 uppercase tracking-widest leading-none">
+                    {user && user.verificationLevel >= 3 ? 'Institutional Access' : 'Upgrade Trust'}
                   </button>
-                </div>
-                <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100">
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className={`p-1.5 rounded border text-[10px] ${trades.filter((t: any) => t.status === 'COMPLETED').length >= 5 ? 'bg-green-50 border-green-200 text-green-800' : 'bg-white border-gray-200 text-gray-400'}`}>
-                      <div className="font-bold">Consistent</div>
-                      <div>5 Trades</div>
-                    </div>
-                    <div className={`p-1.5 rounded border text-[10px] ${trades.filter((t: any) => t.status === 'COMPLETED').length >= 100 ? 'bg-indigo-50 border-indigo-200 text-indigo-800' : 'bg-white border-gray-200 text-gray-400'}`}>
-                      <div className="font-bold">Ambassador</div>
-                      <div>100 Trades</div>
-                    </div>
-                    <div className="p-1.5 rounded border text-[10px] bg-white border-gray-200 text-gray-400">
-                      <div className="font-bold">Legend</div>
-                      <div>1k Trades</div>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-            {user?.ambassadorStatus === 'PENDING' && <div className="text-orange-600 text-sm font-medium bg-orange-50 p-2 rounded border border-orange-200 text-center mt-2">Application Under Review...</div>}
-            {user?.ambassadorStatus === 'ACTIVE' && <div className="text-green-700 text-sm font-medium bg-green-50 p-2 rounded border border-green-200 text-center mt-2">You are a Verified Ambassador!</div>}
-          </div>
-      </div>
-      </section>
-
-      {/* QUICK ACTIONS HERO */}
-      <section className="bg-white border-b border-gray-200 py-8">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <button
-            onClick={() => {
-              setNewListing({ ...newListing, listingType: 'OFFER', title: '', description: '', images: [] });
-              setIsModalOpen(true);
-            }}
-            className="flex flex-col items-center justify-center p-6 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl transition-all hover:-translate-y-1 hover:shadow-md border border-blue-100 group"
-          >
-            <span className="font-semibold">Post Offer</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setNewListing({ ...newListing, listingType: 'REQUEST', title: 'Start a Request', description: 'I am looking for...', images: [] });
-              setIsModalOpen(true);
-            }}
-            className="flex flex-col items-center justify-center p-6 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl transition-all hover:-translate-y-1 hover:shadow-md border border-purple-100 group"
-          >
-            <span className="font-semibold">Request Item</span>
-          </button>
-
-          <Link href="/dashboard" className="flex flex-col items-center justify-center p-6 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl transition-all hover:-translate-y-1 hover:shadow-md border border-gray-200 group">
-            <span className="font-semibold">Dashboard</span>
-          </Link>
-
-          <Link href="/ambassador" className="flex flex-col items-center justify-center p-6 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl transition-all hover:-translate-y-1 hover:shadow-md border border-amber-100 group">
-            <span className="font-semibold">Ambassadors</span>
-          </Link>
-        </div>
-      </div>
-      </section >
-
-    {/* MAIN CONTENT AREA */ }
-    < main className = "max-w-6xl mx-auto px-4 py-8 space-y-12" >
-
-      {/* ACTIVE TRADES */ }
-  {
-    trades.length > 0 && (
-      <section>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-          Active Trades
-        </h2>
-        <div className="grid gap-4">
-          {trades.map((trade: any) => (
-            <div key={trade.id} className={`p-4 rounded-xl border ${trade.status === 'COMPLETED' ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'} shadow-sm`}>
-              <div className="flex flex-col md:flex-row justify-between gap-4">
-                <div className="space-y-1">
-                  <h3 className="font-bold text-lg text-gray-900">{trade.listing.title} <span className="text-gray-400 font-normal">|</span> <span className="text-indigo-600">{trade.offerVP} VP</span></h3>
-                  <div className="text-sm text-gray-600">
-                    <span className="font-medium">Status:</span> {trade.status === 'LOCKED' ? 'Confirmation Pending' : trade.status} • <span className="font-medium">Seller:</span> {trade.seller.fullName}
-                  </div>
-
-                  {trade.status === 'LOCKED' && trade.expiresAt && (
-                    <div className="text-xs text-orange-600 font-semibold bg-orange-50 inline-block px-2 py-0.5 rounded border border-orange-100 mt-1">
-                      Expires in: {getTimeRemaining(trade.expiresAt)}
-                    </div>
-                  )}
-
-                  {/* Escrow Badge */}
-                  <div className="mt-2">
-                    {trade.status === 'COMPLETED' ? (
-                      trade.isVerified ? (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full border border-green-200">Verification Complete</span>
-                      ) : (
-                        <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full border border-yellow-200">Secure Verification</span>
-                      )
-                    ) : (
-                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full border border-blue-200">Escrow Held: {trade.operationalEscrowVP} VP</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center">
-                  {trade.status === 'LOCKED' && !trade.buyerConfirmed && (
-                    <button onClick={() => handleConfirm(trade.id)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-bold shadow-md transition-colors w-full md:w-auto">
-                      Confirm Receipt
-                    </button>
-                  )}
-                  {trade.status === 'LOCKED' && trade.buyerConfirmed && (
-                    <span className="text-gray-500 font-medium italic bg-gray-100 px-4 py-2 rounded-lg">Waiting for Seller...</span>
-                  )}
-                  {trade.status === 'COMPLETED' && (
-                    <span className="text-green-600 font-bold flex items-center gap-1 bg-white px-4 py-2 rounded-lg border border-green-100 shadow-sm">
-                      Trade Secured
-                    </span>
-                  )}
+                  <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Global Status: {user?.ambassadorStatus || 'Standard Account'}</p>
                 </div>
               </div>
             </div>
-          ))}
+
+            {/* Right Column: Mini Dashboard */}
+            <div className="glass-card rounded-3xl p-8 flex flex-col justify-between">
+              <div>
+                <h3 className="font-black text-gray-900 dark:text-white uppercase tracking-widest text-sm mb-6 pb-2 border-b border-gray-100 dark:border-white/5">Network Activity</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-500">Active Trades</span>
+                    <span className="font-black text-indigo-600">{trades.length}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-500">Completed</span>
+                    <span className="font-black text-emerald-500">{trades.filter((t: any) => t.status === 'COMPLETED').length}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-emerald-400 flex items-center justify-center text-white font-black text-xs">
+                    MB
+                  </div>
+                  <div>
+                    <div className="text-xs font-black text-gray-900 dark:text-white uppercase">Personal Rank</div>
+                    <div className="text-[10px] text-indigo-600 font-bold uppercase tracking-widest">Senior Trader</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
-    )
-  }
 
-  {/* TRENDING CATEGORIES */ }
-  <section>
-    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-      Trending Categories
-    </h2>
-    <div className="grid md:grid-cols-2 gap-6">
-      {categories.slice(0, 2).map((cat: Category) => (
-        <div key={cat.id} className="p-6 bg-white rounded-xl border border-green-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-
-          </div>
-          <h3 className="text-xl font-bold text-green-700 mb-2">{cat.name}</h3>
-          <p className="text-gray-600 mb-4">{cat.description}</p>
-          <div className="inline-block bg-green-50 text-green-700 text-sm font-semibold px-3 py-1 rounded-full border border-green-100">
-            {cat.minVP} - {cat.maxVP} VP
-          </div>
-        </div>
-      ))}
-    </div>
-  </section>
-
-  {/* MARKETPLACE SEARCH & LISTINGS */ }
-  <section>
-    <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 mb-8">
-      <h2 className="text-2xl font-bold text-gray-900">Marketplace</h2>
-
-      <div className="flex flex-wrap gap-2 w-full md:w-auto">
-        <input
-          type="text"
-          placeholder="Search items..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 min-w-[200px] p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-        />
-        <select
-          aria-label="Select Country"
-          value={selectedCountry}
-          onChange={e => setSelectedCountry(e.target.value)}
-          className="p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-        >
-          <option value="Lebanon">Lebanon</option>
-          <option value="USA">USA</option>
-          <option value="France">France</option>
-          <option value="UAE">UAE</option>
-          <option value="Other">Worldwide</option>
-        </select>
-        <input
-          type="text"
-          placeholder="City..."
-          value={searchLocation}
-          onChange={(e) => setSearchLocation(e.target.value)}
-          className="flex-1 min-w-[150px] p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-        />
-      </div>
-
-      {/* View Toggle */}
-      <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200">
-        <button
-          onClick={() => setViewMode('grid')}
-          className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
-          title="Grid View"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-        </button>
-        <button
-          onClick={() => setViewMode('map')}
-          className={`p-2 rounded-md transition-all ${viewMode === 'map' ? 'bg-white shadow text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
-          title="Map View"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
-        </button>
-      </div>
-    </div>
-
-    {listings.length === 0 && searchQuery ? (
-      <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-300">
-        <div className="text-4xl mb-4"></div>
-        <h3 className="text-xl font-bold text-gray-900 mb-2">No results for &quot;{searchQuery}&quot;</h3>
-        <p className="text-gray-500 mb-6">Can&apos;t find what you&apos;re looking for?</p>
-        <button onClick={handlePostRequest} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg font-bold transition-colors">
-          Post a Request
-        </button>
-      </div>
-    ) : (
-      viewMode === 'map' ? (
-        <MapViewer listings={listings} />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {listings.map((item: any) => (
-            <ListingCard key={item.id} listing={item} />
-          ))}
-        </div>
-      )
-    )}
-  </section>
-
-  {/* ALL CATEGORIES */ }
-  <section>
-    <h2 className="text-2xl font-bold text-gray-900 mb-6">All Categories</h2>
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {categories.slice(2).map((cat: Category) => (
-        <div key={cat.id} className="p-4 bg-white rounded-xl border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all text-center">
-          <h3 className="font-bold text-gray-900 mb-1">{cat.name}</h3>
-          <p className="text-xs text-gray-500 mb-2 line-clamp-2">{cat.description}</p>
-          <div className="text-xs font-semibold text-indigo-600">
-            {cat.minVP} - {cat.maxVP} VP
+      {/* QUICK ACTIONS SECTION */}
+      <section className="py-12">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { label: 'Post Asset', action: handlePostOffer, color: 'indigo' },
+              { label: 'Request Item', action: handlePostRequest, color: 'emerald' },
+              { label: 'Dashboard', link: '/dashboard', color: 'slate' },
+              { label: 'Network', link: '/ambassador', color: 'amber' }
+            ].map((btn, i) => (
+              btn.link ? (
+                <Link key={i} href={btn.link} className="glass-card p-8 rounded-2xl flex flex-col items-center justify-center gap-2 hover:premium-shadow transition-all group overflow-hidden">
+                  <span className="font-black uppercase tracking-widest text-xs text-gray-400 group-hover:text-indigo-600 transition-colors">{btn.label}</span>
+                </Link>
+              ) : (
+                <button key={i} onClick={btn.action} className="glass-card p-8 rounded-2xl flex flex-col items-center justify-center gap-2 hover:premium-shadow transition-all group overflow-hidden">
+                  <span className="font-black uppercase tracking-widest text-xs text-gray-400 group-hover:text-indigo-600 transition-colors">{btn.label}</span>
+                </button>
+              )
+            ))}
           </div>
         </div>
-      ))}
-    </div>
-  </section>
+      </section>
+
+      {/* MAIN CONTENT AREA */}
+      < main className="max-w-6xl mx-auto px-4 py-8 space-y-12" >
+
+        {/* ACTIVE TRADES */}
+        {
+          trades.length > 0 && (
+            <section>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                Active Trades
+              </h2>
+              <div className="grid gap-4">
+                {trades.map((trade: any) => (
+                  <div key={trade.id} className={`p-4 rounded-xl border ${trade.status === 'COMPLETED' ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'} shadow-sm`}>
+                    <div className="flex flex-col md:flex-row justify-between gap-4">
+                      <div className="space-y-1">
+                        <h3 className="font-bold text-lg text-gray-900">{trade.listing.title} <span className="text-gray-400 font-normal">|</span> <span className="text-indigo-600">{trade.offerVP} VP</span></h3>
+                        <div className="text-sm text-gray-600">
+                          <span className="font-medium">Status:</span> {trade.status === 'LOCKED' ? 'Confirmation Pending' : trade.status} • <span className="font-medium">Seller:</span> {trade.seller.fullName}
+                        </div>
+
+                        {trade.status === 'LOCKED' && trade.expiresAt && (
+                          <div className="text-xs text-orange-600 font-semibold bg-orange-50 inline-block px-2 py-0.5 rounded border border-orange-100 mt-1">
+                            Expires in: {getTimeRemaining(trade.expiresAt)}
+                          </div>
+                        )}
+
+                        {/* Escrow Badge */}
+                        <div className="mt-2">
+                          {trade.status === 'COMPLETED' ? (
+                            trade.isVerified ? (
+                              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full border border-green-200">Verification Complete</span>
+                            ) : (
+                              <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full border border-yellow-200">Secure Verification</span>
+                            )
+                          ) : (
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full border border-blue-200">Escrow Held: {trade.operationalEscrowVP} VP</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center">
+                        {trade.status === 'LOCKED' && !trade.buyerConfirmed && (
+                          <button onClick={() => handleConfirm(trade.id)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-bold shadow-md transition-colors w-full md:w-auto">
+                            Confirm Receipt
+                          </button>
+                        )}
+                        {trade.status === 'LOCKED' && trade.buyerConfirmed && (
+                          <span className="text-gray-500 font-medium italic bg-gray-100 px-4 py-2 rounded-lg">Waiting for Seller...</span>
+                        )}
+                        {trade.status === 'COMPLETED' && (
+                          <span className="text-green-600 font-bold flex items-center gap-1 bg-white px-4 py-2 rounded-lg border border-green-100 shadow-sm">
+                            Trade Secured
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )
+        }
+
+        {/* TRENDING CATEGORIES */}
+        <section>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+            Trending Categories
+          </h2>
+          <div className="grid md:grid-cols-2 gap-6">
+            {categories.slice(0, 2).map((cat: Category) => (
+              <div key={cat.id} className="p-6 bg-white rounded-xl border border-green-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+
+                </div>
+                <h3 className="text-xl font-bold text-green-700 mb-2">{cat.name}</h3>
+                <p className="text-gray-600 mb-4">{cat.description}</p>
+                <div className="inline-block bg-green-50 text-green-700 text-sm font-semibold px-3 py-1 rounded-full border border-green-100">
+                  {cat.minVP} - {cat.maxVP} VP
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* MARKETPLACE SEARCH & LISTINGS */}
+        <section>
+          <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">Marketplace</h2>
+
+            <div className="flex flex-wrap gap-2 w-full md:w-auto">
+              <input
+                type="text"
+                placeholder="Search items..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 min-w-[200px] p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+              <select
+                aria-label="Select Country"
+                value={selectedCountry}
+                onChange={e => setSelectedCountry(e.target.value)}
+                className="p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              >
+                <option value="Lebanon">Lebanon</option>
+                <option value="USA">USA</option>
+                <option value="France">France</option>
+                <option value="UAE">UAE</option>
+                <option value="Other">Worldwide</option>
+              </select>
+              <input
+                type="text"
+                placeholder="City..."
+                value={searchLocation}
+                onChange={(e) => setSearchLocation(e.target.value)}
+                className="flex-1 min-w-[150px] p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* View Toggle */}
+            <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+                title="Grid View"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+              </button>
+              <button
+                onClick={() => setViewMode('map')}
+                className={`p-2 rounded-md transition-all ${viewMode === 'map' ? 'bg-white shadow text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+                title="Map View"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+              </button>
+            </div>
+          </div>
+
+          {listings.length === 0 && searchQuery ? (
+            <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-300">
+              <div className="text-4xl mb-4"></div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">No results for &quot;{searchQuery}&quot;</h3>
+              <p className="text-gray-500 mb-6">Can&apos;t find what you&apos;re looking for?</p>
+              <button onClick={handlePostRequest} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg font-bold transition-colors">
+                Post a Request
+              </button>
+            </div>
+          ) : (
+            viewMode === 'map' ? (
+              <MapViewer listings={listings} />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {listings.map((item: any) => (
+                  <ListingCard key={item.id} listing={item} />
+                ))}
+              </div>
+            )
+          )}
+        </section>
+
+        {/* ALL CATEGORIES */}
+        <section>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">All Categories</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {categories.slice(2).map((cat: Category) => (
+              <div key={cat.id} className="p-4 bg-white rounded-xl border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all text-center">
+                <h3 className="font-bold text-gray-900 mb-1">{cat.name}</h3>
+                <p className="text-xs text-gray-500 mb-2 line-clamp-2">{cat.description}</p>
+                <div className="text-xs font-semibold text-indigo-600">
+                  {cat.minVP} - {cat.maxVP} VP
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
       </main >
 
-    {/* APP DOWNLOAD BANNER (New) */ }
-    < AppDownloadBanner />
+      {/* APP DOWNLOAD BANNER (New) */}
+      < AppDownloadBanner />
 
-    {/* CREATE LISTING MODAL */ }
-    < CreateListingModal
-  isOpen = { isModalOpen }
-  onClose = {() => setIsModalOpen(false)
-}
-userId = { userId || ''}
-categories = { categories }
-initialType = { newListing.listingType as 'OFFER' | 'REQUEST' }
-onSuccess = {() => {
-  // Refresh listings
-  const params = new URLSearchParams();
-  if (searchLocation) params.append('location', searchLocation);
-  if (selectedCountry) params.append('country', selectedCountry);
-  const url = params.toString() ? `${API_BASE_URL}/listings?${params.toString()}` : `${API_BASE_URL}/listings`;
-  fetch(url).then(res => res.json()).then(setListings);
-}}
+      {/* CREATE LISTING MODAL */}
+      < CreateListingModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)
+        }
+        userId={userId || ''}
+        categories={categories}
+        initialType={newListing.listingType as 'OFFER' | 'REQUEST'}
+        onSuccess={() => {
+          // Refresh listings
+          const params = new URLSearchParams();
+          if (searchLocation) params.append('location', searchLocation);
+          if (selectedCountry) params.append('country', selectedCountry);
+          const url = params.toString() ? `${API_BASE_URL}/listings?${params.toString()}` : `${API_BASE_URL}/listings`;
+          fetch(url).then(res => res.json()).then(setListings);
+        }}
       />
 
-  < VerificationTiersModal
-isOpen = { isTierModalOpen }
-onClose = {() => setIsTierModalOpen(false)}
-userId = { userId || ''}
-currentLevel = { user?.verificationLevel || 1}
-onSuccess = {() => fetchUserData(userId || '')}
+      < VerificationTiersModal
+        isOpen={isTierModalOpen}
+        onClose={() => setIsTierModalOpen(false)}
+        userId={userId || ''}
+        currentLevel={user?.verificationLevel || 1}
+        onSuccess={() => fetchUserData(userId || '')}
       />
 
 

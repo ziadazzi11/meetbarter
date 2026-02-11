@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { IntelligenceService } from '../intelligence/intelligence.service';
 import { SearchSecurityService } from '../intelligence/search-security.service';
@@ -16,7 +16,8 @@ export class ListingsService {
     private searchSecurity: SearchSecurityService,
     private aiPricing: AiPricingService,
     private valuation: ValuationService,
-    private moderation: ContentModerationService,
+    // @Inject(forwardRef(() => ContentModerationService))
+    // private moderation: ContentModerationService,
     private cloudinary: CloudinaryService,
   ) { }
 
@@ -131,6 +132,7 @@ export class ListingsService {
     }
 
     // --- ETHICAL MODERATION SCAN ---
+    /*
     const moderationResult = await this.moderation.scanListing(
       createListingDto.title,
       createListingDto.description,
@@ -151,6 +153,7 @@ export class ListingsService {
 
       throw new Error(`Item Blocked: This listing contains prohibited content (${moderationResult.category}). Repetitive violations will lead to permanent account suspension.`);
     }
+    */
 
     return this.prisma.listing.create({
       data: {

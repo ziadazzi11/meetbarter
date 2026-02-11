@@ -47,7 +47,12 @@ export class CanaryInterceptor implements NestInterceptor {
 
         // Check if this is a canary endpoint
         if (this.isCanaryRoute(path)) {
-            this.handleCanaryAccess(request, path);
+            try {
+                this.handleCanaryAccess(request, path);
+            } catch (error) {
+                // Fail-safe: log the failure but don't let it crash the request flow
+                console.error('Failed to handle canary access signal:', error.message);
+            }
 
             // Return plausible 404 to avoid revealing it's a trap
             throw new NotFoundException({

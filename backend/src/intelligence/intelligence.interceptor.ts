@@ -18,13 +18,18 @@ export class IntelligenceInterceptor implements NestInterceptor {
 
         return next.handle().pipe(
             tap(() => {
-                // Silent tracking of listing views
-                if (method === 'GET' && url.startsWith('/listings/') && !url.includes('?')) {
-                    const parts = url.split('/');
-                    const listingId = parts[2];
-                    if (listingId && listingId.length > 20) { // Simple UUID check
-                        this.intelligenceService.logAnonymizedInteraction('VIEW_LISTING', listingId, user?.id);
+                try {
+                    // Silent tracking of listing views
+                    if (method === 'GET' && url.startsWith('/listings/') && !url.includes('?')) {
+                        const parts = url.split('/');
+                        const listingId = parts[2];
+                        if (listingId && listingId.length > 20) { // Simple UUID check
+                            this.intelligenceService.logAnonymizedInteraction('VIEW_LISTING', listingId, user?.id);
+                        }
                     }
+                } catch (error) {
+                    // Silent fail for telemetry
+                    console.error('Intelligence tracking failed:', error.message);
                 }
             }),
         );

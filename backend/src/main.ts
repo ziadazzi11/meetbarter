@@ -6,7 +6,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
-import { SemanticNoiseInterceptor } from './ads/recon/semantic-noise.interceptor';
+
 import { HeaderDeceptionMiddleware } from './ads/recon/header-deception.middleware';
 import { ShadowbanFilter } from './common/filters/shadowban.filter';
 // Note: ShadowbanGuard cannot be global here because it needs DI (Prisma). 
@@ -45,7 +45,7 @@ async function bootstrap() {
     }));
 
     // 🛡️ ADS Phase II: Anti-Reconnaissance Layer
-    app.useGlobalInterceptors(new SemanticNoiseInterceptor());
+
 
     // 🛡️ ADS Phase III: Shadowban Protocol
     app.useGlobalFilters(new ShadowbanFilter());

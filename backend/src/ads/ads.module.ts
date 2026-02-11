@@ -6,7 +6,7 @@ import { AdeService } from './ade.service';
 import { SystemStateModule } from '../system-state/system-state.module';
 import { CanaryController } from './recon/canary.controller';
 import { CanaryInterceptor } from './canary.interceptor';
-import { SemanticNoiseService } from './semantic-noise.service';
+
 import { ProtocolShapingService } from './protocol-shaping.service';
 import { ProtocolGuard } from './recon/protocol.guard';
 import { HandshakeController } from './recon/handshake.controller';
@@ -20,7 +20,7 @@ import { HandshakeController } from './recon/handshake.controller';
         RiskEngineService,
         AdeService,
         CanaryInterceptor,
-        SemanticNoiseService,
+
         ProtocolShapingService,
         ProtocolGuard,
     ],
@@ -28,7 +28,7 @@ import { HandshakeController } from './recon/handshake.controller';
         SignalIngestionService,
         AdsService,
         CanaryInterceptor,
-        SemanticNoiseService,
+
         ProtocolShapingService,
         ProtocolGuard,
     ], // Export for use in other modules

@@ -11,7 +11,14 @@ interface PersonalizationModalProps {
 }
 
 export default function PersonalizationModal({ isOpen, onClose }: PersonalizationModalProps) {
-    const { theme: currentTheme, setTheme, isAutoMode, setIsAutoMode, darkMode, setDarkMode } = useTheme();
+    const {
+        theme: currentTheme,
+        setTheme,
+        isAutoMode,
+        setIsAutoMode,
+        darkMode,
+        setDarkMode
+    } = useTheme() as any;
     const [userId, setUserId] = useState<string | null>(null);
     const [bannerUrl, setBannerUrl] = useState('');
     const [themeConfig, setThemeConfig] = useState({
