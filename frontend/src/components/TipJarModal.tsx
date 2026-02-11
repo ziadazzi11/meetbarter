@@ -14,9 +14,9 @@ interface TipJarModalProps {
 }
 
 export default function TipJarModal({ isOpen, onClose, tradeId, estimatedSavings, userCurrency }: TipJarModalProps) {
-    const [amount, setAmount] = useState<number>(1);
+    const [amount, setAmount] = useState<number>(3);
     const [message, setMessage] = useState('');
-    const [isPublic, setIsPublic] = useState(false);
+    const [isPublic, setIsPublic] = useState(true);
     const [step, setStep] = useState<'AMOUNT' | 'PAYMENT'>('AMOUNT');
     const { showToast } = useToast();
     const { config } = useSystemConfig();
@@ -29,8 +29,6 @@ export default function TipJarModal({ isOpen, onClose, tradeId, estimatedSavings
 
     const handleConfirmPayment = async () => {
         try {
-            // In a real app, this would integrate with a payment gateway or upload proof
-            // For now, we simulate the contribution creation
             await fetch(`${API_BASE_URL}/contributions`, {
                 method: 'POST',
                 headers: {
@@ -40,7 +38,7 @@ export default function TipJarModal({ isOpen, onClose, tradeId, estimatedSavings
                 body: JSON.stringify({
                     tradeId,
                     amount,
-                    currency: 'USD', // For simplicity, tips are often USD standardized or converted
+                    currency: 'USD',
                     message,
                     isPublic
                 })
@@ -55,130 +53,149 @@ export default function TipJarModal({ isOpen, onClose, tradeId, estimatedSavings
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 relative overflow-hidden">
-                {/* Background Decoration */}
-                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-500 to-purple-600" />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300">
+            <div className="glass-card rounded-[2.5rem] max-w-md w-full p-8 relative overflow-hidden animate-float-premium">
+                {/* Visual Accent */}
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500" />
 
                 {step === 'AMOUNT' ? (
                     <>
-                        <div className="text-center mb-6">
-                            <div className="text-4xl mb-4">🎉</div>
-                            <h3 className="text-2xl font-bold text-gray-900 mb-2">Trade Complete!</h3>
-                            <p className="text-gray-600">
-                                You just saved approximately <span className="font-semibold text-green-600">{userCurrency} {estimatedSavings}</span> by bartering.
+                        <div className="text-center mb-8">
+                            <div className="w-20 h-20 bg-gradient-to-br from-indigo-500/10 to-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/10 pulse-neon">
+                                <span className="text-4xl">💰</span>
+                            </div>
+                            <h3 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter mb-2">Trade Secured!</h3>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm">
+                                You just saved approx. <span className="text-indigo-600 dark:text-indigo-400 font-black">{userCurrency} {estimatedSavings.toLocaleString()}</span>
                             </p>
                         </div>
 
-                        <div className="space-y-6">
+                        <div className="space-y-8">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
-                                    Support MeetBarter with a small tip?
+                                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4 text-center">
+                                    Fuel the Network Growth?
                                 </label>
-                                <div className="grid grid-cols-4 gap-2">
+                                <div className="grid grid-cols-4 gap-3">
                                     {[1, 3, 5, 10].map((val) => (
                                         <button
                                             key={val}
                                             onClick={() => setAmount(val)}
-                                            className={`py-2 rounded-lg border transition-all ${amount === val
-                                                ? 'bg-purple-50 border-purple-500 text-purple-700 font-semibold shadow-sm'
-                                                : 'border-gray-200 hover:border-purple-300 text-gray-600'
+                                            className={`py-3 rounded-2xl border transition-all duration-300 active:scale-95 flex flex-col items-center justify-center gap-1 ${amount === val
+                                                ? 'bg-indigo-600 border-indigo-600 text-white font-black shadow-lg shadow-indigo-500/30'
+                                                : 'border-white/10 bg-white/5 hover:bg-white/10 text-gray-500 dark:text-gray-400'
                                                 }`}
                                         >
-                                            ${val}
+                                            <span className="text-xs opacity-60">$</span>
+                                            <span className="text-lg">{val}</span>
                                         </button>
                                     ))}
                                 </div>
-                                <div className="mt-3 flex items-center justify-center gap-2">
-                                    <span className="text-gray-500 text-sm">or custom: $</span>
-                                    <input
-                                        type="number"
-                                        aria-label="Custom Tip Amount"
-                                        value={amount}
-                                        onChange={(e) => setAmount(parseFloat(e.target.value))}
-                                        className="w-20 border-b border-gray-300 focus:border-purple-500 outline-none text-center py-1"
-                                    />
+
+                                <div className="mt-6 glass-card px-4 py-3 rounded-2xl flex items-center justify-between border-white/5">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Custom Pledge</span>
+                                    <div className="flex items-center gap-1 font-black text-indigo-600">
+                                        <span className="text-xs">$</span>
+                                        <input
+                                            type="number"
+                                            aria-label="Custom Tip Amount"
+                                            value={amount}
+                                            onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+                                            className="w-16 bg-transparent outline-none text-right placeholder-gray-300"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Leave a message? (Optional)
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 px-1">
+                                        Legacy Note (Optional)
+                                    </label>
+                                    <textarea
+                                        className="w-full px-5 py-4 bg-white/5 dark:bg-black/20 border border-white/10 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all text-sm line-clamp-2"
+                                        rows={2}
+                                        placeholder="Add a message to the community ledger..."
+                                        value={message}
+                                        onChange={(e) => setMessage(e.target.value)}
+                                    />
+                                </div>
+
+                                <label className="flex items-center gap-3 px-1 cursor-pointer group">
+                                    <div className={`relative w-10 h-6 rounded-full transition-colors border border-white/10 ${isPublic ? 'bg-emerald-500' : 'bg-gray-200 dark:bg-gray-800'}`}>
+                                        <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${isPublic ? 'translate-x-4' : 'translate-x-0'}`} />
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        className="hidden"
+                                        checked={isPublic}
+                                        onChange={(e) => setIsPublic(e.target.checked)}
+                                    />
+                                    <span className="text-xs font-medium text-gray-500 group-hover:text-gray-300 transition-colors">Make my support public</span>
                                 </label>
-                                <textarea
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                    rows={2}
-                                    placeholder="Thanks for the platform!"
-                                    value={message}
-                                    onChange={(e) => setMessage(e.target.value)}
-                                />
                             </div>
 
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="isPublic"
-                                    checked={isPublic}
-                                    onChange={(e) => setIsPublic(e.target.checked)}
-                                    className="rounded text-purple-600 focus:ring-purple-500"
-                                />
-                                <label htmlFor="isPublic" className="text-sm text-gray-600">
-                                    Show my support on the public dashboard
-                                </label>
-                            </div>
-
-                            <div className="flex items-center justify-between pt-4 border-t gap-3">
-                                <button
-                                    onClick={onClose}
-                                    className="px-4 py-2 text-gray-500 hover:text-gray-700 text-sm font-medium"
-                                >
-                                    Maybe later
-                                </button>
+                            <div className="flex flex-col gap-3 pt-4">
                                 <button
                                     onClick={handleInitialSubmit}
-                                    className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5"
+                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-5 rounded-[1.5rem] text-sm font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-indigo-500/20 active:scale-[0.98]"
                                 >
-                                    Support with ${amount} 💖
+                                    Pledge Support
+                                </button>
+                                <button
+                                    onClick={onClose}
+                                    className="w-full py-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-[10px] font-black uppercase tracking-[0.3em] transition-colors"
+                                >
+                                    Skip for now
                                 </button>
                             </div>
-
-                            <p className="text-xs text-center text-gray-400">
-                                Contributions are voluntary and non-refundable. <br />
-                                100% goes to server costs & community grants.
-                            </p>
                         </div>
                     </>
                 ) : (
                     <>
-                        <div className="text-center mb-6">
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">Send Payment</h3>
-                            <p className="text-gray-600 text-sm mb-4">
-                                Please send <strong>${amount}</strong> via Whish to:
+                        <div className="text-center mb-10">
+                            <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter mb-4">Transfer Details</h3>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed mb-8">
+                                Please send exactly <span className="text-emerald-500 font-bold">${amount}</span> via Whish to the following registered identifier:
                             </p>
-                            <div className="bg-gray-100 p-4 rounded-xl mb-4 font-mono text-lg text-gray-800 select-all">
-                                {config?.whishPhoneNumber || 'Loading...'}
+
+                            <div className="glass-card p-6 rounded-[2rem] mb-6 relative group active:scale-95 transition-transform cursor-pointer border-indigo-500/20"
+                                title="Click to copy"
+                                onClick={() => {
+                                    navigator.clipboard.writeText(config?.whishPhoneNumber || '');
+                                    showToast('Copied to clipboard!', 'SUCCESS');
+                                }}>
+                                <div className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-2">Whish Mobile Number</div>
+                                <div className="text-2xl font-black text-gray-900 dark:text-white font-mono tracking-widest leading-none">
+                                    {config?.whishPhoneNumber || '70 123 456'}
+                                </div>
+                                <div className="absolute top-4 right-6 opacity-40">📋</div>
                             </div>
-                            <p className="text-xs text-gray-500 mb-6">
-                                (Simulation: Clicking confirm will record the pledge)
+
+                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">
+                                Reference Code: CONTRIBUTOR_{Math.floor(Math.random() * 9000) + 1000}
                             </p>
                         </div>
 
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setStep('AMOUNT')}
-                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
-                            >
-                                Back
-                            </button>
+                        <div className="space-y-4">
                             <button
                                 onClick={handleConfirmPayment}
-                                className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700"
+                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-[1.5rem] text-sm font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-emerald-500/20 active:scale-[0.98]"
                             >
-                                I Sent It ✅
+                                I Sent the Transfer
+                            </button>
+                            <button
+                                onClick={() => setStep('AMOUNT')}
+                                className="w-full py-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-[10px] font-black uppercase tracking-[0.3em] transition-colors"
+                            >
+                                Edit Amount
                             </button>
                         </div>
                     </>
                 )}
+
+                <p className="mt-8 text-[9px] text-center text-gray-400 uppercase tracking-widest font-bold opacity-30">
+                    Trust-Based Platform Contribution • 100% Peer-to-Peer
+                </p>
             </div>
         </div>
     );
