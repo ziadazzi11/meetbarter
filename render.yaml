@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: meetbarter-api
+    plan: free
+    env: docker
+    region: frankfurt
+    rootDir: backend
+    dockerfilePath: Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://meetbarter.vercel.app

@@ -18,6 +18,20 @@ The Community Grant Pool exists to reward meaningful contribution and ensure pla
 - **Expiration**: Grants expire if unused within 90 days.
 - **Audit-Linked**: Every grant must be linked to a specific justification (e.g., "Dispute Resolution Reward", "Emergency Service Provision").
 
+### 🔄 Liquidity Mechanisms (Making VP "Real")
+
+To ensure VP has value for vulnerable users who cannot eat digital points, the NGO employs two legal mechanisms:
+
+1. **Commodity-Backed Grants (The Wholesaler Model)**:
+    - The NGO uses fiat grant money to buy essential goods (Rice, Fuel, Medicine) at wholesale.
+    - These goods are listed on the platform **purchasable only with VP**.
+    - *Result:* Grants give users VP -> VP buys real food from the NGO.
+
+2. **Third-Party Settlement (The Voucher Model)**:
+    - The NGO contracts with local "Super-Nodes" (Grocery, Pharmacy).
+    - The NGO pays their invoices in fiat monthly.
+    - Verified users can "spend" VP at these stores. Use of VP is treated as redeeming a **pre-paid voucher**, not a currency exchange.
+
 ### 🚫 Hard Rules
 
 - **No Money for VP**: No user may ever receive VP directly or indirectly in exchange for money.

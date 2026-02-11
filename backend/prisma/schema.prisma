@@ -159,6 +159,8 @@ model User {
   moderationFlags ContentModerationFlag[]
   successors      Successor[]
   contributions   Contribution[]
+  achievements    UserAchievement[]
+  geoDropClaims   GeoDropClaim[]
 
   // Universal Succession & Continuity Protocol
   heir1Name       String?
@@ -364,6 +366,7 @@ model CommunityEvent {
   organizer   User     @relation(fields: [organizerId], references: [id])
   
   eventListings Listing[] @relation("EventListings")
+  geoDrops      GeoDrop[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -577,6 +580,11 @@ model UserActivityMetric {
   lastSeenAt      DateTime @default(now())
   averageReplyHours Float? // Calculated from last 20 interactions
   calculatedAt    DateTime @default(now())
+  
+  // Gamification: Streaks
+  currentStreak   Int      @default(0)
+  longestStreak   Int      @default(0)
+  lastLoginDate   DateTime @default(now()) // Used to calc streaks (Daily)
   
   updatedAt       DateTime @updatedAt
 }
@@ -796,4 +804,72 @@ model OtpCode {
   code      String
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+// ========================================
+// v1.3 GAMIFICATION & GROWTH PROTOCOL
+// ========================================
+
+model Achievement {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  rewardVP    Int
+  iconUrl     String?
+  criteria    String?  // JSON: {type: "TRADE_COUNT", threshold: 1}
+  
+  userAchievements UserAchievement[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+  
+  user          User        @relation(fields: [userId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
+model GeoDrop {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  location    String   // Lat/Long or Address
+  rewardVP    Int
+  
+  qrCodeHash  String   // Secret payload in QR
+  maxClaims   Int      @default(100)
+  currentClaims Int    @default(0)
+  
+  expiresAt   DateTime?
+  isActive    Boolean  @default(true)
+  
+  // Link to Events (e.g. "Farmers Market Drop")
+  communityEventId String?
+  communityEvent   CommunityEvent? @relation(fields: [communityEventId], references: [id])
+  
+  claims      GeoDropClaim[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model GeoDropClaim {
+  id          String   @id @default(uuid())
+  userId      String
+  geoDropId   String
+  claimedAt   DateTime @default(now())
+  
+  user        User     @relation(fields: [userId], references: [id])
+  geoDrop     GeoDrop  @relation(fields: [geoDropId], references: [id])
+
+  @@unique([userId, geoDropId])
+  @@index([userId])
 }
