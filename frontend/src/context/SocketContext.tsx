@@ -28,8 +28,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         if (user && !socket) {
             // Initialize socket connection
+            const token = localStorage.getItem('meetbarter_token');
             const newSocket = io(API_BASE_URL, {
-                // auth: { token }, // TODO: Enable auth when backend verifies it
+                auth: { token },
                 transports: ['websocket'],
             });
 

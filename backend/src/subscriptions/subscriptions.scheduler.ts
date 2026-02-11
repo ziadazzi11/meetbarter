@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { ListingsService } from '../listings/listings.service';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 @Injectable()
 export class SubscriptionsScheduler {
@@ -10,7 +11,8 @@ export class SubscriptionsScheduler {
 
     constructor(
         private readonly prisma: PrismaService,
-        private readonly listingsService: ListingsService
+        private readonly listingsService: ListingsService,
+        private readonly notificationsGateway: NotificationsGateway,
     ) { }
 
     @Cron(CronExpression.EVERY_HOUR)
@@ -51,7 +53,16 @@ export class SubscriptionsScheduler {
             // C. Enforce Downgrade Limits (Outside transaction to avoid long locks if heavy)
             await this.listingsService.handleDowngrade(sub.userId);
 
-            // D. TODO: Send Notification "Your subscription has expired."
+            // D. Send Notification "Your subscription has expired."
+            this.notificationsGateway.sendNotification(
+                sub.userId,
+                'SUBSCRIPTION_EXPIRED',
+                {
+                    message: 'Your subscription has expired. You have been downgraded to the FREE tier.',
+                    tier: 'FREE',
+                    expiredAt: sub.expiresAt,
+                }
+            );
         }
     }
 
@@ -74,7 +85,16 @@ export class SubscriptionsScheduler {
 
         for (const sub of expiringSoon) {
             this.logger.log(`Subscription ${sub.id} expires in 24h. Sending warning.`);
-            // TODO: Send Notification "Your subscription expires in 24h."
+            // Send Notification "Your subscription expires in 24h."
+            this.notificationsGateway.sendNotification(
+                sub.userId,
+                'SUBSCRIPTION_EXPIRING_SOON',
+                {
+                    message: 'Your subscription expires in 24 hours. Please renew to maintain your benefits.',
+                    tier: sub.tier,
+                    expiresAt: sub.expiresAt,
+                }
+            );
         }
     }
 }

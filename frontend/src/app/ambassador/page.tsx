@@ -46,9 +46,13 @@ export default function AmbassadorPortal() {
                 }
                 const pendingData = await pendingRes.json();
 
+                // 3. Fetch Invite Count (users referred by this ambassador)
+                const referralsRes = await fetch(`${API_BASE_URL}/users/referrals`, { headers });
+                const referralsCount = referralsRes.ok ? (await referralsRes.json()).length : 0;
+
                 setStats({
                     approved: meData.ambassadorScore || 0, // Using score as proxy for approved count
-                    invited: 0, // TODO: Add real invite count if available
+                    invited: referralsCount,
                     earningsVP: (meData.ambassadorScore || 0) * 50 // Assuming 50 VP per action
                 });
 

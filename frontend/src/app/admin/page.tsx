@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import Link from "next/link";
 import { API_BASE_URL } from "@/config/api";
+import { useAuth } from "@/context/AuthContext";
 import OtpQueueWidget from "@/components/admin/OtpQueueWidget";
 import "./admin.css";
 
@@ -136,6 +137,7 @@ interface ForensicResults {
 }
 
 export default function AdminPage() {
+    const { user } = useAuth();
     const [protocol, setProtocol] = useState<Protocol>("COMMAND_CENTER");
     const [loading, setLoading] = useState(true);
     const [frozen, setFrozen] = useState(false);
@@ -489,7 +491,11 @@ export default function AdminPage() {
     const handleVerifySubscription = async (subId: string) => {
         if (!confirm("Confirm payment receipt and verify subscription?")) return;
         try {
-            const adminId = "9d2c7649-9cf0-48fb-889a-1369e20615a6"; // TODO: Use real admin session if available
+            const adminId = user?.id;
+            if (!adminId) {
+                alert("Admin session not found. Please log in again.");
+                return;
+            }
             await fetch(`${API_BASE_URL}/subscriptions/${subId}/verify`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -503,7 +509,11 @@ export default function AdminPage() {
     const handleVerifyLicense = async (licenseId: string) => {
         if (!confirm("Verify this Institutional License? This grants Level 3 status.")) return;
         try {
-            const adminId = "9d2c7649-9cf0-48fb-889a-1369e20615a6";
+            const adminId = user?.id;
+            if (!adminId) {
+                alert("Admin session not found. Please log in again.");
+                return;
+            }
             const res = await fetch(`${API_BASE_URL}/users/${licenseId}/verify-license`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
