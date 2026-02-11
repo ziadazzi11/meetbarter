@@ -235,7 +235,7 @@ export default function Home() {
     <div className="min-h-screen bg-transparent font-sans text-[var(--text-main)]">
 
       {/* 1. HERO SPLIT SECTION (New) */}
-      <HeroSplit onPost={handlePostOffer} onRequest={handlePostRequest} />
+      <HeroSplit onPost={handlePostOffer} onRequest={handlePostRequest} isLoggedIn={!!userId} />
 
       {/* QUICK STATS SECTION */}
       <section className="bg-transparent py-10 px-4 -mt-12 relative z-20">

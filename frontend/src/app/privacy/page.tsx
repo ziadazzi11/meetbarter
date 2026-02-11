@@ -144,8 +144,8 @@ export default function PrivacyPolicy() {
                         <h2 className="text-2xl font-semibold text-gray-900 mb-3">11. Contact</h2>
                         <p>
                             For privacy questions or data requests:{' '}
-                            <a href="mailto:privacy@meetbarter.com" className="text-blue-600 hover:underline">
-                                privacy@meetbarter.com
+                            <a href="mailto:meetbarter@gmail.com" className="text-blue-600 hover:underline">
+                                meetbarter@gmail.com
                             </a>
                         </p>
                         <p className="mt-4 text-sm">

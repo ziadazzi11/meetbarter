@@ -1,8 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { API_BASE_URL } from "@/config/api";
 
 export default function SignupPage() {
     const router = useRouter();
@@ -53,7 +51,7 @@ export default function SignupPage() {
         setLoading(true);
 
         try {
-            const response = await fetch('/api/auth/signup', {
+            const response = await fetch(`${API_BASE_URL}/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -61,12 +59,29 @@ export default function SignupPage() {
                     password: formData.password,
                     fullName: formData.fullName,
                     country: formData.country,
-                    termsVersion: '1.0',
                 }),
             });
 
             if (response.ok) {
-                router.push('/login?signup=success');
+                // Auto-login after successful signup
+                const loginRes = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: formData.email,
+                        password: formData.password,
+                    }),
+                });
+
+                if (loginRes.ok) {
+                    const data = await loginRes.json();
+                    localStorage.setItem('meetbarter_token', data.access_token);
+                    localStorage.setItem('meetbarter_uid', data.user.id);
+                    localStorage.setItem('meetbarter_user', JSON.stringify(data.user));
+                    window.location.href = '/dashboard';
+                } else {
+                    router.push('/login?signup=success');
+                }
             } else {
                 const data = await response.json();
                 setError(data.message || 'Signup failed. Please try again.');

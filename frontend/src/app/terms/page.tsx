@@ -220,8 +220,8 @@ export default function TermsOfService() {
                         <h2 className="text-2xl font-semibold text-gray-900 mb-3">12. Contact</h2>
                         <p>
                             For questions, reports, or legal requests, contact:{' '}
-                            <a href="mailto:legal@meetbarter.com" className="text-blue-600 hover:underline">
-                                legal@meetbarter.com
+                            <a href="mailto:meetbarter@gmail.com" className="text-blue-600 hover:underline">
+                                meetbarter@gmail.com
                             </a>
                         </p>
                         <p className="mt-4 text-sm">

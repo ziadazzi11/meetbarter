@@ -63,8 +63,8 @@ export default function Header() {
                         Get App
                     </button>
 
-                    <Link href="/login" className="px-4 py-2 rounded-full bg-indigo-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all duration-300 active:scale-95">
-                        Sign In
+                    <Link href="/signup" className="px-5 py-2.5 rounded-full bg-indigo-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 hover:scale-105 transition-all duration-300 active:scale-95">
+                        Join MeetBarter
                     </Link>
 
                     {/* Bulk Upload Trigger - Businesses & Institutions & Farmers Only */}
