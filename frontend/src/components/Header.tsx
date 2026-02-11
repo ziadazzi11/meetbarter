@@ -33,9 +33,9 @@ export default function Header() {
 
                 {/* 2. Navigation Actions (Right Aligned) */}
                 <nav className="flex items-center gap-4">
-                    <Link href="/about" className="text-[var(--text-main)] hover:text-indigo-600 font-medium text-sm transition-colors duration-200 opacity-80 hover:opacity-100">How it Works</Link>
-                    <Link href="/events" className="text-[var(--text-main)] hover:text-indigo-600 font-medium text-sm transition-colors duration-200 opacity-80 hover:opacity-100">Events</Link>
-                    <Link href="/dashboard" className="text-[var(--text-main)] hover:text-indigo-600 font-medium text-sm transition-colors duration-200 opacity-80 hover:opacity-100">Dashboard</Link>
+                    <Link href="/about" className="hidden md:block text-[var(--text-main)] hover:text-indigo-600 font-medium text-sm transition-colors duration-200 opacity-80 hover:opacity-100">How it Works</Link>
+                    <Link href="/events" className="hidden md:block text-[var(--text-main)] hover:text-indigo-600 font-medium text-sm transition-colors duration-200 opacity-80 hover:opacity-100">Events</Link>
+                    <Link href="/dashboard" className="hidden md:block text-[var(--text-main)] hover:text-indigo-600 font-medium text-sm transition-colors duration-200 opacity-80 hover:opacity-100">Dashboard</Link>
 
                     {/* Dark/Light Mode Toggle */}
                     <button

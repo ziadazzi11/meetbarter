@@ -33,9 +33,14 @@ interface User {
   verificationLevel: number;
 }
 
+import { useAuth } from "@/context/AuthContext";
+
 export default function Home() {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const { user, loading: authLoading } = useAuth();
+  const userId = user?.id; // Legacy compat
+
+  // const [userId, setUserId] = useState<string | null>(null); // Removed local state
+  // const [user, setUser] = useState<User | null>(null); // Removed local state
   const [categories, setCategories] = useState<Category[]>([]);
   const [trades, setTrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,13 +66,12 @@ export default function Home() {
   });
 
   useEffect(() => {
-    const storedUid = localStorage.getItem("meetbarter_uid");
-    if (storedUid) {
-      setUserId(storedUid);
-      fetchUserData(storedUid);
-    } else {
-      setLoading(false);
+    // Auth handled by Context now
+    if (userId) {
+      fetchActiveTrades(userId);
     }
+    setLoading(false); // Page loading done, auth loading handled separately
+
     fetch(`${API_BASE_URL}/listings/categories`)
       .then(res => res.json())
       .then(data => {
@@ -83,22 +87,7 @@ export default function Home() {
   }, []);   // Listen for Bulk Upload trigger from Header
 
 
-  const fetchUserData = async (uid: string) => {
-    try {
-      // Parallel fetch for speed
-      await Promise.all([
-        fetchActiveTrades(uid),
-        fetch(`${API_BASE_URL}/users/me`).then(res => {
-          if (res.ok) return res.json();
-          throw new Error('User fetch failed');
-        }).then(setUser)
-      ]);
-    } catch (e) {
-      console.error("Fetch User Data Error:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   useEffect(() => {
     let url = `${API_BASE_URL}/listings`;
@@ -210,11 +199,13 @@ export default function Home() {
   };
 
   const handlePostOffer = () => {
+    if (!user) return window.location.href = '/signup';
     setNewListing({ ...newListing, listingType: 'OFFER', title: '', description: '', images: [] });
     setIsModalOpen(true);
   };
 
   const handlePostRequest = () => {
+    if (!user) return window.location.href = '/signup';
     setNewListing({
       ...newListing,
       title: searchQuery || '',
@@ -480,6 +471,21 @@ export default function Home() {
               <button onClick={handlePostRequest} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg font-bold transition-colors">
                 Post a Request
               </button>
+            </div>
+          )}
+
+          {!user ? (
+            <div className="glass-card rounded-3xl p-12 text-center border border-indigo-500/30 bg-gradient-to-b from-transparent to-indigo-500/5">
+              <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-600/30">
+                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+              </div>
+              <h2 className="text-3xl font-black text-[var(--text-main)] mb-4">Members Only Marketplace</h2>
+              <p className="text-lg text-[var(--text-muted)] max-w-xl mx-auto mb-8">
+                The MeetBarter Marketplace is exclusive to verifiable members. Join our trust-based community to browse listings, trade assets, and access our secure ecosystem.
+              </p>
+              <Link href="/signup" className="inline-block px-10 py-4 bg-indigo-600 text-white font-black uppercase tracking-widest rounded-xl hover:bg-indigo-700 hover:scale-105 transition-all shadow-xl shadow-indigo-600/30">
+                Join to Explore
+              </Link>
             </div>
           ) : (
             viewMode === 'map' ? (

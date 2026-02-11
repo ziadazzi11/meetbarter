@@ -5,11 +5,20 @@ import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/config/api";
 import { adsClient } from "@/lib/ads-client";
 import UpgradeModal from "@/components/UpgradeModal";
-import ImageUpload from "@/components/ImageUpload";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CreateListing() {
     const router = useRouter();
+    const { user, loading } = useAuth();
     const [categories, setCategories] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/signup');
+        }
+    }, [user, loading, router]);
+
+    if (loading || !user) return null; // Or a loading spinner
 
     // Form State
     const [title, setTitle] = useState("");
@@ -37,7 +46,7 @@ export default function CreateListing() {
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
     // DEMO USER ID (From seed)
-    const DEMO_USER_ID = "9d2c7649-9cf0-48fb-889a-1369e20615a6";
+
 
     useEffect(() => {
         fetch(`${API_BASE_URL}/categories`)
@@ -61,7 +70,8 @@ export default function CreateListing() {
     };
 
     const handleUpgrade = async () => {
-        await fetch(`${API_BASE_URL}/users/${DEMO_USER_ID}/upgrade`, { method: 'PUT' });
+        if (!user) return;
+        await fetch(`${API_BASE_URL}/users/${user.id}/upgrade`, { method: 'PUT' });
         setIsUpgradeModalOpen(false);
         alert("Upgraded to Premium! You can now post unlimited items.");
         window.location.reload();
@@ -93,7 +103,7 @@ export default function CreateListing() {
             images: JSON.stringify(images),
             location,
             country,
-            sellerId: DEMO_USER_ID,
+            sellerId: user.id,
             expiresAt,
             priceCash: priceCash ? parseFloat(priceCash) : null,
             priceCurrency
