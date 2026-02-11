@@ -23,10 +23,11 @@ export function ListingCard({ listing }: { listing: ListingProps }) {
             {/* Image Section */}
             <div className="h-56 bg-gray-100/50 flex items-center justify-center relative overflow-hidden">
                 {imageUrl ? (
-                    <img
+                    <Image
                         src={imageUrl}
                         alt={listing.title}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                 ) : (
                     <div className="flex flex-col items-center gap-2 text-gray-300">
@@ -62,8 +63,8 @@ export function ListingCard({ listing }: { listing: ListingProps }) {
 
                     {listing.condition && (
                         <span className={`text-[10px] px-2.5 py-1 rounded-md font-extrabold uppercase tracking-wider border ${listing.condition === 'NEW'
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800'
-                                : 'bg-orange-50 text-orange-700 border-orange-100 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800'
+                            : 'bg-orange-50 text-orange-700 border-orange-100 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800'
                             }`}>
                             {listing.condition.replace('_', ' ')}
                         </span>
