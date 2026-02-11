@@ -44,9 +44,9 @@ import { SystemStateModule } from './system-state/system-state.module';
 import { AdsModule } from './ads/ads.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { CanaryInterceptor } from './ads/canary.interceptor';
-
 import { ContributionsModule } from './contributions/contributions.module';
 import { EventsModule } from './events/events.module';
+import { GamificationModule } from './gamification/gamification.module';
 
 
 import { ConfigModule } from '@nestjs/config';
@@ -85,6 +85,7 @@ import { validate } from './config/env.validation';
         AdsModule,
         SubscriptionsModule,
         ContributionsModule,
+        GamificationModule,
     ],
     controllers: [AppController, AdminController],
     providers: [

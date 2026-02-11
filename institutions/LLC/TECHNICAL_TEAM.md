@@ -10,6 +10,10 @@ The Technical Team is responsible for developing, maintaining, and securing the 
 
 ### 1. **Chief Technology Officer (CTO) / Lead Developer**
 
+> [!NOTE]
+> **Phase 0 (Current):** The CTO (Founder) is the *only* human member of this team.
+> All other roles below (DevOps, Security, QA) are handled by **Code Automation** and **PaaS Services** (Vercel/Render).
+
 **Primary Responsibilities:**
 
 - Overall technical architecture and strategy

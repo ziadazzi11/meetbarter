@@ -10,6 +10,13 @@ The NGO Operations Team manages day-to-day Foundation activities, community prog
 
 ### 1. **Executive Director / General Manager**
 
+> [!NOTE]
+> **Phase 0 (Current):** The Executive Director (Founder) is the *only* staff member.
+>
+> - **Grant Processing:** Automated by Database Logic.
+> - **Community Outreach:** Handled by Founder & Volunteer Ambassadors.
+> - **Operations:** Automated via Admin Dashboard.
+
 **Primary Responsibilities:**
 
 - Lead NGO operations and staff management

@@ -10,6 +10,10 @@ Ambassadors are trusted community members who verify businesses, onboard new use
 
 ### Level 1: Community Ambassador
 
+> [!TIP]
+> **Phase 0 Strategy:** This program is the *primary* operational workforce for the launch.
+> Ambassadors are volunteers paid in **Status and VP**, not cash.
+
 **Requirements:**
 
 - 20+ completed trades
