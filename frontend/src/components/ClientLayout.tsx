@@ -3,7 +3,7 @@
 import Header from "@/components/Header";
 import ThemeManager from "@/components/ThemeManager";
 import { ThemeProvider, useTheme } from "@/components/ThemeContext";
-import SacredGeometryOverlay from "@/components/SacredGeometryOverlay";
+
 import RouteThemeController from "@/components/RouteThemeController";
 import Footer from "@/components/Footer";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -51,7 +51,7 @@ function ThemedContent({ children }: { children: React.ReactNode }) {
             <ThemeManager />
             <RouteThemeController />
             <BackgroundAudio />
-            <SacredGeometryOverlay />
+
             <ChatWidget />
             <div className="flex-grow">
                 {children}

@@ -3,21 +3,32 @@
 :root {
   --background: #ffffff;
   --foreground: #111827;
-  /* Gray 900 */
+
+  /* Semantic Tokens - Light Mode */
+  --bg-app: #f9fbfc;
+  --text-main: #111827;
+  --text-muted: #6b7280;
+  --mesh-glow: rgba(79, 70, 229, 0.08);
+  /* Indigo */
+
   --primary-color: #f59e0b;
-  /* Amber 500 */
   --neon-blue: #00f3ff;
   --neon-purple: #bc13fe;
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.5);
   --accent-glow: 0 0 20px rgba(0, 243, 255, 0.4);
 }
 
 .dark {
   --background: #030712;
-  /* Gray 950 */
   --foreground: #f3f4f6;
-  /* Gray 100 */
+
+  /* Semantic Tokens - Dark Mode */
+  --bg-app: #030712;
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --mesh-glow: rgba(79, 70, 229, 0.15);
+
   --glass-bg: rgba(17, 24, 39, 0.6);
   --glass-border: rgba(255, 255, 255, 0.1);
 }
@@ -31,8 +42,12 @@ body {
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  color: var(--text-main);
+  background: var(--bg-app);
+  background-image:
+    radial-gradient(at 0% 0%, var(--mesh-glow) 0, transparent 50%),
+    radial-gradient(at 100% 100%, var(--mesh-glow) 0, transparent 50%);
+  background-attachment: fixed;
   font-family: var(--font-geist-sans), Inter, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -79,15 +94,10 @@ body {
   left: 100%;
 }
 
-/* Theme Backgrounds */
-body.theme-jungle {
-  background: radial-gradient(circle at top, rgba(5, 150, 105, 0.1), transparent), #030712;
-  background-attachment: fixed;
-}
-
+/* Theme Backgrounds - Unified Mesh Adaptation */
 body.theme-beach {
-  background: radial-gradient(circle at top, rgba(245, 158, 11, 0.1), transparent), #ffffff;
-  background-attachment: fixed;
+  --mesh-glow: rgba(245, 158, 11, 0.15);
+  /* Amber */
 }
 
 /* Animations */
@@ -132,4 +142,13 @@ body.theme-beach {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* Global Button Standardization */
+button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

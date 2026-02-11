@@ -69,7 +69,7 @@ import { validate } from './config/env.validation';
         TradesModule,
         MessagesModule,
         EventsModule,
-        // ModerationModule, // Disabled for debugging
+        ModerationModule,
         NotificationsModule,
         // v1.2 Features
         TimelineModule,

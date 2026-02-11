@@ -25,13 +25,25 @@ export default function AmbassadorPortal() {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                const token = localStorage.getItem('meetbarter_token');
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                };
+
                 // 1. Fetch Current Ambassador Stats (Me)
-                const meRes = await fetch(`${API_BASE_URL}/users/me`);
+                const meRes = await fetch(`${API_BASE_URL}/users/me`, { headers });
+                if (!meRes.ok) throw new Error("Unauthorized access to statistics.");
                 const meData = await meRes.json();
                 setCurrentUserId(meData.id);
 
                 // 2. Fetch Pending Businesses
-                const pendingRes = await fetch(`${API_BASE_URL}/users/pending-businesses`);
+                const pendingRes = await fetch(`${API_BASE_URL}/users/pending-businesses`, { headers });
+                if (!pendingRes.ok) {
+                    const errorMsg = await pendingRes.text();
+                    console.error("Pending fetch failed:", errorMsg);
+                    throw new Error("Could not load pending businesses.");
+                }
                 const pendingData = await pendingRes.json();
 
                 setStats({
@@ -63,11 +75,17 @@ export default function AmbassadorPortal() {
         if (!confirm("Verify this business? Your reputation vouches for their initial trust score.")) return;
 
         try {
-            await fetch(`${API_BASE_URL}/users/${businessId}/approve-business`, {
+            const token = localStorage.getItem('meetbarter_token');
+            const res = await fetch(`${API_BASE_URL}/users/${businessId}/approve-business`, {
                 method: 'PUT', // Changed to PUT to match controller
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ verifierId: currentUserId, notes: "Verified via Ambassador Portal" })
             });
+
+            if (!res.ok) throw new Error("Verification failed.");
 
             alert(`Business Verified! +50 VP reward credited to your wallet.`);
             setPendingBusinesses(prev => prev.filter(b => b.id !== businessId));

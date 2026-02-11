@@ -15,6 +15,43 @@ export class UsersController {
         return this.usersService.findMe();
     }
 
+    @Get('pending-businesses')
+    @UseGuards(JwtAuthGuard)
+    async getPendingBusinesses(@Request() req: any) {
+        const { role, sub: userId } = req.user;
+        if (role === 'ADMIN' || role === 'MODERATOR') {
+            return this.usersService.findPendingBusinesses();
+        }
+
+        const user = await this.usersService.findOne(userId);
+        if (user?.ambassadorStatus === 'ACTIVE') {
+            return this.usersService.findPendingBusinesses();
+        }
+
+        throw new ForbiddenException('Access Denied: Requires Admin, Moderator, or Active Ambassador status.');
+    }
+
+    @Get('pending-community')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.APPROVE_BUSINESS)
+    getPendingCommunity() {
+        return this.usersService.findPendingCommunityVerifications();
+    }
+
+    @Get('pending-licenses')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.APPROVE_BUSINESS)
+    getPendingLicenses() {
+        return this.usersService.findPendingLicenses();
+    }
+
+    @Get('pending-ambassadors')
+    @UseGuards(JwtAuthGuard, PermissionGuard)
+    @Permissions(Permission.APPROVE_AMBASSADOR)
+    getPendingAmbassadors() {
+        return this.usersService.findPendingAmbassadors();
+    }
+
     @Get(':id')
     getUser(@Param('id') id: string) {
         return this.usersService.findOne(id);
@@ -61,35 +98,7 @@ export class UsersController {
         return this.usersService.requestCommunityVerification(id, body.role, body.evidence);
     }
 
-    @Get('pending-businesses')
-    @UseGuards(JwtAuthGuard)
-    async getPendingBusinesses(@Request() req: any) { // Auth: Admin, Mod, or Active Ambassador
-        const { role, sub: userId } = req.user;
-        if (role === 'ADMIN' || role === 'MODERATOR') {
-            return this.usersService.findPendingBusinesses();
-        }
 
-        const user = await this.usersService.findOne(userId);
-        if (user?.ambassadorStatus === 'ACTIVE') {
-            return this.usersService.findPendingBusinesses();
-        }
-
-        throw new ForbiddenException('Access Denied: Requires Admin, Moderator, or Active Ambassador status.');
-    }
-
-    @Get('pending-community')
-    @UseGuards(JwtAuthGuard, PermissionGuard)
-    @Permissions(Permission.APPROVE_BUSINESS)
-    getPendingCommunity() {
-        return this.usersService.findPendingCommunityVerifications();
-    }
-
-    @Get('pending-licenses')
-    @UseGuards(JwtAuthGuard, PermissionGuard)
-    @Permissions(Permission.APPROVE_BUSINESS)
-    getPendingLicenses() {
-        return this.usersService.findPendingLicenses();
-    }
 
     @Put(':id/verify-license')
     @UseGuards(JwtAuthGuard, PermissionGuard)
@@ -110,12 +119,7 @@ export class UsersController {
         return this.usersService.confirmPhoneVerification(id, phoneNumber, code);
     }
 
-    @Get('pending-ambassadors')
-    @UseGuards(JwtAuthGuard, PermissionGuard)
-    @Permissions(Permission.APPROVE_AMBASSADOR)
-    getPendingAmbassadors() {
-        return this.usersService.findPendingAmbassadors();
-    }
+
 
     @Put(':id/approve-ambassador')
     @UseGuards(JwtAuthGuard, PermissionGuard)

@@ -2,16 +2,19 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useTheme } from "./ThemeContext";
 
 export default function Footer() {
+    const { darkMode } = useTheme();
+
     return (
-        <footer className="bg-gray-50 border-t border-gray-100 mt-24 pb-12 pt-16">
+        <footer className="bg-[var(--bg-app)] border-t border-[var(--glass-border)] mt-24 pb-12 pt-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 {/* Centered Logo */}
                 <div className="flex justify-center mb-8">
-                    <div className="relative h-10 w-40 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-500">
+                    <div className="relative h-10 w-44 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-500">
                         <Image
-                            src="/assets/logo-full.png"
+                            src={darkMode ? "/assets/logo-full negative.png" : "/assets/logo-full.png"}
                             alt="Meetbarter"
                             fill
                             className="object-contain"
@@ -20,7 +23,7 @@ export default function Footer() {
                 </div>
 
                 {/* Primary Navigation */}
-                <nav className="flex flex-wrap justify-center gap-x-8 gap-y-4 mb-8 text-sm font-medium text-gray-500">
+                <nav className="flex flex-wrap justify-center gap-x-8 gap-y-4 mb-8 text-sm font-black uppercase tracking-widest text-[var(--text-muted)]">
                     <Link href="/about" className="hover:text-indigo-600 transition-colors duration-200">About Us</Link>
                     <Link href="/ambassador" className="hover:text-indigo-600 transition-colors duration-200">Ambassadors</Link>
                     <Link href="/privacy" className="hover:text-indigo-600 transition-colors duration-200">Privacy Policy</Link>

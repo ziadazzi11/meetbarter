@@ -10,7 +10,7 @@ import { UploadModule } from '../upload/upload.module';
 import { ModerationModule } from '../moderation/moderation.module';
 
 @Module({
-  imports: [PrismaModule, CategoriesModule, IntelligenceModule, ValuationModule, UploadModule],
+  imports: [PrismaModule, CategoriesModule, IntelligenceModule, ValuationModule, UploadModule, ModerationModule],
   controllers: [ListingsController],
   providers: [ListingsService, AiPricingService],
   exports: [ListingsService, AiPricingService],

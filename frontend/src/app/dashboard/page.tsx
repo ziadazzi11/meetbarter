@@ -153,28 +153,31 @@ export default function DashboardPage() {
 
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8 px-4">
+        <div className="min-h-screen bg-[var(--bg-app)] py-12 px-4 pt-32">
             <div className="max-w-6xl mx-auto">
-                <div className="mb-8 flex justify-between items-end">
+                <div className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                        <p className="text-gray-600 mt-1">Manage your listings and trades</p>
+                        <div className="inline-block px-4 py-1.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-4">
+                            Operational Hub
+                        </div>
+                        <h1 className="text-4xl md:text-5xl font-black text-[var(--text-main)] uppercase tracking-tight">Dashboard</h1>
+                        <p className="text-[var(--text-muted)] mt-2 font-medium">Manage your listings and trade velocity.</p>
                     </div>
                     <button
                         onClick={() => setIsPersonalizeOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
+                        className="flex items-center gap-2 px-6 py-3 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-xl text-[10px] font-black uppercase tracking-widest text-[var(--text-main)] hover:bg-[var(--mesh-glow)] transition-all shadow-xl shadow-indigo-500/5"
                     >
                         <span>🎨 Personalize</span>
                     </button>
                 </div>
 
                 {/* Navigation Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
                     <button
                         onClick={() => setActiveTab('listings')}
-                        className={`p-6 rounded-xl border font-bold text-center transition-all duration-200 shadow-sm hover:shadow-md ${activeTab === 'listings'
-                            ? 'bg-indigo-600 text-white border-indigo-600 transform scale-[1.02]'
-                            : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300'
+                        className={`p-8 rounded-3xl border font-black uppercase tracking-widest text-[10px] text-center transition-all duration-300 shadow-xl ${activeTab === 'listings'
+                            ? 'bg-indigo-600 text-white border-indigo-600 scale-105 shadow-indigo-500/20'
+                            : 'bg-[var(--glass-bg)] text-[var(--text-muted)] border-[var(--glass-border)] hover:border-indigo-500/30'
                             }`}
                     >
                         My Listings
@@ -182,9 +185,9 @@ export default function DashboardPage() {
 
                     <button
                         onClick={() => setActiveTab('trades')}
-                        className={`p-6 rounded-xl border font-bold text-center transition-all duration-200 shadow-sm hover:shadow-md ${activeTab === 'trades'
-                            ? 'bg-indigo-600 text-white border-indigo-600 transform scale-[1.02]'
-                            : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300'
+                        className={`p-8 rounded-3xl border font-black uppercase tracking-widest text-[10px] text-center transition-all duration-300 shadow-xl ${activeTab === 'trades'
+                            ? 'bg-indigo-600 text-white border-indigo-600 scale-105 shadow-indigo-500/20'
+                            : 'bg-[var(--glass-bg)] text-[var(--text-muted)] border-[var(--glass-border)] hover:border-indigo-500/30'
                             }`}
                     >
                         Pending Trades
@@ -192,9 +195,9 @@ export default function DashboardPage() {
 
                     <button
                         onClick={() => setActiveTab('wallet')}
-                        className={`p-6 rounded-xl border font-bold text-center transition-all duration-200 shadow-sm hover:shadow-md ${activeTab === 'wallet'
-                            ? 'bg-indigo-600 text-white border-indigo-600 transform scale-[1.02]'
-                            : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300'
+                        className={`p-8 rounded-3xl border font-black uppercase tracking-widest text-[10px] text-center transition-all duration-300 shadow-xl ${activeTab === 'wallet'
+                            ? 'bg-indigo-600 text-white border-indigo-600 scale-105 shadow-indigo-500/20'
+                            : 'bg-[var(--glass-bg)] text-[var(--text-muted)] border-[var(--glass-border)] hover:border-indigo-500/30'
                             }`}
                     >
                         Wallet
@@ -202,7 +205,7 @@ export default function DashboardPage() {
 
                     <Link
                         href="/bounties"
-                        className="p-6 rounded-xl border font-bold text-center transition-all duration-200 shadow-sm hover:shadow-md bg-white text-indigo-600 border-gray-200 hover:border-indigo-300 flex items-center justify-center"
+                        className="p-8 rounded-3xl border font-black uppercase tracking-widest text-[10px] text-center transition-all duration-300 shadow-xl bg-[var(--glass-bg)] text-indigo-600 border-[var(--glass-border)] hover:border-indigo-500/30 flex items-center justify-center grayscale hover:grayscale-0"
                     >
                         Earn VP
                     </Link>
@@ -213,27 +216,27 @@ export default function DashboardPage() {
                     <div className="p-6">
                         {/* My Listings Tab */}
                         {activeTab === 'listings' && (
-                            <div>
-                                <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-xl font-semibold">Your Active Listings</h2>
+                            <div className="bg-[var(--glass-bg)] p-10 rounded-2xl shadow-2xl border border-[var(--glass-border)] backdrop-blur-xl relative overflow-hidden">
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-12 relative z-10">
+                                    <h2 className="text-2xl font-black text-[var(--text-main)] uppercase tracking-tight">Active Listings</h2>
                                     {myListings.length > 0 && (
                                         <button
                                             onClick={openCreateModal}
-                                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                            className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all active:scale-95"
                                         >
-                                            + Create Listing
+                                            + Create New
                                         </button>
                                     )}
                                 </div>
 
                                 {myListings.length === 0 ? (
-                                    <div className="text-center py-12">
-                                        <p className="text-gray-500 mb-4">You haven&apos;t created any listings yet</p>
+                                    <div className="text-center py-20 border-2 border-dashed border-[var(--glass-border)] rounded-[2rem]">
+                                        <p className="text-[var(--text-muted)] mb-6 font-black uppercase tracking-widest text-xs">No active inventory discovered</p>
                                         <button
                                             onClick={openCreateModal}
-                                            className="inline-block px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                            className="px-8 py-4 bg-indigo-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all active:scale-95"
                                         >
-                                            Create Your First Listing
+                                            Mint First Listing
                                         </button>
                                     </div>
                                 ) : (
@@ -247,12 +250,11 @@ export default function DashboardPage() {
                                                     <div>
                                                         <h3 className="font-semibold text-gray-900">{listing.title}</h3>
                                                         <p className="text-sm text-gray-600 mt-1">{listing.description}</p>
-                                                        <div className="flex gap-4 mt-2 items-center">
-                                                            <span className="text-blue-600 font-bold">{listing.priceVP} VP</span>
-                                                            <span className="text-gray-500">{listing.location}</span>
-                                                            {/* Status Badge */}
-                                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide
-                                                                ${listing.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}
+                                                        <div className="flex gap-4 mt-3 items-center">
+                                                            <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-tighter text-lg">{listing.priceVP.toLocaleString()} VP</span>
+                                                            <span className="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest opacity-60">📍 {listing.location}</span>
+                                                            <span className={`px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest
+                                                                ${listing.status === 'ACTIVE' ? 'bg-indigo-500/10 text-indigo-600' : 'bg-[var(--glass-bg)] text-[var(--text-muted)] border border-[var(--glass-border)]'}
                                                             `}>
                                                                 {listing.status}
                                                             </span>
@@ -311,14 +313,14 @@ export default function DashboardPage() {
                                                     <div className="flex gap-2">
                                                         <Link
                                                             href={`/trades/${trade.id}`}
-                                                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200"
+                                                            className="px-4 py-2 bg-indigo-500/10 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500/20 transition-all"
                                                         >
-                                                            View Details
+                                                            Inspect Trade
                                                         </Link>
-                                                        <button className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700">
+                                                        <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all">
                                                             Accept
                                                         </button>
-                                                        <button className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700">
+                                                        <button className="px-4 py-2 bg-[var(--text-muted)] text-[var(--bg-app)] rounded-lg text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-all">
                                                             Reject
                                                         </button>
                                                     </div>
@@ -332,14 +334,17 @@ export default function DashboardPage() {
 
                         {/* Wallet Tab */}
                         {activeTab === 'wallet' && (
-                            <div>
-                                <h2 className="text-xl font-semibold mb-6">Your Wallet</h2>
-                                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg p-8 text-white mb-6">
-                                    <p className="text-sm opacity-90 mb-2">Administrative Credits</p>
-                                    <div className="text-5xl font-bold">{walletBalance} VP</div>
-                                    <p className="text-sm opacity-75 mt-4">
-                                        Value Points earned through successful trades
-                                    </p>
+                            <div className="bg-[var(--glass-bg)] p-8 rounded-[2.5rem] border border-[var(--glass-border)] shadow-2xl backdrop-blur-md">
+                                <h2 className="text-2xl font-black text-[var(--text-main)] uppercase tracking-tight mb-8">Asset Liquidity</h2>
+                                <div className="bg-gradient-to-br from-indigo-600 to-indigo-900 rounded-[2rem] p-12 text-white mb-10 shadow-2xl shadow-indigo-500/20 relative overflow-hidden">
+                                    <div className="relative z-10">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-60 mb-4">Total Available Capital</p>
+                                        <div className="text-6xl md:text-7xl font-black tracking-tighter">{walletBalance.toLocaleString()} <span className="text-2xl opacity-50 font-medium">VP</span></div>
+                                        <p className="text-xs font-medium opacity-60 mt-8 max-w-sm">
+                                            Value Points are minted directly into your wallet upon mutual verification of trade completion.
+                                        </p>
+                                    </div>
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
                                 </div>
 
                                 <div className="border border-gray-200 rounded-lg p-6">
@@ -405,9 +410,9 @@ export default function DashboardPage() {
                                         <label className="block text-sm font-medium text-gray-700 mb-2">Images</label>
                                         <ImageUpload initialImages={listingFormData.images} onUpload={(urls) => setListingFormData({ ...listingFormData, images: urls })} maxImages={5} />
                                     </div>
-                                    <div className="flex justify-end gap-3 pt-4">
-                                        <button type="button" onClick={() => setIsListingModalOpen(false)} className="px-4 py-2 border rounded text-gray-600">Cancel</button>
-                                        <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">Save Listing</button>
+                                    <div className="flex justify-end gap-3 pt-6">
+                                        <button type="button" onClick={() => setIsListingModalOpen(false)} className="px-6 py-3 border border-[var(--glass-border)] rounded-xl text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] hover:bg-[var(--mesh-glow)] transition-all">Cancel</button>
+                                        <button type="submit" className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all active:scale-95">Save Asset</button>
                                     </div>
                                 </form>
                             </div>

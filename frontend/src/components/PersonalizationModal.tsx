@@ -143,7 +143,7 @@ export default function PersonalizationModal({ isOpen, onClose }: Personalizatio
                                     className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isAutoMode ? 'bg-indigo-600' : 'bg-gray-200'
                                         }`}
                                     role="switch"
-                                    aria-checked={String(isAutoMode)}
+                                    aria-checked={isAutoMode}
                                 >
                                     <span
                                         aria-hidden="true"

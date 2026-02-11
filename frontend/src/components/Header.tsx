@@ -15,13 +15,13 @@ export default function Header() {
     const { user } = useAuth();
 
     return (
-        <header className="w-full z-50 transition-all duration-300 bg-white border-b border-gray-100 shadow-sm">
+        <header className="w-full z-50 transition-all duration-300 bg-[var(--bg-app)]/80 backdrop-blur-md border-b border-[var(--glass-border)] sticky top-0">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                 {/* 1. SINGLE LOGO - Left Aligned */}
                 <Link href="/" className="flex items-center group">
-                    <div className="relative h-10 w-40 block transition-opacity hover:opacity-90">
+                    <div className="relative h-10 w-44 block transition-opacity hover:opacity-90">
                         <Image
-                            src="/assets/meetbarter logo typo-02.png"
+                            src={darkMode ? "/assets/logo-alt negative.png" : "/assets/logo-alt.png"}
                             alt="Meetbarter"
                             fill
                             className="object-contain object-left"
@@ -33,14 +33,14 @@ export default function Header() {
 
                 {/* 2. Navigation Actions (Right Aligned) */}
                 <nav className="flex items-center gap-4">
-                    <Link href="/about" className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors duration-200">How it Works</Link>
-                    <Link href="/events" className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors duration-200">Events</Link>
-                    <Link href="/dashboard" className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors duration-200">Dashboard</Link>
+                    <Link href="/about" className="text-[var(--text-main)] hover:text-indigo-600 font-medium text-sm transition-colors duration-200 opacity-80 hover:opacity-100">How it Works</Link>
+                    <Link href="/events" className="text-[var(--text-main)] hover:text-indigo-600 font-medium text-sm transition-colors duration-200 opacity-80 hover:opacity-100">Events</Link>
+                    <Link href="/dashboard" className="text-[var(--text-main)] hover:text-indigo-600 font-medium text-sm transition-colors duration-200 opacity-80 hover:opacity-100">Dashboard</Link>
 
                     {/* Dark/Light Mode Toggle */}
                     <button
                         onClick={() => setDarkMode(!darkMode)}
-                        className="p-2 rounded-full text-gray-500 hover:bg-gray-100 transition-colors"
+                        className="p-2 rounded-full text-[var(--text-muted)] hover:bg-gray-500/10 transition-colors"
                         title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
                     >
                         {darkMode ? (
@@ -56,15 +56,15 @@ export default function Header() {
                         )}
                     </button>
 
-                    <div className="h-5 w-[1px] bg-gray-200 mx-2"></div>
+                    <div className="h-5 w-[1px] bg-[var(--glass-border)] mx-2"></div>
 
-                    <button className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-meetbarter-black hover:bg-gray-900 border border-gray-800 text-meetbarter-neon-blue font-bold text-xs uppercase tracking-wider transition-all shadow-sm hover:shadow-md hover:scale-105 active:scale-95 group">
-                        <svg className="w-4 h-4 text-meetbarter-neon-blue group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <button className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--text-main)] hover:opacity-90 border border-[var(--glass-border)] text-[var(--bg-app)] font-black text-xs uppercase tracking-wider transition-all shadow-sm active:scale-95 group">
+                        <svg className="w-4 h-4 text-inherit group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         Get App
                     </button>
 
-                    <Link href="/login" className="px-4 py-2 rounded-full bg-indigo-600 text-white font-semibold text-sm shadow-md hover:bg-indigo-700 hover:shadow-lg transition-all duration-300 active:scale-95">
-                        Sign In / Join
+                    <Link href="/login" className="px-4 py-2 rounded-full bg-indigo-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all duration-300 active:scale-95">
+                        Sign In
                     </Link>
 
                     {/* Bulk Upload Trigger - Businesses & Institutions & Farmers Only */}

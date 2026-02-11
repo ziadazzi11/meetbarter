@@ -232,7 +232,7 @@ export default function Home() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-transparent font-sans text-[var(--text-main)]">
 
       {/* 1. HERO SPLIT SECTION (New) */}
       <HeroSplit onPost={handlePostOffer} onRequest={handlePostRequest} />
@@ -250,21 +250,21 @@ export default function Home() {
 
               <div className="flex flex-col md:flex-row justify-between gap-12 relative z-10">
                 <div className="space-y-6">
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400 mb-2 block">Available Capital</span>
-                    <div className="text-5xl font-black tracking-tighter text-gray-900 dark:text-white">
-                      {user?.walletBalance.toLocaleString()} <span className="text-xl font-medium text-gray-400">VP</span>
+                  <div className="flex flex-col items-center justify-center w-full px-4">
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-600 dark:text-indigo-400 mb-2 block leading-none text-center">Available Capital</span>
+                    <div className="text-5xl md:text-6xl font-black tracking-tighter text-[var(--text-main)] text-center">
+                      {user?.walletBalance.toLocaleString()} <span className="text-xl font-medium text-[var(--text-muted)] opacity-50">VP</span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-6">
-                    <div className="bg-white/50 dark:bg-black/20 px-4 py-2 rounded-xl border border-white/50 dark:border-white/5">
-                      <span className="text-[10px] font-bold uppercase text-gray-400 block mb-0.5">Trust Score</span>
-                      <span className="font-extrabold text-indigo-600">{user?.globalTrustScore}</span>
+                    <div className="bg-white/50 dark:bg-black/20 px-4 py-2 rounded-xl border border-white/50 dark:border-white/5 flex flex-col items-center min-w-[100px]">
+                      <span className="text-[10px] font-bold uppercase text-[var(--text-muted)] block mb-0.5 px-1 leading-none">Trust Score</span>
+                      <span className="font-extrabold text-indigo-600 text-center">{user?.globalTrustScore}</span>
                     </div>
-                    <div className="bg-white/50 dark:bg-black/20 px-4 py-2 rounded-xl border border-white/50 dark:border-white/5">
-                      <span className="text-[10px] font-bold uppercase text-gray-400 block mb-0.5">Clearance</span>
-                      <span className="font-extrabold text-indigo-600">Tier {user?.verificationLevel || 1}</span>
+                    <div className="bg-white/50 dark:bg-black/20 px-4 py-2 rounded-xl border border-white/50 dark:border-white/5 flex flex-col items-center min-w-[100px]">
+                      <span className="text-[10px] font-bold uppercase text-[var(--text-muted)] block mb-0.5 px-1 leading-none">Clearance</span>
+                      <span className="font-extrabold text-indigo-600 text-center">Tier {user?.verificationLevel || 1}</span>
                     </div>
                   </div>
                 </div>
@@ -273,7 +273,7 @@ export default function Home() {
                   <button onClick={() => setIsTierModalOpen(true)} className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all active:scale-95 uppercase tracking-widest leading-none">
                     {user && user.verificationLevel >= 3 ? 'Institutional Access' : 'Upgrade Trust'}
                   </button>
-                  <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Global Status: {user?.ambassadorStatus || 'Standard Account'}</p>
+                  <p className="text-[10px] text-[var(--text-muted)] uppercase font-black tracking-widest">Global Status: {user?.ambassadorStatus || 'Standard Account'}</p>
                 </div>
               </div>
             </div>
@@ -281,7 +281,7 @@ export default function Home() {
             {/* Right Column: Mini Dashboard */}
             <div className="glass-card rounded-3xl p-8 flex flex-col justify-between">
               <div>
-                <h3 className="font-black text-gray-900 dark:text-white uppercase tracking-widest text-sm mb-6 pb-2 border-b border-gray-100 dark:border-white/5">Network Activity</h3>
+                <h3 className="font-black text-[var(--text-main)] uppercase tracking-widest text-sm mb-6 pb-2 border-b border-[var(--glass-border)]">Network Activity</h3>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-500">Active Trades</span>
@@ -381,10 +381,11 @@ export default function Home() {
                           </button>
                         )}
                         {trade.status === 'LOCKED' && trade.buyerConfirmed && (
-                          <span className="text-gray-500 font-medium italic bg-gray-100 px-4 py-2 rounded-lg">Waiting for Seller...</span>
+                          <span className="text-indigo-400 font-black italic bg-indigo-500/5 px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest border border-indigo-500/10">Waiting for Seller...</span>
                         )}
                         {trade.status === 'COMPLETED' && (
-                          <span className="text-green-600 font-bold flex items-center gap-1 bg-white px-4 py-2 rounded-lg border border-green-100 shadow-sm">
+                          <span className="text-indigo-600 dark:text-indigo-400 font-black flex items-center gap-2 bg-indigo-500/10 px-4 py-2 rounded-xl border border-indigo-500/20 shadow-sm text-[10px] uppercase tracking-widest">
+                            <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></div>
                             Trade Secured
                           </span>
                         )}
@@ -404,13 +405,13 @@ export default function Home() {
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
             {categories.slice(0, 2).map((cat: Category) => (
-              <div key={cat.id} className="p-6 bg-white rounded-xl border border-green-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+              <div key={cat.id} className="p-6 bg-[var(--glass-bg)] rounded-3xl border border-[var(--glass-border)] shadow-xl hover:shadow-indigo-500/10 transition-all relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-
+                  <div className="w-24 h-24 bg-indigo-500 rounded-full blur-3xl"></div>
                 </div>
-                <h3 className="text-xl font-bold text-green-700 mb-2">{cat.name}</h3>
-                <p className="text-gray-600 mb-4">{cat.description}</p>
-                <div className="inline-block bg-green-50 text-green-700 text-sm font-semibold px-3 py-1 rounded-full border border-green-100">
+                <h3 className="text-xl font-black text-indigo-600 dark:text-indigo-400 mb-2 uppercase tracking-wide">{cat.name}</h3>
+                <p className="text-[var(--text-muted)] mb-4">{cat.description}</p>
+                <div className="inline-block bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full border border-indigo-500/20">
                   {cat.minVP} - {cat.maxVP} VP
                 </div>
               </div>
@@ -421,7 +422,7 @@ export default function Home() {
         {/* MARKETPLACE SEARCH & LISTINGS */}
         <section>
           <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Marketplace</h2>
+            <h2 className="text-2xl font-bold text-[var(--text-main)]">Marketplace</h2>
 
             <div className="flex flex-wrap gap-2 w-full md:w-auto">
               <input

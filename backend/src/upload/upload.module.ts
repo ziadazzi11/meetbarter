@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { CloudinaryService } from './cloudinary.service';
 import { SecureUploadController } from './secure-upload.controller';
 import { SecureUploadService } from './secure-upload.service';
+import { SecurityModule } from '../security/security.module';
 
 @Module({
+    imports: [SecurityModule],
     controllers: [SecureUploadController],
     providers: [CloudinaryService, SecureUploadService],
     exports: [CloudinaryService, SecureUploadService],
