@@ -1,8 +1,8 @@
 # MeetBarter - Unified Investment Offering & Protocol Strategic Brief
 
-**Version**: 1.0 (Dispatch-Ready)
-**Date**: February 12, 2026
-**Confidentiality**: Strictly Private & Confidential
+Version: 1.0 (Dispatch-Ready)
+Date: February 12, 2026
+Confidentiality: Strictly Private & Confidential
 
 ## 1. EXECUTIVE SUMMARY & MARKET OBJECT
 

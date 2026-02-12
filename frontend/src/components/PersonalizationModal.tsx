@@ -143,7 +143,7 @@ export default function PersonalizationModal({ isOpen, onClose }: Personalizatio
                                     className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isAutoMode ? 'bg-indigo-600' : 'bg-gray-200'
                                         }`}
                                     role="switch"
-                                    aria-checked={isAutoMode ? "true" : "false"}
+                                    aria-checked={isAutoMode}
                                     title={isAutoMode ? "Switch to Manual Mode" : "Switch to Auto-Journey Mode"}
                                 >
                                     <span
@@ -214,7 +214,7 @@ export default function PersonalizationModal({ isOpen, onClose }: Personalizatio
                                     className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${darkMode ? 'bg-indigo-600' : 'bg-gray-200'
                                         }`}
                                     role="switch"
-                                    aria-checked={darkMode ? "true" : "false"}
+                                    aria-checked={darkMode}
                                     title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
                                 >
                                     <span

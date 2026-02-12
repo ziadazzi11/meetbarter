@@ -1,8 +1,10 @@
 # MeetBarter SARL - Articles of Association (Draft Template)
 
-**Entity Name**: MeetBarter SARL (Limited Liability Company)
-**Headquarters**: Zouk Mosbeh, Lebanon
-**Capital**: 5,000,000 LBP (Five Million Lebanese Pounds)
+## Entity Name: MeetBarter SARL (Limited Liability Company)
+
+## Headquarters: Zouk Mosbeh, Lebanon
+
+## Capital: 5,000,000 LBP (Five Million Lebanese Pounds)
 
 ---
 
