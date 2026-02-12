@@ -19,7 +19,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     // const [theme, setTheme] = useState<Theme>('neon-blue'); // Default to nice but irrelevant
     const [theme, setTheme] = useState<Theme>('neon-blue');
     const [isAutoMode, setIsAutoMode] = useState(false); // Disable auto logic
-    const [darkMode, setDarkMode] = useState(false);
+    const [darkMode, setDarkMode] = useState(true);
 
     // Initialize from localStorage on mount
     useEffect(() => {

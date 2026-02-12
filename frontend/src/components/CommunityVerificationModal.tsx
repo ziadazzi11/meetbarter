@@ -56,7 +56,7 @@ export default function CommunityVerificationModal({ isOpen, onClose, userId }: 
         <div className="modal-overlay">
             <div className="modal-content">
                 <h2 className="modal-title">Community Service Verification</h2>
-                <p className="text-sm text-gray-500 mb-4">
+                <p className="text-sm text-slate-600 mb-4">
                     Verified community members get <strong>+5 Extra Listings</strong>.
                 </p>
 
@@ -131,8 +131,8 @@ export default function CommunityVerificationModal({ isOpen, onClose, userId }: 
                     {/* Special Gardener Section */}
                     {role === 'GARDENER' && (
                         <div className="p-3 bg-green-50 rounded-lg border border-green-200 mt-2 mb-2">
-                            <label className="input-label text-green-800">The &quot;Gardener&quot;s Special&quot; (Optional)</label>
-                            <p className="text-xs text-green-600 mb-2">
+                            <label className="input-label text-black">The &quot;Gardener&quot;s Special&quot; (Optional)</label>
+                            <p className="text-xs text-green-700 mb-2">
                                 We love our gardeners! Upload a selfie with your favorite tree or bush to join the &quot;Green Thumb&quot; club.
                                 <br /><em>(Totally optional if you are shy!)</em>
                             </p>

@@ -56,7 +56,7 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
 
                 localStorage.setItem("meetbarter_uid", user.id);
                 onLogin(user.id);
-            } catch (e) {
+            } catch {
                 alert("Login Failed");
                 setLoading(false);
             }
@@ -67,14 +67,14 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
             <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl animate-fade-in text-center">
                 {/* Logo removed to prevent duplication */}
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome Back</h2>
-                <p className="text-gray-500 mb-8">Sign in to continue your compassionate trading journey.</p>
+                <h2 className="text-2xl font-bold text-black mb-2">Welcome Back</h2>
+                <p className="text-slate-600 mb-8">Sign in to continue your compassionate trading journey.</p>
 
                 <div className="space-y-3">
                     <button
                         onClick={() => handleSocialLogin("GOOGLE")}
                         disabled={loading}
-                        className="w-full py-3 px-4 rounded-xl border border-gray-200 flex items-center justify-center gap-3 hover:bg-gray-50 transition-all font-medium text-gray-700"
+                        className="w-full py-3 px-4 rounded-xl border border-gray-200 flex items-center justify-center gap-3 hover:bg-gray-50 transition-all font-medium text-black"
                     >
                         <span className="text-red-500 font-bold">G</span> Continue with Google
                     </button>
@@ -103,10 +103,10 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
                         <span>📸</span> Continue with Instagram
                     </button>
 
-                    {loading && <p className="text-sm text-gray-400 mt-4 animate-pulse">Connecting to provider...</p>}
+                    {loading && <p className="text-sm text-slate-500 mt-4 animate-pulse">Connecting to provider...</p>}
                 </div>
 
-                <p className="mt-8 text-xs text-gray-400">
+                <p className="mt-8 text-xs text-slate-500">
                     By continuing, you agree to our Terms of Service and Compassionate Economy Protocol.
                 </p>
             </div>

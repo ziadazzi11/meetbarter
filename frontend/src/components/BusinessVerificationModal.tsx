@@ -47,7 +47,7 @@ export default function BusinessVerificationModal({ isOpen, onClose, userId }: B
                     <form onSubmit={handleSubmit}>
                         <div className="bg-blue-50 p-4 rounded-lg mb-5 border border-blue-200">
                             <h4 className="m-0 mb-2 text-blue-700">🛡️ Why Verify?</h4>
-                            <p className="text-sm text-slate-700 m-0">
+                            <p className="text-sm text-black m-0">
                                 Verification is an <strong>identity check</strong> to ensure businesses are legitimate entities.
                                 This protects our community from anonymous actors and fraud.
                             </p>
@@ -83,7 +83,7 @@ export default function BusinessVerificationModal({ isOpen, onClose, userId }: B
                             </select>
                         </div>
 
-                        <div className="text-[0.85rem] text-slate-500 mb-5">
+                        <div className="text-[0.85rem] text-slate-600 mb-5">
                             <p><strong>Required Documents (Transparency Check):</strong></p>
                             <ul className="pl-5 mt-1">
                                 <li><strong>Lebanon:</strong> Commercial Circular (Idha&apos;ah Tujariyah) & Tax ID (Maliyah).</li>

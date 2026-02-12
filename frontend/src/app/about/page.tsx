@@ -73,7 +73,7 @@ export default function AboutPage() {
                                 <div className="flex gap-6 items-center">
                                     <div className="w-14 h-14 rounded-2xl bg-[var(--mesh-glow)] flex items-center justify-center text-2xl shadow-inner">👤</div>
                                     <div className="flex-1 h-3 bg-indigo-500/10 rounded-full relative overflow-hidden">
-                                        <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-indigo-500 to-amber-500 animate-pulse" style={{ width: '40%' }}></div>
+                                        <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-indigo-500 to-amber-500 animate-pulse w-[40%]"></div>
                                     </div>
                                     <div className="w-16 h-16 rounded-[1.5rem] bg-indigo-600 flex items-center justify-center text-2xl text-white shadow-xl shadow-indigo-500/40 animate-bounce">💰</div>
                                     <div className="flex-1 h-3 bg-indigo-500/10 rounded-full"></div>

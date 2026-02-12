@@ -37,39 +37,23 @@ export default function HeroSplit({ onPost, onRequest, isLoggedIn }: HeroSplitPr
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-5">
-                    {isLoggedIn ? (
-                        <button
-                            onClick={onPost}
-                            className="group relative px-8 py-5 bg-[var(--text-main)] text-[var(--bg-app)] font-black uppercase tracking-widest text-sm rounded-2xl hover:bg-indigo-600 hover:text-white transition-all duration-500 shadow-xl hover:shadow-indigo-500/40 active:scale-95 overflow-hidden flex items-center justify-center min-w-[220px]"
-                        >
-                            <span className="relative z-10">Initiate Barter</span>
-                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        </button>
-                    ) : (
-                        <Link
-                            href="/signup"
-                            className="group relative px-8 py-5 bg-indigo-600 text-white font-black uppercase tracking-widest text-sm rounded-2xl hover:bg-indigo-700 transition-all duration-500 shadow-xl hover:shadow-indigo-500/40 active:scale-95 overflow-hidden flex items-center justify-center min-w-[220px]"
-                        >
-                            <span className="relative z-10">Join Network</span>
-                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-emerald-500 opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
-                        </Link>
-                    )}
+                    <button
+                        onClick={onPost}
+                        className={`group relative px-8 py-5 font-black uppercase tracking-widest text-sm rounded-2xl transition-all duration-500 shadow-xl active:scale-95 overflow-hidden flex items-center justify-center min-w-[220px] ${isLoggedIn
+                                ? "bg-[var(--text-main)] text-[var(--bg-app)] hover:bg-indigo-600 hover:text-white hover:shadow-indigo-500/40"
+                                : "bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-indigo-500/40"
+                            }`}
+                    >
+                        <span className="relative z-10">{isLoggedIn ? "Initiate Barter" : "Join Network"}</span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    </button>
 
-                    {isLoggedIn ? (
-                        <button
-                            onClick={onRequest}
-                            className="px-8 py-5 bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-main)] font-black uppercase tracking-widest text-sm rounded-2xl hover:bg-[var(--mesh-glow)] hover:border-indigo-500/30 transition-all duration-300 backdrop-blur-md active:scale-95 flex items-center justify-center min-w-[220px]"
-                        >
-                            Post Request
-                        </button>
-                    ) : (
-                        <Link
-                            href="/about"
-                            className="px-8 py-5 bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-main)] font-black uppercase tracking-widest text-sm rounded-2xl hover:bg-[var(--mesh-glow)] hover:border-indigo-500/30 transition-all duration-300 backdrop-blur-md active:scale-95 flex items-center justify-center min-w-[220px]"
-                        >
-                            Explore Protocol
-                        </Link>
-                    )}
+                    <button
+                        onClick={onRequest}
+                        className="px-8 py-5 bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-main)] font-black uppercase tracking-widest text-sm rounded-2xl hover:bg-[var(--mesh-glow)] hover:border-indigo-500/30 transition-all duration-300 backdrop-blur-md active:scale-95 flex items-center justify-center min-w-[220px]"
+                    >
+                        {isLoggedIn ? "Post Request" : "Explore Protocol"}
+                    </button>
                 </div>
             </div>
 

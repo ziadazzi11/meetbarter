@@ -6,9 +6,11 @@ import { API_BASE_URL } from "@/config/api";
 import { adsClient } from "@/lib/ads-client";
 import UpgradeModal from "@/components/UpgradeModal";
 import ImageUpload from "@/components/ImageUpload";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CreateListing() {
     const router = useRouter();
+    const { user, loading } = useAuth();
     const [categories, setCategories] = useState<any[]>([]);
 
     // Form State
@@ -36,8 +38,11 @@ export default function CreateListing() {
     const [listingLimit, setListingLimit] = useState(5);
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
-    // DEMO USER ID (From seed)
-    const DEMO_USER_ID = "9d2c7649-9cf0-48fb-889a-1369e20615a6";
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/signup');
+        }
+    }, [user, loading, router]);
 
     useEffect(() => {
         fetch(`${API_BASE_URL}/categories`)
@@ -45,8 +50,10 @@ export default function CreateListing() {
             .then(setCategories)
             .catch(console.error);
 
-        checkStorageLimits();
-    }, []);
+        if (user) {
+            checkStorageLimits();
+        }
+    }, [user]);
 
     const checkStorageLimits = async () => {
         try {
@@ -61,7 +68,8 @@ export default function CreateListing() {
     };
 
     const handleUpgrade = async () => {
-        await fetch(`${API_BASE_URL}/users/${DEMO_USER_ID}/upgrade`, { method: 'PUT' });
+        if (!user) return;
+        await fetch(`${API_BASE_URL}/users/${user.id}/upgrade`, { method: 'PUT' });
         setIsUpgradeModalOpen(false);
         alert("Upgraded to Premium! You can now post unlimited items.");
         window.location.reload();
@@ -93,7 +101,7 @@ export default function CreateListing() {
             images: JSON.stringify(images),
             location,
             country,
-            sellerId: DEMO_USER_ID,
+            sellerId: user?.id,
             expiresAt,
             priceCash: priceCash ? parseFloat(priceCash) : null,
             priceCurrency
@@ -101,16 +109,6 @@ export default function CreateListing() {
 
         try {
             await adsClient.post('/listings', payload);
-
-            // const res = await fetch(`${API_BASE_URL}/listings`, {
-            //     method: "POST",
-            //     headers: { "Content-Type": "application/json" },
-            //     body: JSON.stringify(payload)
-            // });
-
-            // if (!res.ok) throw new Error(await res.text());
-
-            // Add a small delay for better UX
             setTimeout(() => {
                 alert("Listing Created Successfully!");
                 router.push("/dashboard");
@@ -124,6 +122,12 @@ export default function CreateListing() {
             }
         }
     }
+
+    if (loading || !user) return (
+        <div className="flex justify-center items-center min-h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-sans">

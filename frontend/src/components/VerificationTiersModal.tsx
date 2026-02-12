@@ -119,8 +119,8 @@ export default function VerificationTiersModal({ isOpen, onClose, userId, curren
                                 &quot;Community trust is the heartbeat of MeetBarter. Confirm your role to help others find you.&quot;
                             </div>
                             <div>
-                                <label htmlFor="community-role" className="block text-sm font-medium text-gray-700 mb-1">Your Community Role</label>
-                                <select id="community-role" className="w-full p-2.5 border border-gray-300 rounded-lg" value={role} onChange={e => setRole(e.target.value)}>
+                                <label htmlFor="community-role" className="block text-sm font-medium text-black mb-1">Your Community Role</label>
+                                <select id="community-role" className="w-full p-2.5 border border-gray-300 rounded-lg text-black bg-white" value={role} onChange={e => setRole(e.target.value)}>
                                     <option value="GARDENER">Gardener</option>
                                     <option value="TEACHER">Teacher</option>
                                     <option value="DOCTOR">Doctor</option>
@@ -128,10 +128,10 @@ export default function VerificationTiersModal({ isOpen, onClose, userId, curren
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Optional Evidence (ID/Certificate)</label>
+                                <label className="block text-sm font-medium text-black mb-2">Optional Evidence (ID/Certificate)</label>
                                 <ImageUpload initialImages={docs} onUpload={setDocs} maxImages={1} />
                             </div>
-                            <p className="text-xs text-gray-500">Tier 1 allows you to post up to 10 listings.</p>
+                            <p className="text-xs text-slate-500">Tier 1 allows you to post up to 10 listings.</p>
                         </div>
                     )}
 
@@ -141,26 +141,26 @@ export default function VerificationTiersModal({ isOpen, onClose, userId, curren
                                 <strong>Professional Verification:</strong> Required for businesses and high-value traders. Requires valid ID.
                             </div>
                             <div>
-                                <label htmlFor="business-name" className="block text-sm font-medium text-gray-700 mb-1">Business / Professional Name</label>
+                                <label htmlFor="business-name" className="block text-sm font-medium text-black mb-1">Business / Professional Name</label>
                                 <input
                                     id="business-name"
-                                    className="w-full p-2.5 border border-gray-300 rounded-lg"
+                                    className="w-full p-2.5 border border-gray-300 rounded-lg text-black bg-white"
                                     placeholder="e.g. Acme Services"
                                     value={bizName}
                                     onChange={e => setBizName(e.target.value)}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">ID Proof (Passport/National ID)</label>
+                                <label className="block text-sm font-medium text-black mb-2">ID Proof (Passport/National ID)</label>
                                 <ImageUpload initialImages={docs} onUpload={setDocs} maxImages={1} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Verification Links (Optional)</label>
+                                <label className="block text-sm font-medium text-black mb-1">Verification Links (Optional)</label>
                                 <div className="space-y-2">
                                     {links.map((link, idx) => (
                                         <input
                                             key={idx}
-                                            className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                                            className="w-full p-2 border border-gray-300 rounded-lg text-sm text-black bg-white"
                                             placeholder="https://linkedin.com/..."
                                             value={link}
                                             onChange={e => {
@@ -187,7 +187,7 @@ export default function VerificationTiersModal({ isOpen, onClose, userId, curren
                             <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 text-sm text-amber-800 font-bold">
                                 🏛️ Institutional / NGO Tier
                             </div>
-                            <p className="text-xs text-gray-600">
+                            <p className="text-xs text-slate-600">
                                 This tier is for registered NGOs, sovereign collectives, and legitimate businesses with official permits.
                                 Unlocks &quot;Institutional Partner&quot; badge and high-fidelity features.
                             </p>
@@ -197,30 +197,30 @@ export default function VerificationTiersModal({ isOpen, onClose, userId, curren
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2">
-                                    <label htmlFor="inst-org-name" className="block text-sm font-medium text-gray-700 mb-1">Organization Name</label>
+                                    <label htmlFor="inst-org-name" className="block text-sm font-medium text-black mb-1">Organization Name</label>
                                     <input
                                         id="inst-org-name"
                                         title="Organization Name"
-                                        className="w-full p-2.5 border border-gray-300 rounded-lg"
+                                        className="w-full p-2.5 border border-gray-300 rounded-lg text-black bg-white"
                                         placeholder="e.g. Green Peace Lebanon"
                                         value={bizName}
                                         onChange={(e) => setBizName(e.target.value)}
                                     />
                                 </div>
                                 <div className="col-span-2">
-                                    <label htmlFor="inst-reg-number" className="block text-sm font-medium text-gray-700 mb-1">Commercial Register / Tax ID</label>
+                                    <label htmlFor="inst-reg-number" className="block text-sm font-medium text-black mb-1">Commercial Register / Tax ID</label>
                                     <input
                                         id="inst-reg-number"
-                                        className="w-full p-2.5 border border-gray-300 rounded-lg"
+                                        className="w-full p-2.5 border border-gray-300 rounded-lg text-black bg-white"
                                         value={regNumber}
                                         onChange={e => setRegNumber(e.target.value)}
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="inst-permit-type" className="block text-sm font-medium text-gray-700 mb-1">Permit Type</label>
+                                    <label htmlFor="inst-permit-type" className="block text-sm font-medium text-black mb-1">Permit Type</label>
                                     <select
                                         id="inst-permit-type"
-                                        className="w-full p-2.5 border border-gray-300 rounded-lg"
+                                        className="w-full p-2.5 border border-gray-300 rounded-lg text-black bg-white"
                                         value={permitType}
                                         onChange={e => setPermitType(e.target.value)}
                                     >
@@ -231,31 +231,31 @@ export default function VerificationTiersModal({ isOpen, onClose, userId, curren
                                     </select>
                                 </div>
                                 <div>
-                                    <label htmlFor="inst-authority" className="block text-sm font-medium text-gray-700 mb-1">Issuing Authority</label>
+                                    <label htmlFor="inst-authority" className="block text-sm font-medium text-black mb-1">Issuing Authority</label>
                                     <input
                                         id="inst-authority"
-                                        className="w-full p-2.5 border border-gray-300 rounded-lg"
+                                        className="w-full p-2.5 border border-gray-300 rounded-lg text-black bg-white"
                                         placeholder="Min. of Industry"
                                         value={authority}
                                         onChange={e => setAuthority(e.target.value)}
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="inst-issue-date" className="block text-sm font-medium text-gray-700 mb-1">Issue Date</label>
+                                    <label htmlFor="inst-issue-date" className="block text-sm font-medium text-black mb-1">Issue Date</label>
                                     <input
                                         id="inst-issue-date"
                                         type="date"
-                                        className="w-full p-2.5 border border-gray-300 rounded-lg"
+                                        className="w-full p-2.5 border border-gray-300 rounded-lg text-black bg-white"
                                         value={issuedAt}
                                         onChange={e => setIssuedAt(e.target.value)}
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="inst-expiry-date" className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
+                                    <label htmlFor="inst-expiry-date" className="block text-sm font-medium text-black mb-1">Expiry Date</label>
                                     <input
                                         id="inst-expiry-date"
                                         type="date"
-                                        className="w-full p-2.5 border border-gray-300 rounded-lg"
+                                        className="w-full p-2.5 border border-gray-300 rounded-lg text-black bg-white"
                                         value={expiresAt}
                                         onChange={e => setExpiresAt(e.target.value)}
                                     />
@@ -263,16 +263,16 @@ export default function VerificationTiersModal({ isOpen, onClose, userId, curren
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Registration Documents (PDF/Photo)</label>
+                                <label className="block text-sm font-medium text-black mb-2">Registration Documents (PDF/Photo)</label>
                                 <ImageUpload initialImages={docs} onUpload={setDocs} maxImages={5} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Verification Links</label>
+                                <label className="block text-sm font-medium text-black mb-1">Verification Links</label>
                                 <div className="space-y-2">
                                     {links.map((link, idx) => (
                                         <input
                                             key={idx}
-                                            className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                                            className="w-full p-2 border border-gray-300 rounded-lg text-sm text-black bg-white"
                                             placeholder="https://gov-registry.com/verify/..."
                                             value={link}
                                             onChange={e => {
@@ -295,7 +295,7 @@ export default function VerificationTiersModal({ isOpen, onClose, userId, curren
                     )}
 
                     <div className="mt-8 flex gap-3">
-                        <button onClick={onClose} className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+                        <button onClick={onClose} className="px-6 py-2.5 border border-gray-300 rounded-lg text-black font-medium hover:bg-gray-50 transition-colors">
                             Close
                         </button>
                         <button

@@ -1,2 +1,0 @@
-Just a touch to force refresh if needed or debug.
-Actually, I will not do this. I will rely on replace_file_content.

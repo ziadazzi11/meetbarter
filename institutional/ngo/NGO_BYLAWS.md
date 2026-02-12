@@ -63,5 +63,6 @@ The Association's resources consist of:
 5. **Liability**: The Association serves as a verification infrastructure. While we verify institutional legitimacy, the Association is not liable for individual commercial disputes between partners, provided the Verification Protocol was followed.
 
 ---
-*Drafted: January 2026*
-*Amended: January 28, 2026 (Business Onboarding Protocol)*
+---
+Drafted: January 2026
+Amended: January 28, 2026 (Business Onboarding Protocol)

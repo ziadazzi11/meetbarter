@@ -25,4 +25,4 @@ To facilitate early-stage capital or resource investment into the Meetbarter eco
 3. **SAFT Issuance**: Simple Agreement for Future Tokens (Equity or VP).
 
 ---
-*Property of Meetbarter Board of Trustees*
+Property of Meetbarter Board of Trustees

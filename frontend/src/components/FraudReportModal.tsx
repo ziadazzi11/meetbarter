@@ -19,7 +19,7 @@ export default function FraudReportModal({ isOpen, onClose, onConfirm }: FraudRe
                 <div className="text-center mb-8">
                     <div className="text-5xl mb-4">🚩</div>
                     <h2 className="text-2xl font-bold text-red-600 uppercase tracking-tighter">Report Fraudulent Activity</h2>
-                    <p className="text-sm text-gray-500 mt-2">Flag this transaction for immediate administrative review.</p>
+                    <p className="text-sm text-slate-600 mt-2">Flag this transaction for immediate administrative review.</p>
                 </div>
 
                 <div className="space-y-6">
@@ -31,7 +31,7 @@ export default function FraudReportModal({ isOpen, onClose, onConfirm }: FraudRe
                             title="Reason for Report"
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
-                            className="w-full border border-gray-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-red-500 outline-none bg-gray-50 font-medium"
+                            className="w-full border border-gray-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-red-500 outline-none bg-gray-50 font-medium text-black"
                         >
                             <option value="">Select a reason...</option>
                             <option value="STOLEN_ITEM">Stolen Item / Property</option>
@@ -49,7 +49,7 @@ export default function FraudReportModal({ isOpen, onClose, onConfirm }: FraudRe
                         <textarea
                             value={evidence}
                             onChange={(e) => setEvidence(e.target.value)}
-                            className="w-full border border-gray-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                            className="w-full border border-gray-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-red-500 outline-none transition-all text-black bg-white"
                             placeholder="Please provide specific details or links to evidence (e.g. photos, chat logs)..."
                             rows={5}
                         />
@@ -65,7 +65,7 @@ export default function FraudReportModal({ isOpen, onClose, onConfirm }: FraudRe
                 <div className="flex gap-3">
                     <button
                         onClick={onClose}
-                        className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-medium transition-colors"
+                        className="flex-1 px-4 py-3 bg-gray-100 text-black rounded-xl hover:bg-gray-200 font-medium transition-colors"
                     >
                         Cancel
                     </button>
