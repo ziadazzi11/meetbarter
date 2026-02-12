@@ -1,6 +1,6 @@
 # MeetBarter SARL - Simple Agreement for Future Tokens (SAFT)
 
-### BETWEEN
+## BETWEEN
 
 MeetBarter SARL (The "Company"), a Lebanese limited liability company.
 AND

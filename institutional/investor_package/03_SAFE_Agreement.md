@@ -1,6 +1,6 @@
 # MeetBarter SARL - 03: Simple Agreement for Future Equity (SAFE)
 
-### BETWEEN
+## BETWEEN
 
 MeetBarter SARL (The "Company"), a Lebanese limited liability company.
 AND
