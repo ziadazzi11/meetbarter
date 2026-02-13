@@ -54,6 +54,8 @@ async function bootstrap() {
     const deceptionMiddleware = new HeaderDeceptionMiddleware();
     app.use((req, res, next) => deceptionMiddleware.use(req, res, next));
 
-    await app.listen(4000);
+    const port = process.env.PORT || 3001;
+    await app.listen(port);
+    console.log(`Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();
