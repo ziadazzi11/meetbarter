@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
@@ -101,14 +101,22 @@ export class AuthService {
         // We don't have a userId yet, so we might pass a temporary identifier or IP if available in context.
         // For now, we log AFTER creation which is safer for ID tracking.
 
-        const user = await this.prisma.user.create({
-            data: {
-                email: data.email,
-                passwordHash: hashedPassword,
-                fullName: data.fullName,
-                country: data.country || 'Lebanon'
+        let user;
+        try {
+            user = await this.prisma.user.create({
+                data: {
+                    email: data.email,
+                    passwordHash: hashedPassword,
+                    fullName: data.fullName,
+                    country: data.country || 'Lebanon'
+                }
+            });
+        } catch (error) {
+            if (error.code === 'P2002') {
+                throw new ConflictException('Email already exists');
             }
-        });
+            throw error;
+        }
 
         // 🛡️ Security Hook: Signup Event
         await this.security.assessAndLog(user.id, {
