@@ -35,15 +35,7 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
-<<<<<<< HEAD
   const userId = user?.id;
-
-=======
-  const userId = user?.id; // Legacy compat
-
-  // const [userId, setUserId] = useState<string | null>(null); // Removed local state
-  // const [user, setUser] = useState<User | null>(null); // Removed local state
->>>>>>> 1537f909c097c9c83a961b9cf809c1df6c73e1ad
   const [categories, setCategories] = useState<Category[]>([]);
   const [trades, setTrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,18 +63,10 @@ export default function Home() {
   });
 
   useEffect(() => {
-<<<<<<< HEAD
     if (userId) {
       fetchActiveTrades(userId);
     }
     setLoading(false);
-=======
-    // Auth handled by Context now
-    if (userId) {
-      fetchActiveTrades(userId);
-    }
-    setLoading(false); // Page loading done, auth loading handled separately
->>>>>>> 1537f909c097c9c83a961b9cf809c1df6c73e1ad
 
     fetch(`${API_BASE_URL}/listings/categories`)
       .then(res => res.json())
@@ -98,7 +82,6 @@ export default function Home() {
     return () => window.removeEventListener('openBulkUpload', handleBulkOpen);
   }, [userId]);
 
-<<<<<<< HEAD
   useEffect(() => {
     // Show Registration CTA on load for new unauthenticated users
     if (!authLoading && !user) {
@@ -112,10 +95,6 @@ export default function Home() {
       }
     }
   }, [user, authLoading]);
-=======
-
-
->>>>>>> 1537f909c097c9c83a961b9cf809c1df6c73e1ad
 
   useEffect(() => {
     let url = `${API_BASE_URL}/listings`;
@@ -154,34 +133,18 @@ export default function Home() {
   };
 
   const handlePostOffer = () => {
-<<<<<<< HEAD
     if (!user) {
       setIsRegistrationCTAOpen(true);
       return;
     }
-=======
-    if (!user) return window.location.href = '/signup';
-    setNewListing({ ...newListing, listingType: 'OFFER', title: '', description: '', images: [] });
->>>>>>> 1537f909c097c9c83a961b9cf809c1df6c73e1ad
     setIsModalOpen(true);
   };
 
   const handlePostRequest = () => {
-<<<<<<< HEAD
     if (!user) {
       setIsRegistrationCTAOpen(true);
       return;
     }
-=======
-    if (!user) return window.location.href = '/signup';
-    setNewListing({
-      ...newListing,
-      title: searchQuery || '',
-      location: searchLocation || '',
-      country: selectedCountry || 'Lebanon',
-      description: `I am looking for: ${searchQuery || 'an item'}. Please contact me if you have one available to trade.`
-    });
->>>>>>> 1537f909c097c9c83a961b9cf809c1df6c73e1ad
     setIsModalOpen(true);
   };
 

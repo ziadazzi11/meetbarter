@@ -5,10 +5,7 @@ import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/config/api";
 import { adsClient } from "@/lib/ads-client";
 import UpgradeModal from "@/components/UpgradeModal";
-<<<<<<< HEAD
 import ImageUpload from "@/components/ImageUpload";
-=======
->>>>>>> 1537f909c097c9c83a961b9cf809c1df6c73e1ad
 import { useAuth } from "@/context/AuthContext";
 
 export default function CreateListing() {
@@ -49,16 +46,11 @@ export default function CreateListing() {
     const [listingLimit, setListingLimit] = useState(5);
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
-<<<<<<< HEAD
     useEffect(() => {
         if (!loading && !user) {
             router.push('/signup');
         }
     }, [user, loading, router]);
-=======
-    // DEMO USER ID (From seed)
-
->>>>>>> 1537f909c097c9c83a961b9cf809c1df6c73e1ad
 
     useEffect(() => {
         fetch(`${API_BASE_URL}/categories`)
@@ -117,11 +109,7 @@ export default function CreateListing() {
             images: JSON.stringify(images),
             location,
             country,
-<<<<<<< HEAD
             sellerId: user?.id,
-=======
-            sellerId: user.id,
->>>>>>> 1537f909c097c9c83a961b9cf809c1df6c73e1ad
             expiresAt,
             priceCash: priceCash ? parseFloat(priceCash) : null,
             priceCurrency
