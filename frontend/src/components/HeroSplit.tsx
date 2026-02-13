@@ -20,13 +20,7 @@ export default function HeroSplit({ onPost, onRequest, isLoggedIn, listings = []
 
             {/* Left Content - 55% */}
             <div className="w-full md:w-[55%] flex flex-col justify-center px-6 md:px-20 py-16 z-10 relative">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/5 border border-indigo-500/10 w-fit mb-6 backdrop-blur-md">
-                    <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Live Barter Network • Lebanon</span>
-                </div>
+
 
                 <h1 className="text-5xl md:text-7xl font-black text-[var(--text-main)] uppercase tracking-tighter leading-[0.9] mb-6">
                     TRADE <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-emerald-500">EVERYTHING</span> <br />
