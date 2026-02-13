@@ -1,11 +1,5 @@
 import { plainToInstance } from 'class-transformer';
-import { IsEnum, IsNotEmpty, IsOptional, IsString, MinLength, validateSync } from 'class-validator';
-
-enum Environment {
-    Development = 'development',
-    Production = 'production',
-    Test = 'test',
-}
+import { IsNotEmpty, IsOptional, IsString, validateSync } from 'class-validator';
 
 class EnvironmentVariables {
     @IsOptional()
