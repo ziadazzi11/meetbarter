@@ -49,5 +49,5 @@ EXPOSE 3001
 # Start the application
 # Note: In production we use prisma migrate deploy, but for local dev with docker-compose
 # we might want to use db push if iterating fast, or migrate deploy for strictness.
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
 
