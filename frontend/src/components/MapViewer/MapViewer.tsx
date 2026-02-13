@@ -21,13 +21,14 @@ interface Listing {
 
 interface MapViewerProps {
     listings: Listing[];
+    className?: string;
 }
 
-export default function MapViewer({ listings }: MapViewerProps) {
+export default function MapViewer({ listings, className = "" }: MapViewerProps) {
     const mapListings = useMemo(() => listings, [listings]);
 
     return (
-        <div className="w-full h-[500px] rounded-xl overflow-hidden shadow-lg border-2 border-white">
+        <div className={`w-full h-[500px] rounded-xl overflow-hidden shadow-lg border-2 border-white ${className}`}>
             <MapLogic listings={mapListings} />
         </div>
     );

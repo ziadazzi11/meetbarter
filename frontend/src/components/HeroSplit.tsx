@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import MapViewer from "./MapViewer/MapViewer";
 
 interface HeroSplitProps {
     onPost: () => void;
     onRequest: () => void;
     isLoggedIn: boolean;
+    listings?: any[];
 }
 
-export default function HeroSplit({ onPost, onRequest, isLoggedIn }: HeroSplitProps) {
+export default function HeroSplit({ onPost, onRequest, isLoggedIn, listings = [] }: HeroSplitProps) {
     return (
         <section className="relative w-full min-h-[550px] flex flex-col md:flex-row bg-transparent overflow-hidden border-b border-[var(--glass-border)]">
             {/* Ambient Background Glows - Using meshes from globals.css + local accents */}
@@ -40,8 +42,8 @@ export default function HeroSplit({ onPost, onRequest, isLoggedIn }: HeroSplitPr
                     <button
                         onClick={onPost}
                         className={`group relative px-8 py-5 font-black uppercase tracking-widest text-sm rounded-2xl transition-all duration-500 shadow-xl active:scale-95 overflow-hidden flex items-center justify-center min-w-[220px] ${isLoggedIn
-                                ? "bg-[var(--text-main)] text-[var(--bg-app)] hover:bg-indigo-600 hover:text-white hover:shadow-indigo-500/40"
-                                : "bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-indigo-500/40"
+                            ? "bg-[var(--text-main)] text-[var(--bg-app)] hover:bg-indigo-600 hover:text-white hover:shadow-indigo-500/40"
+                            : "bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-indigo-500/40"
                             }`}
                     >
                         <span className="relative z-10">{isLoggedIn ? "Initiate Barter" : "Join Network"}</span>
@@ -58,30 +60,25 @@ export default function HeroSplit({ onPost, onRequest, isLoggedIn }: HeroSplitPr
             </div>
 
             {/* Right Image/Visual - 45% */}
-            <div className="w-full md:w-[45%] relative min-h-[400px] md:h-auto overflow-hidden group">
+            <div className="w-full md:w-[45%] relative min-h-[500px] md:h-auto overflow-hidden group flex items-center justify-center p-8">
                 {/* Geometrical Decorative Shapes */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] pointer-events-none">
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] border border-white/5 rounded-full animate-[spin_20s_linear_infinite]"></div>
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] border border-white/5 rounded-full animate-[spin_35s_linear_infinite_reverse]"></div>
                 </div>
 
-                <div className="absolute inset-0 flex items-center justify-center p-12">
-                    <div className="relative w-full h-full max-w-lg animate-float-premium">
-                        <div className="absolute inset-0 bg-indigo-500/20 blur-[100px] rounded-full group-hover:bg-indigo-500/30 transition-colors duration-700"></div>
-                        <Image
-                            src="/assets/xtribe_analysis_1770581509194.webp"
-                            alt="Premium Barter Experience"
-                            fill
-                            className="object-contain drop-shadow-[0_0_50px_rgba(79,70,229,0.3)] group-hover:drop-shadow-[0_0_80px_rgba(79,70,229,0.5)] transition-all duration-700 brightness-110"
-                            priority
-                        />
-                    </div>
+                <div className="relative w-full h-full max-h-[600px] z-10 animate-float-premium perspective-1000">
+                    <div className="absolute inset-0 bg-indigo-500/10 blur-[80px] rounded-full group-hover:bg-indigo-500/20 transition-colors duration-700"></div>
+                    <MapViewer
+                        listings={listings || []}
+                        className="h-full min-h-[450px] border-none shadow-2xl shadow-indigo-500/20 !rounded-[2.5rem]"
+                    />
                 </div>
 
                 {/* Subtext info */}
-                <div className="absolute bottom-8 right-12 text-right hidden lg:block">
-                    <div className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-muted)] opacity-50 mb-1">Architecture v4.2</div>
-                    <div className="text-xs font-medium text-[var(--text-muted)] opacity-20">ANTI-RECONNAISSANCE PROTECTED</div>
+                <div className="absolute bottom-8 right-12 text-right hidden lg:block pointer-events-none">
+                    <div className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-muted)] opacity-50 mb-1">Live Map v2.0</div>
+                    <div className="text-xs font-medium text-[var(--text-muted)] opacity-20">REAL-TIME ACTIVITY</div>
                 </div>
             </div>
         </section>

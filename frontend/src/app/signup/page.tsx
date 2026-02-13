@@ -1,5 +1,8 @@
 'use client';
 
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from "@/config/api";
 
 export default function SignupPage() {
@@ -27,26 +30,10 @@ export default function SignupPage() {
         e.preventDefault();
         setError('');
 
-        // Validation
-        if (!formData.email || !formData.password || !formData.fullName) {
-            setError('Please fill in all required fields');
-            return;
-        }
-
-        if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
-            return;
-        }
-
-        if (formData.password.length < 8) {
-            setError('Password must be at least 8 characters');
-            return;
-        }
-
-        if (!formData.termsAccepted) {
-            setError('You must accept the Terms of Service to create an account');
-            return;
-        }
+        if (!formData.email || !formData.password || !formData.fullName) return setError('All fields are required');
+        if (formData.password !== formData.confirmPassword) return setError('Passwords do not match');
+        if (formData.password.length < 8) return setError('Password must be at least 8 characters');
+        if (!formData.termsAccepted) return setError('Please accept the Terms of Service');
 
         setLoading(true);
 
@@ -63,14 +50,11 @@ export default function SignupPage() {
             });
 
             if (response.ok) {
-                // Auto-login after successful signup
+                // Auto-login
                 const loginRes = await fetch(`${API_BASE_URL}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: formData.email,
-                        password: formData.password,
-                    }),
+                    body: JSON.stringify({ email: formData.email, password: formData.password }),
                 });
 
                 if (loginRes.ok) {
@@ -84,151 +68,134 @@ export default function SignupPage() {
                 }
             } else {
                 const data = await response.json();
-                setError(data.message || 'Signup failed. Please try again.');
+                setError(data.message || 'Registration failed');
             }
         } catch (err) {
-            setError('An error occurred. Please try again.');
-            console.error('Signup error:', err);
+            setError('Connection error. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Join MeetBarter</h1>
-                    <p className="text-gray-600">Start bartering with trust</p>
+        <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden bg-[#050505]">
+            {/* Animated Backgrounds */}
+            <div className="absolute top-[-20%] right-[30%] w-[60%] h-[60%] bg-indigo-600/15 rounded-full blur-[130px] animate-pulse"></div>
+            <div className="absolute bottom-[-20%] left-[20%] w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-[100px] animate-pulse delay-500"></div>
+
+            <div className="relative w-full max-w-lg bg-[#0a0a0b]/80 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 md:p-12 shadow-2xl overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-indigo-500 to-purple-500"></div>
+
+                <div className="text-center mb-10">
+                    <h1 className="text-4xl font-black text-white tracking-tight mb-2">Join the Network</h1>
+                    <p className="text-gray-400">Establish your secure validation profile</p>
                 </div>
 
                 {error && (
-                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                    <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm font-medium text-center">
                         {error}
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Full Name <span className="text-red-500">*</span>
-                        </label>
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Full Identity</label>
                         <input
                             type="text"
                             name="fullName"
                             value={formData.fullName}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Your full name"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                            placeholder="John Doe"
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Email <span className="text-red-500">*</span>
-                        </label>
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Email Address</label>
                         <input
                             type="email"
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="you@example.com"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                            placeholder="name@example.com"
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Password <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="At least 8 characters"
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Password</label>
+                            <input
+                                type="password"
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                                placeholder="••••••••"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Confirm</label>
+                            <input
+                                type="password"
+                                name="confirmPassword"
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                                placeholder="••••••••"
+                            />
+                        </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Confirm Password <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="password"
-                            name="confirmPassword"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Re-enter password"
-                        />
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Country</label>
+                        <div className="relative">
+                            <select
+                                name="country"
+                                value={formData.country}
+                                onChange={handleChange}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white appearance-none focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                            >
+                                <option value="Lebanon" className="bg-[#0a0a0b]">Lebanon</option>
+                                <option value="USA" className="bg-[#0a0a0b]">USA</option>
+                                <option value="UAE" className="bg-[#0a0a0b]">UAE</option>
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">▼</div>
+                        </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                        <select
-                            name="country"
-                            value={formData.country}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            aria-label="Select your country"
-                        >
-                            <option value="Lebanon">Lebanon</option>
-                            <option value="USA">United States</option>
-                            <option value="Canada">Canada</option>
-                            <option value="UAE">United Arab Emirates</option>
-                            <option value="France">France</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-
-                    {/* Terms of Service Checkbox */}
-                    <div className="pt-4 border-t border-gray-200">
-                        <label className="flex items-start gap-3 cursor-pointer">
+                    <label className="flex items-center gap-3 p-2 cursor-pointer group">
+                        <div className="relative flex items-center">
                             <input
                                 type="checkbox"
                                 name="termsAccepted"
                                 checked={formData.termsAccepted}
                                 onChange={handleChange}
-                                className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                                className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-white/20 bg-white/5 checked:bg-emerald-500 checked:border-emerald-500 transition-all"
                             />
-                            <span className="text-sm text-gray-700">
-                                I agree to the{' '}
-                                <Link
-                                    href="/terms"
-                                    target="_blank"
-                                    className="text-blue-600 hover:underline font-medium"
-                                >
-                                    Terms of Service
-                                </Link>{' '}
-                                and{' '}
-                                <Link
-                                    href="/privacy"
-                                    target="_blank"
-                                    className="text-blue-600 hover:underline font-medium"
-                                >
-                                    Privacy Policy
-                                </Link>
-                                <span className="text-red-500">*</span>
-                            </span>
-                        </label>
-                    </div>
+                            <svg className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none opacity-0 peer-checked:opacity-100 text-white transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        </div>
+                        <span className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
+                            I accept the <span className="text-emerald-400 font-medium hover:underline">Protocol Terms</span>
+                        </span>
+                    </label>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
+                        className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/20 transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
                     >
-                        {loading ? 'Creating Account...' : 'Create Account'}
+                        {loading ? 'Validating Identity...' : 'Initiate Membership'}
                     </button>
                 </form>
 
-                <div className="mt-6 text-center text-sm text-gray-600">
-                    Already have an account?{' '}
-                    <Link href="/login" className="text-blue-600 hover:underline font-medium">
-                        Log in
-                    </Link>
+                <div className="mt-8 text-center">
+                    <p className="text-gray-500 text-sm">
+                        Existing Member?{' '}
+                        <Link href="/login" className="text-white font-bold hover:text-emerald-400 transition-colors ml-1">
+                            Access Vault
+                        </Link>
+                    </p>
                 </div>
             </div>
         </div>

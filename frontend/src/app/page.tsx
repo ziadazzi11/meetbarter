@@ -4,6 +4,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { API_BASE_URL } from "@/config/api";
 import { ListingCard } from "@/components/Listings/ListingCard";
 import CreateListingModal from "@/components/Listings/CreateListingModal";
@@ -31,7 +32,7 @@ interface User {
   verificationLevel: number;
 }
 
-import { useAuth } from "@/context/AuthContext";
+
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -134,7 +135,7 @@ export default function Home() {
 
   const handlePostOffer = () => {
     if (!user) {
-      setIsRegistrationCTAOpen(true);
+      window.location.href = '/signup';
       return;
     }
     setIsModalOpen(true);
@@ -142,7 +143,7 @@ export default function Home() {
 
   const handlePostRequest = () => {
     if (!user) {
-      setIsRegistrationCTAOpen(true);
+      window.location.href = '/signup';
       return;
     }
     setIsModalOpen(true);
@@ -157,6 +158,7 @@ export default function Home() {
         }}
         onPostOffer={handlePostOffer}
         onPostRequest={handlePostRequest}
+        listings={listings}
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
@@ -221,24 +223,6 @@ export default function Home() {
               <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-600/30">
                 <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
               </div>
-              <h2 className="text-3xl font-black text-[var(--text-main)] mb-4 uppercase">Members Only Marketplace</h2>
-              <p className="text-lg text-[var(--text-muted)] max-w-xl mx-auto mb-8">
-                The MeetBarter Marketplace is exclusive to verifiable members. Join our trust-based community to browse listings, trade assets, and access our secure ecosystem.
-              </p>
-              <button
-                onClick={() => setIsRegistrationCTAOpen(true)}
-                className="inline-block px-10 py-4 bg-indigo-600 text-white font-black uppercase tracking-widest rounded-xl hover:bg-indigo-700 hover:scale-105 transition-all shadow-xl shadow-indigo-600/30"
-              >
-                Join to Explore
-              </button>
-            </div>
-          )}
-
-          {!user ? (
-            <div className="glass-card rounded-3xl p-12 text-center border border-indigo-500/30 bg-gradient-to-b from-transparent to-indigo-500/5">
-              <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-600/30">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-              </div>
               <h2 className="text-3xl font-black text-[var(--text-main)] mb-4">Members Only Marketplace</h2>
               <p className="text-lg text-[var(--text-muted)] max-w-xl mx-auto mb-8">
                 The MeetBarter Marketplace is exclusive to verifiable members. Join our trust-based community to browse listings, trade assets, and access our secure ecosystem.
@@ -263,9 +247,9 @@ export default function Home() {
         {/* ALL CATEGORIES */}
         <section>
           <h2 className="text-2xl font-bold text-[var(--text-main)] mb-6 uppercase">All Categories</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {categories.slice(2).map((cat: Category) => (
-              <div key={cat.id} className="p-4 bg-[var(--bg-card)] rounded-xl border border-[var(--border-main)] hover:border-indigo-300 hover:shadow-md transition-all text-center">
+              <div key={cat.id} className="p-8 bg-[var(--bg-card)] rounded-2xl border border-[var(--border-main)] hover:border-indigo-500/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-center group cursor-pointer">
                 <h3 className="font-bold text-[var(--text-main)] mb-1">{cat.name}</h3>
                 <p className="text-xs text-[var(--text-muted)] mb-2 line-clamp-2">{cat.description}</p>
                 <div className="text-xs font-semibold text-indigo-600">
