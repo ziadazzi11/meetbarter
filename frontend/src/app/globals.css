@@ -152,3 +152,15 @@ button {
   text-align: center !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Force Dark Mode Autofill */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s;
+  box-shadow: inset 0 0 20px 20px #0a0a0b00 !important; /* Transparent shadow */
+  caret-color: white;
+}

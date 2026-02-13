@@ -67,8 +67,13 @@ export default function SignupPage() {
                     router.push('/login?signup=success');
                 }
             } else {
+            } else {
                 const data = await response.json();
-                setError(data.message || 'Registration failed');
+                // Handle NestJS array of errors
+                const errorMessage = Array.isArray(data.message)
+                    ? data.message.join(', ')
+                    : (data.message || 'Registration failed. Please check your details.');
+                setError(errorMessage);
             }
         } catch (err) {
             setError('Connection error. Please try again.');
