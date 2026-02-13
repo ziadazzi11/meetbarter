@@ -76,6 +76,7 @@ export default function SignupPage() {
                 setError(errorMessage);
             }
         } catch (err) {
+            console.error('Signup Error:', err);
             setError('Connection error. Please try again.');
         } finally {
             setLoading(false);
