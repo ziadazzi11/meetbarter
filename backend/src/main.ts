@@ -32,7 +32,14 @@ async function bootstrap() {
     // 🛡️ Security: Strict CORS
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     app.enableCors({
-        origin: [frontendUrl, 'https://meetbarter.com', 'https://www.meetbarter.com', 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
+        origin: (origin, callback) => {
+            const allowedOrigins = [frontendUrl, 'https://meetbarter.com', 'https://www.meetbarter.com', 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'];
+            if (!origin || allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         credentials: true,
     });
