@@ -2,7 +2,7 @@ import { Controller, Post, Body, UnauthorizedException, HttpCode, HttpStatus, Us
 import { AuthService } from './auth.service';
 import { SystemStateService } from '../system-state/system-state.service';
 import { MfaService } from './mfa.service';
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
 class LoginDto {
