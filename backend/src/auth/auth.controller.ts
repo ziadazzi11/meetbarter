@@ -23,6 +23,10 @@ class RegisterDto {
 
     @IsString()
     fullName: string;
+
+    @IsString()
+    @IsOptional()
+    country?: string;
 }
 
 @Controller('auth')

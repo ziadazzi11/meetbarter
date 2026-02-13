@@ -152,6 +152,8 @@ export default function SignupPage() {
                         <div className="relative">
                             <select
                                 name="country"
+                                id="country"
+                                aria-label="Select Country"
                                 value={formData.country}
                                 onChange={handleChange}
                                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white appearance-none focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
