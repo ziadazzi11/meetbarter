@@ -32,7 +32,7 @@ async function bootstrap() {
     // 🛡️ Security: Strict CORS
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     app.enableCors({
-        origin: [frontendUrl, 'https://meetbarter.com', 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
+        origin: [frontendUrl, 'https://meetbarter.com', 'https://www.meetbarter.com', 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         credentials: true,
     });
