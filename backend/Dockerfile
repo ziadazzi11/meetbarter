@@ -16,8 +16,11 @@ RUN npm ci
 # Copy source
 COPY . .
 
+# Generate Prisma Client before build
+RUN npx prisma generate
+
 # Build the application
-RUN npm run build
+RUN npm run build && ls -la && ls -la dist
 
 # Production stage
 FROM node:20-slim
