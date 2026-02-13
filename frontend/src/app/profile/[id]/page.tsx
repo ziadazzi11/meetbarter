@@ -99,27 +99,35 @@ export default function ProfilePage() {
                 <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
                     <div className="flex items-start justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
                                 {profile.fullName}
+                                {profile.ambassadorStatus === 'ACTIVE' && (
+                                    <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clipRule="evenodd" />
+                                        </svg>
+                                        AMBASSADOR
+                                    </span>
+                                )}
                             </h1>
-                            <p className="text-gray-600 flex items-center gap-2">
+                            <p className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
                                 <span>📍</span>
                                 {profile.country}
                             </p>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
                                 Member since {new Date(profile.createdAt).toLocaleDateString()}
                             </p>
 
                             {user?.id === userId && (
                                 <div className="mt-3">
                                     {profile.phoneVerified ? (
-                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800">
                                             ✓ Phone Verified
                                         </span>
                                     ) : (
                                         <button
                                             onClick={() => setIsPhoneModalOpen(true)}
-                                            className="text-sm text-indigo-600 hover:text-indigo-800 font-semibold underline decoration-dotted"
+                                            className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-semibold underline decoration-dotted"
                                         >
                                             Verify Phone Number
                                         </button>
@@ -140,11 +148,14 @@ export default function ProfilePage() {
 
                         {/* Trust Score Badge */}
                         <div className="text-center">
-                            <div className={`text-5xl font-bold ${getTrustColor(profile.globalTrustScore)}`}>
+                            <div className={`text-5xl font-bold ${getTrustColor(profile.globalTrustScore)} drop-shadow-sm`}>
                                 {profile.globalTrustScore.toFixed(1)}
                             </div>
-                            <p className="text-sm text-gray-600 mt-1">{getTrustLabel(profile.globalTrustScore)}</p>
-                            <p className="text-xs text-gray-500">Trust Score</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 font-medium">{getTrustLabel(profile.globalTrustScore)}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-500 uppercase tracking-wider mt-1">Trust Score</p>
+                            <p className="text-[10px] text-gray-400 dark:text-gray-600 mt-1 max-w-[120px] mx-auto leading-tight">
+                                based on {profile.completedTrades} ethical trades
+                            </p>
                         </div>
                     </div>
 

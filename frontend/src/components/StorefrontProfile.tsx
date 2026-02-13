@@ -33,7 +33,7 @@ interface StorefrontProfileProps {
 
 export default function StorefrontProfile({ profile, listings }: StorefrontProfileProps) {
     return (
-        <div className="min-h-screen bg-gray-50 pb-12">
+        <div className="min-h-screen bg-gray-50 dark:bg-[#050505] pb-12 transition-colors duration-300">
             {/* 1. Full Width Banner */}
             <div className="relative w-full h-64 md:h-80 bg-gray-900 overflow-hidden">
                 {profile.bannerUrl ? (
@@ -52,11 +52,11 @@ export default function StorefrontProfile({ profile, listings }: StorefrontProfi
 
             {/* 2. Store Header Info (Overlapping) */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 relative z-10">
-                <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-6 md:p-8 flex flex-col md:flex-row gap-8 items-start">
+                <div className="bg-white dark:bg-[#0a0a0b] dark:border-white/10 rounded-xl shadow-xl border border-gray-100 p-6 md:p-8 flex flex-col md:flex-row gap-8 items-start transition-colors duration-300">
 
                     {/* Logo/Avatar */}
                     <div className="flex-shrink-0">
-                        <div className="w-32 h-32 md:w-40 md:h-40 rounded-xl bg-white p-1 shadow-md border border-gray-100 overflow-hidden relative">
+                        <div className="w-32 h-32 md:w-40 md:h-40 rounded-xl bg-white dark:bg-[#1a1a1c] p-1 shadow-md border border-gray-100 dark:border-white/5 overflow-hidden relative">
                             {profile.profilePicture ? (
                                 <img src={profile.profilePicture} alt={profile.fullName} className="w-full h-full object-cover rounded-lg" />
                             ) : (
@@ -70,7 +70,7 @@ export default function StorefrontProfile({ profile, listings }: StorefrontProfi
                     {/* Details */}
                     <div className="flex-grow pt-2">
                         <div className="flex items-center gap-3 mb-2">
-                            <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tight">{profile.fullName}</h1>
+                            <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{profile.fullName}</h1>
                             <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
                                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                                 AUTHORIZED PARTNER
@@ -82,7 +82,7 @@ export default function StorefrontProfile({ profile, listings }: StorefrontProfi
                             )}
                         </div>
 
-                        <p className="text-gray-500 flex items-center gap-2 mb-4 text-sm">
+                        <p className="text-gray-500 dark:text-gray-400 flex items-center gap-2 mb-4 text-sm">
                             <span>📍 {profile.country}</span>
                             <span>•</span>
                             <span>📅 Member since {new Date(profile.createdAt).getFullYear()}</span>
@@ -90,18 +90,18 @@ export default function StorefrontProfile({ profile, listings }: StorefrontProfi
 
                         <div className="flex flex-wrap gap-4 mt-4">
                             <div className="flex flex-col">
-                                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Trust Score</span>
-                                <span className="text-2xl font-bold text-gray-900">{profile.globalTrustScore.toFixed(1)} <span className="text-sm font-normal text-green-600">Excellent</span></span>
+                                <span className="text-xs text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider">Trust Score</span>
+                                <span className="text-2xl font-bold text-gray-900 dark:text-white">{profile.globalTrustScore.toFixed(1)} <span className="text-sm font-normal text-green-600 dark:text-green-500">Excellent</span></span>
                             </div>
-                            <div className="w-px h-10 bg-gray-200"></div>
+                            <div className="w-px h-10 bg-gray-200 dark:bg-white/10"></div>
                             <div className="flex flex-col">
-                                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Completed Trades</span>
-                                <span className="text-2xl font-bold text-gray-900">{profile.completedTrades}</span>
+                                <span className="text-xs text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider">Completed Trades</span>
+                                <span className="text-2xl font-bold text-gray-900 dark:text-white">{profile.completedTrades}</span>
                             </div>
-                            <div className="w-px h-10 bg-gray-200"></div>
+                            <div className="w-px h-10 bg-gray-200 dark:bg-white/10"></div>
                             <div className="flex flex-col">
-                                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Active Listings</span>
-                                <span className="text-2xl font-bold text-gray-900">{profile.activeListing}</span>
+                                <span className="text-xs text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider">Active Listings</span>
+                                <span className="text-2xl font-bold text-gray-900 dark:text-white">{profile.activeListing}</span>
                             </div>
                         </div>
                     </div>
