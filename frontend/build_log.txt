@@ -1,0 +1,23 @@
+
+> frontend@0.1.0 build
+> next build
+
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 52s
+  Running TypeScript ...
+Failed to compile.
+
+./src/app/profile/[id]/page.tsx:104:42
+Type error: Property 'ambassadorStatus' does not exist on type 'UserProfile'.
+
+[0m [90m 102 |[39m                             [33m<[39m[33mh1[39m className[33m=[39m[32m"text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3"[39m[33m>[39m
+ [90m 103 |[39m                                 {profile[33m.[39mfullName}
+[31m[1m>[22m[39m[90m 104 |[39m                                 {profile[33m.[39mambassadorStatus [33m===[39m [32m'ACTIVE'[39m [33m&&[39m (
+ [90m     |[39m                                          [31m[1m^[22m[39m
+ [90m 105 |[39m                                     [33m<[39m[33mspan[39m className[33m=[39m[32m"bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1"[39m[33m>[39m
+ [90m 106 |[39m                                         [33m<[39m[33msvg[39m xmlns[33m=[39m[32m"http://www.w3.org/2000/svg"[39m className[33m=[39m[32m"h-3 w-3"[39m viewBox[33m=[39m[32m"0 0 20 20"[39m fill[33m=[39m[32m"currentColor"[39m[33m>[39m
+ [90m 107 |[39m                                             [33m<[39m[33mpath[39m fillRule[33m=[39m[32m"evenodd"[39m d[33m=[39m[32m"M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z"[39m clipRule[33m=[39m[32m"evenodd"[39m [33m/[39m[33m>[39m[0m
+Next.js build worker exited with code: 1 and signal: null

@@ -20,6 +20,7 @@ interface UserProfile {
     verificationLevel: number;
     bannerUrl?: string;
     profilePicture?: string;
+    ambassadorStatus?: string;
 }
 
 import { API_BASE_URL } from '@/config/api';

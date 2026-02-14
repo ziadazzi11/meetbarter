@@ -3,6 +3,7 @@
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { API_BASE_URL } from "@/config/api";
+import SocialLoginButtons from '@/components/SocialLoginButtons';
 
 function LoginForm() {
     const [formData, setFormData] = useState({
@@ -67,6 +68,22 @@ function LoginForm() {
                     {error}
                 </div>
             )}
+
+            <div className="space-y-6 mb-6">
+                <SocialLoginButtons onLoginSuccess={(userId) => {
+                    // Auto-redirect handled by component or we can force it here
+                    window.location.href = '/dashboard';
+                }} />
+
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-700"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-[#0a0a0b] text-gray-400">Or continue with email</span>
+                    </div>
+                </div>
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
