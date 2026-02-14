@@ -105,6 +105,7 @@ export default function SignupPage() {
                 )}
 
                 <div className="space-y-6">
+                    <div className="text-center text-gray-400 text-sm mb-2">Social Login:</div>
                     <SocialLoginButtons onLoginSuccess={(userId) => {
                         // For mock login, we might not get a token, but let's assume valid session for now
                         // or redirect to login to force token generation if needed.

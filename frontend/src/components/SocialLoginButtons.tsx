@@ -10,6 +10,7 @@ interface SocialLoginButtonsProps {
 
 export default function SocialLoginButtons({ onLoginSuccess }: SocialLoginButtonsProps) {
     const [loading, setLoading] = useState(false);
+    console.log("SocialLoginButtons: Rendering");
 
     const handleSocialLogin = async (provider: string) => {
         // 🛡️ DEV MODE: Prompt for email to allow testing different users
