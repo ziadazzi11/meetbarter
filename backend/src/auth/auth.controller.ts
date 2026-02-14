@@ -1,9 +1,11 @@
-import { Controller, Post, Body, UnauthorizedException, HttpCode, HttpStatus, UseGuards, Request, ServiceUnavailableException } from '@nestjs/common';
+import { Controller, Post, Get, Body, UnauthorizedException, HttpCode, HttpStatus, UseGuards, Request, Res, ServiceUnavailableException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SystemStateService } from '../system-state/system-state.service';
 import { MfaService } from './mfa.service';
 import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { FacebookAuthGuard } from './guards/facebook-auth.guard';
 
 class LoginDto {
     @IsEmail()
@@ -36,6 +38,31 @@ export class AuthController {
         private mfaService: MfaService,
         private systemState: SystemStateService,
     ) { }
+
+    @Get('google')
+    @UseGuards(GoogleAuthGuard)
+    async googleAuth(@Request() req: any) { }
+
+    @Get('google/callback')
+    @UseGuards(GoogleAuthGuard)
+    async googleAuthRedirect(@Request() req: any, @Res() res: any) {
+        const { access_token, user } = await this.authService.login(req.user);
+        // Redirect to frontend with token
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+        return res.redirect(`${frontendUrl}/login?token=${access_token}&uid=${user.id}`);
+    }
+
+    @Get('facebook')
+    @UseGuards(FacebookAuthGuard)
+    async facebookAuth(@Request() req: any) { }
+
+    @Get('facebook/callback')
+    @UseGuards(FacebookAuthGuard)
+    async facebookAuthRedirect(@Request() req: any, @Res() res: any) {
+        const { access_token, user } = await this.authService.login(req.user);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+        return res.redirect(`${frontendUrl}/login?token=${access_token}&uid=${user.id}`);
+    }
 
     @HttpCode(HttpStatus.OK)
     @Post('login')

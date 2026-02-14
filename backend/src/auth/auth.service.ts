@@ -7,6 +7,8 @@ import { AnomalyDetectionService } from '../security/anomaly-detection.service';
 import { SignalIngestionService } from '../ads/signal-ingestion.service';
 import * as crypto from 'crypto';
 
+import { UsersService } from '../users/users.service';
+
 @Injectable()
 export class AuthService {
     constructor(
@@ -14,8 +16,14 @@ export class AuthService {
         private jwtService: JwtService,
         private security: SecurityService,
         private anomalyDetection: AnomalyDetectionService,
-        private ads: SignalIngestionService, // Replaces AutomationService
+        private ads: SignalIngestionService,
+        private usersService: UsersService,
     ) { }
+
+    async validateOAuthLogin(profile: { email: string; name: string; provider: string; photoUrl?: string }) {
+        // Delegate to UsersService to Find-or-Create user
+        return this.usersService.socialLogin(profile);
+    }
 
     async validateUser(email: string, pass: string): Promise<any> {
         const user = await this.prisma.user.findUnique({ where: { email } });

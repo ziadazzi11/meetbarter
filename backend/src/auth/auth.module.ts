@@ -11,6 +11,9 @@ import { SecurityModule } from '../security/security.module';
 import { MfaService } from './mfa.service';
 import { OtpService } from './otp.service';
 
+import { GoogleStrategy } from './strategies/google.strategy';
+import { FacebookStrategy } from './strategies/facebook.strategy';
+
 @Module({
     imports: [
         PrismaModule,
@@ -22,7 +25,7 @@ import { OtpService } from './otp.service';
         }),
     ],
     controllers: [AuthController],
-    providers: [AuthService, JwtStrategy, MfaService, OtpService],
+    providers: [AuthService, JwtStrategy, MfaService, OtpService, GoogleStrategy, FacebookStrategy],
     exports: [AuthService, JwtModule, MfaService, OtpService],
 })
 export class AuthModule { }
