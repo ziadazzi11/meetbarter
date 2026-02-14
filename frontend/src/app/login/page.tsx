@@ -1,17 +1,33 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { API_BASE_URL } from "@/config/api";
 import SocialLoginButtons from '@/components/SocialLoginButtons';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 function LoginForm() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const token = searchParams.get('token');
+        const uid = searchParams.get('uid');
+
+        if (token && uid) {
+            localStorage.setItem('meetbarter_token', token);
+            localStorage.setItem('meetbarter_uid', uid);
+            // We might want to fetch user details using the token if not provided
+            // For now, redirect to dashboard
+            window.location.href = '/dashboard';
+        }
+    }, [searchParams]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({
@@ -127,9 +143,7 @@ function LoginForm() {
                     </div>
                 </div>
 
-                <SocialLoginButtons onLoginSuccess={(_userId) => {
-                    window.location.href = '/dashboard';
-                }} />
+                <SocialLoginButtons />
             </div>
 
             <div className="mt-8 text-center">

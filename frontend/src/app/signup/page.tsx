@@ -208,9 +208,7 @@ export default function SignupPage() {
                         </div>
                     </div>
 
-                    <SocialLoginButtons onLoginSuccess={(_userId) => {
-                        window.location.href = '/dashboard';
-                    }} />
+                    <SocialLoginButtons />
                 </div>
             </div>
         </div>
