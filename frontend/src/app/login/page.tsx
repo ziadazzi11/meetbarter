@@ -42,7 +42,7 @@ function LoginForm() {
                 const errData = await res.json();
                 setError(errData.message || 'Invalid credentials');
             }
-        } catch (err) {
+        } catch {
             setError('Connection failed. Please try again.');
         } finally {
             setLoading(false);
@@ -69,21 +69,7 @@ function LoginForm() {
                 </div>
             )}
 
-            <div className="space-y-6 mb-6">
-                <SocialLoginButtons onLoginSuccess={(userId) => {
-                    // Auto-redirect handled by component or we can force it here
-                    window.location.href = '/dashboard';
-                }} />
 
-                <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-700"></div>
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-[#0a0a0b] text-gray-400">Or continue with email</span>
-                    </div>
-                </div>
-            </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
@@ -130,6 +116,21 @@ function LoginForm() {
                     ) : 'Access Account'}
                 </button>
             </form>
+
+            <div className="mt-8">
+                <div className="relative mb-6">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-700"></div>
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase tracking-widest">
+                        <span className="px-2 bg-[#0a0a0b] text-gray-500 font-bold">Or enter via</span>
+                    </div>
+                </div>
+
+                <SocialLoginButtons onLoginSuccess={(_userId) => {
+                    window.location.href = '/dashboard';
+                }} />
+            </div>
 
             <div className="mt-8 text-center">
                 <p className="text-gray-500 text-sm">

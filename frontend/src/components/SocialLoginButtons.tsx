@@ -54,44 +54,44 @@ export default function SocialLoginButtons({ onLoginSuccess }: SocialLoginButton
     };
 
     return (
-        <div className="space-y-3 w-full">
+        <div className="grid grid-cols-2 gap-3 w-full">
             <button
                 type="button"
                 onClick={() => handleSocialLogin("GOOGLE")}
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-xl bg-white border border-gray-200 flex items-center justify-center gap-3 hover:bg-gray-50 transition-all font-medium text-black shadow-sm"
+                className="w-full py-2.5 px-4 rounded-xl bg-white border border-gray-200 flex items-center justify-center gap-2 hover:bg-gray-50 transition-all font-bold text-black text-sm shadow-sm"
             >
-                <span className="text-red-500 font-bold">G</span> Continue with Google
-            </button>
-
-            <button
-                type="button"
-                onClick={() => handleSocialLogin("OUTLOOK")}
-                disabled={loading}
-                className="w-full py-3 px-4 rounded-xl bg-[#0078D4] text-white flex items-center justify-center gap-3 hover:opacity-90 transition-all font-medium shadow-md shadow-blue-900/20"
-            >
-                <span>📧</span> Continue with Outlook
+                <span className="text-red-500 text-lg">G</span> Google
             </button>
 
             <button
                 type="button"
                 onClick={() => handleSocialLogin("FACEBOOK")}
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-xl bg-[#1877F2] text-white flex items-center justify-center gap-3 hover:opacity-90 transition-all font-medium shadow-md shadow-blue-900/20"
+                className="w-full py-2.5 px-4 rounded-xl bg-[#1877F2] text-white flex items-center justify-center gap-2 hover:opacity-90 transition-all font-bold text-sm shadow-md shadow-blue-900/20"
             >
-                <span>f</span> Continue with Facebook
+                <span className="text-lg">f</span> Facebook
             </button>
 
             <button
                 type="button"
                 onClick={() => handleSocialLogin("INSTAGRAM")}
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white flex items-center justify-center gap-3 hover:opacity-90 transition-all font-medium shadow-md shadow-purple-900/20"
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white flex items-center justify-center gap-2 hover:opacity-90 transition-all font-bold text-sm shadow-md shadow-purple-900/20"
             >
-                <span>📸</span> Continue with Instagram
+                <span className="text-lg">📸</span> Instagram
             </button>
 
-            {loading && <p className="text-xs text-center text-gray-500 animate-pulse">Connecting to provider...</p>}
+            <button
+                type="button"
+                onClick={() => handleSocialLogin("OUTLOOK")}
+                disabled={loading}
+                className="w-full py-2.5 px-4 rounded-xl bg-[#0078D4] text-white flex items-center justify-center gap-2 hover:opacity-90 transition-all font-bold text-sm shadow-md shadow-blue-900/20"
+            >
+                <span className="text-lg">📧</span> Outlook
+            </button>
+
+            {loading && <p className="col-span-2 text-xs text-center text-gray-500 animate-pulse mt-2">Connecting to provider...</p>}
         </div>
     );
 }
