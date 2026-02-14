@@ -152,12 +152,9 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[var(--bg-main)]">
       <HeroSplit
-        onSearch={(q, room) => {
-          setSearchQuery(q);
-          if (room) setSearchLocation(room);
-        }}
-        onPostOffer={handlePostOffer}
-        onPostRequest={handlePostRequest}
+        onPost={handlePostOffer}
+        onRequest={handlePostRequest}
+        isLoggedIn={!!user}
         listings={listings}
       />
 
