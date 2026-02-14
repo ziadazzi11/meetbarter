@@ -68,7 +68,6 @@ export default function SignupPage() {
                     router.push('/login?signup=success');
                 }
             } else {
-            } else {
                 const data = await response.json();
                 // Handle NestJS array of errors
                 const errorMessage = Array.isArray(data.message)
