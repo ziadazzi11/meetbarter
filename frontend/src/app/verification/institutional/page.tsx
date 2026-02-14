@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { API_BASE_URL } from '@/config/api';
 
 export default function InstitutionalVerificationPage() {
     const { user } = useAuth();
@@ -26,7 +27,7 @@ export default function InstitutionalVerificationPage() {
         setIsLoading(true);
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/users/${user.id}/submit-license`, {
+            const res = await fetch(`${API_BASE_URL}/users/${user.id}/submit-license`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

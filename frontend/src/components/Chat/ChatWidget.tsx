@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSocket } from '@/context/SocketContext';
 import { useAuth } from '@/context/AuthContext';
+import { API_BASE_URL } from '@/config/api';
 
 interface Message {
     sender: { fullName: string; id: string };
@@ -30,7 +31,7 @@ export default function ChatWidget() {
     // Fetch conversations on load
     useEffect(() => {
         if (isOpen && token) {
-            fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/chat/conversations`, {
+            fetch(`${API_BASE_URL}/chat/conversations`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
                 .then(res => res.json())
@@ -72,7 +73,7 @@ export default function ChatWidget() {
 
             try {
                 // Call API to start trade/chat
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/trades/start`, {
+                const res = await fetch(`${API_BASE_URL}/trades/start`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -118,7 +119,7 @@ export default function ChatWidget() {
 
             const payFee = async () => {
                 try {
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/trades/${tradeIdToPay}/pay`, {
+                    const res = await fetch(`${API_BASE_URL}/trades/${tradeIdToPay}/pay`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
