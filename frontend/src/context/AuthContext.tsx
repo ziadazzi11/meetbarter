@@ -1,80 +1,163 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { adsClient } from "@/lib/ads-client";
+import { API_BASE_URL } from "@/config/api";
+import { apiClient } from "@/lib/api-client";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface User {
     id: string;
     fullName: string;
     email: string;
     avatarUrl?: string;
-    subscriptionTier: string;
+    subscriptionTier?: string;
     phoneVerified?: boolean;
     isBusiness?: boolean;
     verificationLevel?: number;
     communityRole?: string;
+    trustScore?: number; // Added to match new design
 }
 
 interface AuthContextType {
     user: User | null;
     token: string | null;
-    login: (userId: string) => Promise<void>;
+    login: (email: string, pass: string) => Promise<void>;
+    signup: (fullName: string, email: string, pass: string) => Promise<void>;
     logout: () => void;
     loading: boolean;
+    isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
     useEffect(() => {
-        const storedId = localStorage.getItem("meetbarter_uid");
-        if (storedId) {
-            fetchUser(storedId);
+        // Check for token on mount
+        const storedToken = localStorage.getItem("meetbarter_token");
+        const storedUid = localStorage.getItem("meetbarter_uid");
+
+        if (storedToken && storedUid) {
+            setToken(storedToken);
+            // Fetch user profile
+            fetchUser(storedUid, storedToken);
         } else {
             setLoading(false);
         }
     }, []);
 
-    const fetchUser = async (userId: string) => {
+    const fetchUser = async (userId: string, authToken: string) => {
         try {
-            // Check if we have the endpoint, otherwise fallback to demo user for now if simple setup
-            // In real app: GET /users/me or /users/:id
-            const res = await adsClient.get(`/users/${userId}`); // Assuming this exists or we use /users/:id
-            // If /users/me isn't implemented, we might need to fetch by ID if we trust localStorage (weak security but MVP ok)
-            // validating user existence
-            if (res) {
-                setUser(res as unknown as User);
-                // For now, simulate token as userId or just empty since backend needs real JWT
-                // If we had a real login response, we'd store the token. 
-                // Assuming existing auth flow doesn't have tokens yet, so passing null or placeholder.
-                // ChatGateway checks 'token' in handshake.
-                setToken("mock_token_for_build_pass");
+            // Logic to fetch user profile using the token
+            // For now, assuming we have an endpoint or using the mock strategy from before but enforced with real headers
+            const res = await apiClient.fetch(`${API_BASE_URL}/users/${userId}`, {
+                headers: {
+                    Authorization: `Bearer ${authToken}`
+                }
+            });
+
+            if (res.ok) {
+                const userData = await res.json();
+                setUser(userData);
+            } else {
+                throw new Error("Session expired");
             }
         } catch (error) {
             console.error("Failed to restore session", error);
-            localStorage.removeItem("meetbarter_uid");
+            logout();
         } finally {
             setLoading(false);
         }
     };
 
-    const login = async (userId: string) => {
-        localStorage.setItem("meetbarter_uid", userId);
-        await fetchUser(userId);
+    const login = async (email: string, pass: string) => {
+        try {
+            const res = await apiClient.fetch(`${API_BASE_URL}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password: pass }),
+            });
+
+            if (!res.ok) {
+                throw new Error("Invalid credentials");
+            }
+
+            const data = await res.json();
+            const { access_token, user } = data;
+
+            if (access_token && user) {
+                localStorage.setItem("meetbarter_token", access_token);
+                localStorage.setItem("meetbarter_uid", user.id);
+                setToken(access_token);
+                setUser(user);
+                toast.success("Welcome back!");
+            }
+        } catch (error) {
+            console.error("Login failed", error);
+            throw error;
+        }
+    };
+
+    const signup = async (fullName: string, email: string, pass: string) => {
+        try {
+            const res = await apiClient.fetch(`${API_BASE_URL}/auth/signup`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ fullName, email, password: pass }),
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || "Registration failed");
+            }
+
+            const data = await res.json();
+            // Assuming the backend returns similar structure on signup, or automatically logs in
+            // If not auto-login, we might need to ask user to login or redirect
+            // For now, let's assume we need to login separately or handle the response if it includes token
+            if (data.access_token && data.user) {
+                localStorage.setItem("meetbarter_token", data.access_token);
+                localStorage.setItem("meetbarter_uid", data.user.id);
+                setToken(data.access_token);
+                setUser(data.user);
+            } else {
+                // If no token returned, maybe just success message and redirect to login
+                // But for better UX, auto-login is preferred if possible.
+                // If backend doesn't return token, we can call login() here
+                await login(email, pass);
+            }
+        } catch (error) {
+            console.error("Signup failed", error);
+            throw error;
+        }
     };
 
     const logout = () => {
+        localStorage.removeItem("meetbarter_token");
         localStorage.removeItem("meetbarter_uid");
         setUser(null);
         setToken(null);
+        router.push("/login");
+        toast.info("Logged out successfully");
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+        <AuthContext.Provider value={{
+            user,
+            token,
+            login,
+            signup,
+            logout,
+            loading,
+            isAuthenticated: !!user
+        }}>
             {children}
         </AuthContext.Provider>
     );

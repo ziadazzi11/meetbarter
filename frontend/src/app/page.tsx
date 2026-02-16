@@ -1,294 +1,356 @@
-/**
- * Copyright (c) 2026 Ziad Azzi. All Rights Reserved.
- */
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { API_BASE_URL } from "@/config/api";
-import { ListingCard } from "@/components/Listings/ListingCard";
-import CreateListingModal from "@/components/Listings/CreateListingModal";
-import VerificationTiersModal from "@/components/VerificationTiersModal";
-import HeroSplit from "@/components/HeroSplit";
-import AppDownloadBanner from "@/components/AppDownloadBanner";
-import MapViewer from "@/components/MapViewer/MapViewer";
-import RegistrationCTAModal from "@/components/RegistrationCTAModal";
-import { useAuth } from "@/context/AuthContext";
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import {
+  ArrowRight,
+  Package,
+  Search,
+  MapPin,
+  TrendingUp,
+  Users,
+  Shield,
+  Sparkles,
+  Grid3x3,
+  Map as MapIcon,
+  Filter,
+  Loader2
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ListingCard, Listing } from '@/components/Listings/ListingCard';
+import { API_BASE_URL } from '@/config/api';
+import { apiClient } from '@/lib/api-client';
 
-interface Category {
-  id: string;
-  name: string;
-  description: string;
-  minVP: number;
-  maxVP: number;
-}
+// Recent trades could also be fetched, but keeping mock for now if no endpoint exists
+const recentTrades = [
+  { user: 'Sarah C.', action: 'traded Camera for Design Services', time: '5 min ago', vp: 450 },
+  { user: 'Mike T.', action: 'offered Custom Desk', time: '12 min ago', vp: 850 },
+  { user: 'Jordan L.', action: 'requested Logo Design', time: '18 min ago', vp: 300 },
+  { user: 'Alex R.', action: 'completed Bike Repair trade', time: '23 min ago', vp: 120 },
+  { user: 'Maria G.', action: 'offered Meal Prep Service', time: '35 min ago', vp: 200 },
+];
 
-interface User {
-  id: string;
-  fullName: string;
-  walletBalance: number;
-  globalTrustScore: number;
-  ambassadorStatus: string;
-  verificationLevel: number;
-}
-
-
-
-export default function Home() {
-  const { user, loading: authLoading } = useAuth();
-  const userId = user?.id;
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [trades, setTrades] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [listings, setListings] = useState<any[]>([]);
+export default function HomePage() {
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
-
+  const [filterType, setFilterType] = useState<'all' | 'offer' | 'request'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchLocation, setSearchLocation] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
-  const [isTierModalOpen, setIsTierModalOpen] = useState(false);
-  const [isRegistrationCTAOpen, setIsRegistrationCTAOpen] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState('Lebanon');
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [newListing] = useState({
-    title: '',
-    description: '',
-    location: '',
-    country: 'Lebanon',
-    categoryId: '',
-    originalPrice: 0,
-    listingType: 'OFFER',
-    condition: 'USED_GOOD',
-    images: [] as string[]
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        const res = await apiClient.fetch(`${API_BASE_URL}/listings`);
+        if (res.ok) {
+          const data = await res.json();
+          // Transform backend data to Listing interface if necessary
+          // Assuming backend returns an array of objects matching Listing interface roughly
+          const mappedListings = data.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            image: item.images ? JSON.parse(item.images)[0] : '', // Handle generic image array
+            type: item.type || 'offer', // Default to offer if missing
+            category: item.category || 'General',
+            location: item.location || 'Online',
+            valuePoints: item.priceVP,
+            userName: item.user?.fullName || 'Anonymous',
+            userAvatar: item.user?.avatarUrl,
+            userTrustScore: item.user?.trustScore || 0,
+            createdAt: new Date(item.createdAt).toLocaleDateString(),
+            tags: item.tags || [],
+            cashSweetener: item.cashSweetener,
+            isFeatured: item.isFeatured
+          }));
+          setListings(mappedListings);
+        } else {
+          console.error("Failed to fetch listings");
+        }
+      } catch (error) {
+        console.error("Error fetching listings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchListings();
+  }, []);
+
+  const filteredListings = listings.filter(listing => {
+    const matchesType = filterType === 'all' || listing.type === filterType;
+    const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      listing.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesType && matchesSearch;
   });
 
-  useEffect(() => {
-    if (userId) {
-      fetchActiveTrades(userId);
-    }
-    setLoading(false);
-
-    fetch(`${API_BASE_URL}/listings/categories`)
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) setCategories(data);
-        else console.error("Categories API returned non-array:", data);
-      })
-      .catch(err => console.error("Failed to fetch categories:", err));
-
-    // Listen for Bulk Upload trigger from Header
-    const handleBulkOpen = () => setIsBulkModalOpen(true);
-    window.addEventListener('openBulkUpload', handleBulkOpen);
-    return () => window.removeEventListener('openBulkUpload', handleBulkOpen);
-  }, [userId]);
-
-  useEffect(() => {
-    // Show Registration CTA on load for new unauthenticated users
-    if (!authLoading && !user) {
-      const hasSeenCTA = localStorage.getItem('meetbarter_onboarded');
-      if (!hasSeenCTA) {
-        const timer = setTimeout(() => {
-          setIsRegistrationCTAOpen(true);
-          localStorage.setItem('meetbarter_onboarded', 'true');
-        }, 1500); // Slight delay for "wow" effect
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [user, authLoading]);
-
-  useEffect(() => {
-    let url = `${API_BASE_URL}/listings`;
-    const params = new URLSearchParams();
-    if (searchQuery) params.append('q', searchQuery);
-    if (searchLocation) params.append('location', searchLocation);
-    if (selectedCountry) params.append('country', selectedCountry);
-
-    const finalUrl = params.toString() ? `${url}?${params.toString()}` : url;
-
-    fetch(finalUrl)
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) setListings(data);
-        else setListings([]);
-      })
-      .catch(err => console.error("Failed to fetch listings:", err));
-  }, [searchQuery, searchLocation, selectedCountry]);
-
-  const fetchActiveTrades = async (uid: string) => {
-    fetch(`${API_BASE_URL}/trades/active?userId=${uid}`)
-      .then(res => res.json())
-      .then(setTrades)
-      .catch(() => setLoading(false));
-  };
-
-  const getTimeRemaining = (expiresAt: string) => {
-    if (!expiresAt) return null;
-    const end = new Date(expiresAt).getTime();
-    const now = new Date().getTime();
-    const diff = end - now;
-    if (diff <= 0) return 'Expired';
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hours}h ${minutes}m`;
-  };
-
-  const handlePostOffer = () => {
-    if (!user) {
-      window.location.href = '/signup';
-      return;
-    }
-    setIsModalOpen(true);
-  };
-
-  const handlePostRequest = () => {
-    if (!user) {
-      window.location.href = '/signup';
-      return;
-    }
-    setIsModalOpen(true);
-  };
-
   return (
-    <div className="min-h-screen bg-[var(--bg-main)]">
-      <HeroSplit
-        onPost={handlePostOffer}
-        onRequest={handlePostRequest}
-        isLoggedIn={!!user}
-        listings={listings}
-      />
+    <div className="min-h-screen">
+      {/* Split Hero Section */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-background via-background to-muted/20">
+        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]" />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
-        {/* ACTIVE TRADES (Conditional) */}
-        {user && trades.length > 0 && (
-          <section className="bg-indigo-600 rounded-3xl p-8 shadow-2xl shadow-indigo-200 overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
-            <h2 className="text-2xl font-black text-white mb-6 flex items-center gap-3 relative">
-              <span className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">🔄</span>
-              Active Barter Swaps
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative">
-              {trades.map((trade) => (
-                <div key={trade.id} className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all cursor-pointer group">
-                  <div className="flex justify-between items-start mb-4">
-                    <span className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-black uppercase tracking-widest text-white">
-                      {trade.status}
-                    </span>
-                    <span className="text-xs text-indigo-100 font-medium">#{trade.id.slice(0, 8)}</span>
-                  </div>
-                  <h3 className="text-white font-bold mb-2 group-hover:text-indigo-200 transition-colors uppercase tracking-tight line-clamp-1">
-                    {trade.listing?.title || "Unknown Item"}
-                  </h3>
-                  <div className="flex items-center justify-between mt-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">🤝</span>
-                      <span className="text-sm text-indigo-100 italic">Offered by {trade.offerer?.fullName.split(' ')[0]}</span>
-                    </div>
-                  </div>
+        <div className="container mx-auto px-4 py-16 md:py-24">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <Badge className="mb-4 bg-purple-500/10 text-purple-500 hover:bg-purple-500/20">
+              <Sparkles className="h-3 w-3 mr-1" />
+              Community-Driven Trading Platform
+            </Badge>
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-400">
+              Trade What You Have<br />For What You Need
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+              Join a trust-based economy where skills, goods, and services are exchanged fairly.
+              Build your reputation, help your community, and get what you need.
+            </p>
+
+            {/* Search Bar */}
+            <div className="max-w-2xl mx-auto mb-8">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Search for items, services, or skills..."
+                    className="pl-10 h-12"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
-              ))}
+                <Button size="lg" className="px-8">
+                  <Search className="h-5 w-5 mr-2" />
+                  Search
+                </Button>
+              </div>
             </div>
-          </section>
-        )}
+          </motion.div>
 
-        {/* MARKETPLACE SECTION */}
-        <section id="marketplace">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-6">
-            <div>
-              <h2 className="text-4xl font-black text-[var(--text-main)] tracking-tight mb-2 uppercase">Marketplace</h2>
-              <div className="h-1.5 w-24 bg-indigo-600 rounded-full"></div>
-            </div>
+          {/* Split CTA Cards */}
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <Card className="border-2 border-green-500/20 hover:border-green-500/40 transition-all hover:shadow-lg hover:shadow-green-500/10 group">
+                <CardContent className="p-8 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Package className="h-8 w-8 text-green-500" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2">I Have Something</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Offer your goods, skills, or services to the community
+                  </p>
+                  <Link href="/create-offer">
+                    <Button className="w-full" size="lg" variant="default">
+                      Create Offer
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <div className="flex bg-[var(--bg-card)] p-1.5 rounded-2xl border border-[var(--border-main)] shadow-sm">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${viewMode === 'grid' ? 'bg-indigo-600 text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
-              >
-                GRID VIEW
-              </button>
-              <button
-                onClick={() => setViewMode('map')}
-                className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${viewMode === 'map' ? 'bg-indigo-600 text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
-              >
-                MAP VIEW
-              </button>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <Card className="border-2 border-blue-500/20 hover:border-blue-500/40 transition-all hover:shadow-lg hover:shadow-blue-500/10 group">
+                <CardContent className="p-8 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Search className="h-8 w-8 text-blue-500" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2">I Need Something</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Request items, services, or help from community members
+                  </p>
+                  <Link href="/create-request">
+                    <Button className="w-full" size="lg" variant="outline">
+                      Create Request
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
+        </div>
+      </section>
 
-          {!user ? (
-            <div className="glass-card rounded-3xl p-12 text-center border border-indigo-500/30 bg-gradient-to-b from-transparent to-indigo-500/5">
-              <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-600/30">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-              </div>
-              <h2 className="text-3xl font-black text-[var(--text-main)] mb-4">Members Only Marketplace</h2>
-              <p className="text-lg text-[var(--text-muted)] max-w-xl mx-auto mb-8">
-                The MeetBarter Marketplace is exclusive to verifiable members. Join our trust-based community to browse listings, trade assets, and access our secure ecosystem.
-              </p>
-              <Link href="/signup" className="inline-block px-10 py-4 bg-indigo-600 text-white font-black uppercase tracking-widest rounded-xl hover:bg-indigo-700 hover:scale-105 transition-all shadow-xl shadow-indigo-600/30">
-                Join to Explore
-              </Link>
-            </div>
-          ) : (
-            viewMode === 'map' ? (
-              <MapViewer listings={listings} />
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                {listings.map((item: any) => (
-                  <ListingCard key={item.id} listing={item} />
-                ))}
-              </div>
-            )
-          )}
-        </section>
-
-        {/* ALL CATEGORIES */}
-        <section>
-          <h2 className="text-2xl font-bold text-[var(--text-main)] mb-6 uppercase">All Categories</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {categories.slice(2).map((cat: Category) => (
-              <div key={cat.id} className="p-8 bg-[var(--bg-card)] rounded-2xl border border-[var(--border-main)] hover:border-indigo-500/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-center group cursor-pointer">
-                <h3 className="font-bold text-[var(--text-main)] mb-1">{cat.name}</h3>
-                <p className="text-xs text-[var(--text-muted)] mb-2 line-clamp-2">{cat.description}</p>
-                <div className="text-xs font-semibold text-indigo-600">
-                  {cat.minVP} - {cat.maxVP} VP
-                </div>
-              </div>
+      {/* Stats Section */}
+      <section className="py-12 border-y border-border/40 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {[
+              { icon: Users, label: 'Active Traders', value: '12,450+' },
+              { icon: TrendingUp, label: 'Trades Completed', value: '45,230+' },
+              { icon: Shield, label: 'Trust Score Avg', value: '94.2%' },
+              { icon: MapPin, label: 'Cities Covered', value: '230+' },
+            ].map((stat, index) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+                className="text-center"
+              >
+                <stat.icon className="h-8 w-8 mx-auto mb-2 text-primary" />
+                <div className="text-3xl font-bold mb-1">{stat.value}</div>
+                <div className="text-sm text-muted-foreground">{stat.label}</div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-      </main >
+      {/* Active Trades Feed & Listings */}
+      <section className="py-12">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-4 gap-8">
+            {/* Recent Activity Feed */}
+            <div className="lg:col-span-1">
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-4 flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-green-500" />
+                    Live Activity
+                  </h3>
+                  <div className="space-y-4">
+                    {recentTrades.map((trade, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="border-l-2 border-primary/30 pl-3"
+                      >
+                        <p className="text-sm font-medium">{trade.user}</p>
+                        <p className="text-xs text-muted-foreground">{trade.action}</p>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-xs text-muted-foreground">{trade.time}</span>
+                          <Badge variant="secondary" className="text-xs">{trade.vp} VP</Badge>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-      <AppDownloadBanner />
+            {/* Main Listings Area */}
+            <div className="lg:col-span-3">
+              {/* Controls */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-1">Marketplace</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {filteredListings.length} listings available near you
+                  </p>
+                </div>
 
-      <CreateListingModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        userId={userId || ''}
-        categories={categories}
-        initialType={newListing.listingType as 'OFFER' | 'REQUEST'}
-        onSuccess={() => {
-          // Refresh listings
-          const params = new URLSearchParams();
-          if (searchLocation) params.append('location', searchLocation);
-          if (selectedCountry) params.append('country', selectedCountry);
-          const url = params.toString() ? `${API_BASE_URL}/listings/search?${params.toString()}` : `${API_BASE_URL}/listings`;
-          fetch(url).then(res => res.json()).then(setListings);
-        }}
-      />
+                <div className="flex gap-2">
+                  <Select value={filterType} onValueChange={(value: any) => setFilterType(value)}>
+                    <SelectTrigger className="w-[140px]">
+                      <Filter className="h-4 w-4 mr-2" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Listings</SelectItem>
+                      <SelectItem value="offer">Offers Only</SelectItem>
+                      <SelectItem value="request">Requests Only</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-      <VerificationTiersModal
-        isOpen={isTierModalOpen}
-        onClose={() => setIsTierModalOpen(false)}
-        userId={userId || ''}
-        currentLevel={user?.verificationLevel || 1}
-        onSuccess={() => { }}
-      />
+                  <div className="flex gap-1 border border-border rounded-lg p-1">
+                    <Button
+                      size="sm"
+                      variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                      onClick={() => setViewMode('grid')}
+                      className="px-3"
+                    >
+                      <Grid3x3 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={viewMode === 'map' ? 'secondary' : 'ghost'}
+                      onClick={() => setViewMode('map')}
+                      className="px-3"
+                    >
+                      <MapIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
 
-      <RegistrationCTAModal
-        isOpen={isRegistrationCTAOpen}
-        onClose={() => setIsRegistrationCTAOpen(false)}
-      />
-    </div >
+              {/* Listings Grid */}
+              {loading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                </div>
+              ) : viewMode === 'grid' ? (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {filteredListings.map((listing) => (
+                    <ListingCard key={listing.id} listing={listing} />
+                  ))}
+                  {filteredListings.length === 0 && (
+                    <div className="col-span-full text-center py-12 text-muted-foreground">
+                      No listings found matching your text.
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Card className="h-[600px] flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
+                    <MapIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Map view coming soon...</p>
+                  </div>
+                </Card>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10">
+        <div className="container mx-auto px-4 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Ready to Start Trading?
+            </h2>
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Join thousands of community members building a better economy together
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Link href="/signup">
+                <Button size="lg" className="px-8">
+                  Get Started Free
+                  <ArrowRight className="ml-2" />
+                </Button>
+              </Link>
+              <Link href="/how-it-works">
+                <Button size="lg" variant="outline" className="px-8">
+                  Learn More
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+    </div>
   );
 }

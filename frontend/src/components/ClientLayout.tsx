@@ -26,6 +26,8 @@ import { AuthProvider } from "@/context/AuthContext";
 import { SocketProvider } from "@/context/SocketContext";
 import ChatWidget from "@/components/Chat/ChatWidget";
 
+import { Toaster } from "@/components/ui/sonner";
+
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
     return (
         <ThemeProvider>
@@ -47,6 +49,7 @@ function ThemedContent({ children }: { children: React.ReactNode }) {
     return (
         <body className={`${geistSans.variable} ${geistMono.variable} flex flex-col min-h-screen theme-${theme} ${darkMode ? 'dark' : ''}`} suppressHydrationWarning={true}>
             <ToastContainer />
+            <Toaster />
             <Header />
             <ThemeManager />
             <RouteThemeController />

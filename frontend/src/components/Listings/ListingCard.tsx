@@ -1,84 +1,174 @@
+"use client";
+
 import Link from 'next/link';
 import Image from 'next/image';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { MapPin, Clock, Heart, Share2, TrendingUp } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useState } from 'react';
 
-interface ListingProps {
-    id: string;
-    title: string;
-    description: string;
-    priceVP: number;
-    images: string; // JSON string
-    location: string;
-    condition?: string;
+export interface Listing {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  type: 'offer' | 'request';
+  category: string;
+  location: string;
+  distance?: string;
+  valuePoints: number;
+  cashSweetener?: number;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  userTrustScore: number;
+  createdAt: string;
+  expiresAt?: string;
+  isFeatured?: boolean;
+  tags: string[];
 }
 
-export function ListingCard({ listing }: { listing: ListingProps }) {
-    let imageUrl = '';
-    try {
-        const parsed = JSON.parse(listing.images);
-        imageUrl = parsed[0] || '';
-    } catch { }
+interface ListingCardProps {
+  listing: Listing;
+  onLike?: () => void;
+  onShare?: () => void;
+}
 
-    return (
-        <div className="glass-card rounded-2xl overflow-hidden flex flex-col h-full group transition-all duration-300 hover:premium-shadow hover:-translate-y-2">
-            {/* Image Section */}
-            <div className="h-56 bg-indigo-50/10 flex items-center justify-center relative overflow-hidden">
-                {imageUrl ? (
-                    <Image
-                        src={imageUrl}
-                        alt={listing.title}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                ) : (
-                    <div className="flex flex-col items-center gap-2 text-indigo-200">
-                        <span className="text-5xl">📦</span>
-                        <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">No Image</span>
-                    </div>
-                )}
+export function ListingCard({ listing, onLike, onShare }: ListingCardProps) {
+  const [isLiked, setIsLiked] = useState(false);
 
-                {/* VP Badge */}
-                <div className="absolute top-4 right-4 glass-card px-3 py-1.5 rounded-full text-xs font-black shadow-lg text-indigo-600 bg-white/90">
-                    {listing.priceVP} VP
-                </div>
+  const handleLike = () => {
+    setIsLiked(!isLiked);
+    onLike?.();
+  };
 
-                {/* Scrim overlay on hover */}
-                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card className="overflow-hidden hover:shadow-lg transition-shadow group h-full flex flex-col">
+        <Link href={`/listings/${listing.id}`}>
+          <div className="relative h-48 overflow-hidden bg-muted">
+            {/* Use standard img tag if external URL or next/image if configured */}
+            <img
+              src={listing.image || '/assets/placeholder.png'}
+              alt={listing.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+            <div className="absolute top-2 left-2 flex gap-2">
+              <Badge
+                className={
+                  listing.type === 'offer'
+                    ? 'bg-green-500 hover:bg-green-600'
+                    : 'bg-blue-500 hover:bg-blue-600'
+                }
+              >
+                {listing.type === 'offer' ? '📦 Offering' : '🔍 Seeking'}
+              </Badge>
+              {listing.isFeatured && (
+                <Badge variant="secondary" className="bg-yellow-500 text-black">
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  Featured
+                </Badge>
+              )}
             </div>
+            <div className="absolute top-2 right-2 flex gap-1">
+              <Button
+                size="icon"
+                variant="secondary"
+                className="h-8 w-8 rounded-full bg-background/80 backdrop-blur"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleLike();
+                }}
+              >
+                <Heart
+                  className={`h-4 w-4 ${isLiked ? 'fill-red-500 text-red-500' : ''}`}
+                />
+              </Button>
+              <Button
+                size="icon"
+                variant="secondary"
+                className="h-8 w-8 rounded-full bg-background/80 backdrop-blur"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onShare?.();
+                }}
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </Link>
 
-            {/* Content Section */}
-            <div className="p-5 flex flex-col flex-1">
-                <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-extrabold text-[var(--text-main)] text-lg leading-tight line-clamp-1 group-hover:text-indigo-600 transition-colors" title={listing.title}>
-                        {listing.title}
-                    </h3>
-                </div>
+        <CardContent className="p-4 flex-1">
+          <Link href={`/listings/${listing.id}`}>
+            <h3 className="font-semibold mb-2 line-clamp-1 hover:text-primary transition-colors">
+              {listing.title}
+            </h3>
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+              {listing.description}
+            </p>
+          </Link>
 
-                <div className="flex flex-wrap gap-2 mb-4">
-                    <span className="text-[10px] bg-indigo-50/50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 px-2.5 py-1 rounded-md flex items-center gap-1.5 font-bold uppercase tracking-wider border border-indigo-100/50 dark:border-indigo-800/30">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        </svg>
-                        <span className="truncate max-w-[100px]">{listing.location || 'Unknown'}</span>
-                    </span>
+          <div className="flex items-center gap-2 mb-3">
+            <Badge variant="outline" className="text-xs">
+              {listing.category}
+            </Badge>
+            {listing.tags.slice(0, 2).map((tag) => (
+              <Badge key={tag} variant="secondary" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+          </div>
 
-                    {listing.condition && (
-                        <span className={`text-[10px] px-2.5 py-1 rounded-md font-extrabold uppercase tracking-wider border ${listing.condition === 'NEW'
-                            ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800'
-                            : 'bg-orange-50 text-orange-700 border-orange-100 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800'
-                            }`}>
-                            {listing.condition.replace('_', ' ')}
-                        </span>
-                    )}
-                </div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4" />
+              <span>{listing.location}</span>
+              {listing.distance && <span className="text-xs">({listing.distance})</span>}
+            </div>
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Clock className="h-4 w-4" />
+              <span>{listing.createdAt}</span>
+            </div>
+          </div>
 
-                <p className="text-[var(--text-muted)] text-sm line-clamp-2 mb-6 flex-1 leading-relaxed">
-                    {listing.description}
+          <div className="flex items-center justify-between mt-auto">
+            <div className="flex items-center gap-2">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={listing.userAvatar} alt={listing.userName} />
+                <AvatarFallback>{listing.userName[0]}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm font-medium">{listing.userName}</p>
+                <p className="text-xs text-muted-foreground">
+                  Trust: {listing.userTrustScore}
                 </p>
-
-                <Link href={`/listings/${listing.id}`} className="block text-center w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl text-sm font-black transition-all shadow-lg shadow-indigo-200 dark:shadow-none active:scale-95 uppercase tracking-widest">
-                    View Asset
-                </Link>
+              </div>
             </div>
-        </div>
-    );
+            <div className="text-right">
+              <p className="text-lg font-bold text-primary">{listing.valuePoints} VP</p>
+              {listing.cashSweetener && (
+                <p className="text-xs text-green-500">+${listing.cashSweetener} cash</p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+
+        <CardFooter className="p-4 pt-0">
+          <Link href={`/listings/${listing.id}`} className="w-full">
+            <Button className="w-full" variant={listing.type === 'offer' ? 'default' : 'outline'}>
+              {listing.type === 'offer' ? 'Make Offer' : 'I Can Help'}
+            </Button>
+          </Link>
+        </CardFooter>
+      </Card>
+    </motion.div>
+  );
 }

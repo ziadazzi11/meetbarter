@@ -1,6 +1,10 @@
 import { API_BASE_URL } from '@/config/api';
 
-export default function SocialLoginButtons() {
+interface SocialLoginButtonsProps {
+    onLoginSuccess?: (userId: string) => void;
+}
+
+export default function SocialLoginButtons({ onLoginSuccess }: SocialLoginButtonsProps) {
 
     const handleSocialLogin = (provider: string) => {
         // Redirect to backend OAuth endpoint which handles the handshake

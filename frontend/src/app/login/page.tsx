@@ -1,176 +1,176 @@
-'use client';
+"use client";
 
-import { useState, Suspense, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { API_BASE_URL } from "@/config/api";
-import SocialLoginButtons from '@/components/SocialLoginButtons';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { Mail, Lock, Shield, Chrome, Facebook } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from 'sonner';
+import { API_BASE_URL } from '@/config/api';
 
-function LoginForm() {
-    const searchParams = useSearchParams();
+export default function LoginPage() {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const { login } = useAuth();
     const router = useRouter();
-    const [formData, setFormData] = useState({
-        email: '',
-        password: '',
-    });
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-        const token = searchParams.get('token');
-        const uid = searchParams.get('uid');
-
-        if (token && uid) {
-            localStorage.setItem('meetbarter_token', token);
-            localStorage.setItem('meetbarter_uid', uid);
-            // We might want to fetch user details using the token if not provided
-            // For now, redirect to dashboard
-            window.location.href = '/dashboard';
-        }
-    }, [searchParams]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
-        setLoading(true);
+        setIsLoading(true);
 
         try {
-            const res = await fetch(`${API_BASE_URL}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                localStorage.setItem('meetbarter_token', data.access_token);
-                localStorage.setItem('meetbarter_uid', data.user.id);
-                localStorage.setItem('meetbarter_user', JSON.stringify(data.user));
-                window.location.href = '/dashboard';
-            } else {
-                const errData = await res.json();
-                setError(errData.message || 'Invalid credentials');
-            }
-        } catch {
-            setError('Connection failed. Please try again.');
+            await login(email, password);
+            // Success toast handled in AuthContext or here if preferred
+            // toast.success('Welcome back!'); // AuthContext handles it
+            router.push('/dashboard');
+        } catch (error) {
+            toast.error('Invalid credentials. Please try again.');
         } finally {
-            setLoading(false);
+            setIsLoading(false);
+        }
+    };
+
+    const handleSocialLogin = (provider: 'Google' | 'Facebook') => {
+        // Redirect to backend OAuth endpoint which handles the handshake
+        if (provider === 'Google') {
+            window.location.href = `${API_BASE_URL}/auth/google`;
+        } else if (provider === 'Facebook') {
+            window.location.href = `${API_BASE_URL}/auth/facebook`;
         }
     };
 
     return (
-        <div className="relative w-full max-w-md bg-[#0a0a0b]/80 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 md:p-10 shadow-2xl overflow-hidden">
-            {/* Ambient Background Glow inside card */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500"></div>
-
-            <div className="text-center mb-10">
-                <div className="inline-block p-4 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-white/5 mb-6 shadow-inner">
-                    <span className="text-4xl">🔐</span>
-                </div>
-                <h1 className="text-3xl font-black text-white tracking-tight mb-2">Welcome Back</h1>
-                <p className="text-gray-400 text-sm">Enter your credentials to access the vault</p>
-            </div>
-
-            {error && (
-                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400 text-sm font-medium">
-                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    {error}
-                </div>
-            )}
-
-
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Email Address</label>
-                    <input
-                        type="email"
-                        name="email"
-                        required
-                        value={formData.email}
-                        onChange={handleChange}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:bg-white/[0.07]"
-                        placeholder="name@example.com"
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <div className="flex justify-between items-center ml-1">
-                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Password</label>
-                        <Link href="/forgot-password" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer">
-                            Forgot?
-                        </Link>
-                    </div>
-                    <input
-                        type="password"
-                        name="password"
-                        required
-                        value={formData.password}
-                        onChange={handleChange}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:bg-white/[0.07]"
-                        placeholder="••••••••••••"
-                    />
-                </div>
-
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
-                >
-                    {loading ? (
-                        <span className="flex items-center justify-center gap-2">
-                            <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            Authenticating...
-                        </span>
-                    ) : 'Access Account'}
-                </button>
-            </form>
-
-            <div className="mt-8">
-                <div className="relative mb-6">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-700"></div>
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase tracking-widest">
-                        <span className="px-2 bg-[#0a0a0b] text-gray-500 font-bold">Or enter via</span>
-                    </div>
-                </div>
-
-                <SocialLoginButtons />
-            </div>
-
-            <div className="mt-8 text-center">
-                <p className="text-gray-500 text-sm">
-                    New to MeetBarter?{' '}
-                    <Link href="/signup" className="text-white font-bold hover:text-indigo-400 transition-colors ml-1">
-                        Create Validation Profile
+        <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="w-full max-w-md"
+            >
+                <Link href="/" className="flex items-center justify-center space-x-2 mb-8">
+                    <Link href="/" className="flex items-center justify-center space-x-2 mb-8">
+                        <img src="/assets/logo-icon.png" alt="MeetBarter" className="w-12 h-12 rounded-lg" />
+                        <span className="font-bold text-2xl">MeetBarter</span>
                     </Link>
+                </Link>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-2xl">Welcome Back</CardTitle>
+                        <CardDescription>
+                            Sign in to your account to continue trading
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email</Label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        placeholder="you@example.com"
+                                        className="pl-10"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="password">Password</Label>
+                                    <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                                        Forgot password?
+                                    </Link>
+                                </div>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="password"
+                                        type="password"
+                                        placeholder="••••••••"
+                                        className="pl-10"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="remember"
+                                    checked={rememberMe}
+                                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                                />
+                                <Label
+                                    htmlFor="remember"
+                                    className="text-sm font-normal cursor-pointer"
+                                >
+                                    Remember me for 30 days
+                                </Label>
+                            </div>
+
+                            <Button type="submit" className="w-full" disabled={isLoading}>
+                                {isLoading ? 'Signing in...' : 'Sign In'}
+                            </Button>
+                        </form>
+
+                        <div className="relative my-6">
+                            <Separator />
+                            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-sm text-muted-foreground">
+                                Or continue with
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => handleSocialLogin('Google')}
+                                className="w-full"
+                            >
+                                <Chrome className="mr-2 h-4 w-4" />
+                                Google
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => handleSocialLogin('Facebook')}
+                                className="w-full"
+                            >
+                                <Facebook className="mr-2 h-4 w-4" />
+                                Facebook
+                            </Button>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="flex flex-col">
+                        <p className="text-sm text-center text-muted-foreground">
+                            Don't have an account?{' '}
+                            <Link href="/signup" className="text-primary hover:underline font-medium">
+                                Sign up for free
+                            </Link>
+                        </p>
+                    </CardFooter>
+                </Card>
+
+                <p className="text-xs text-center text-muted-foreground mt-4">
+                    By signing in, you agree to our{' '}
+                    <Link href="/terms" className="underline">Terms of Service</Link>
+                    {' '}and{' '}
+                    <Link href="/privacy" className="underline">Privacy Policy</Link>
                 </p>
-            </div>
-        </div>
-    );
-}
-
-export default function LoginPage() {
-    return (
-        <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden bg-[#050505]">
-            {/* Animated Background Elements */}
-            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/20 rounded-full blur-[120px] animate-pulse"></div>
-            <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-emerald-600/10 rounded-full blur-[100px] animate-pulse delay-700"></div>
-
-            {/* Grid Pattern Overlay */}
-            <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-[0.03]"></div>
-
-            <Suspense fallback={<div className="text-white/50">Loading interface...</div>}>
-                <LoginForm />
-            </Suspense>
+            </motion.div>
         </div>
     );
 }
