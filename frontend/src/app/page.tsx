@@ -26,16 +26,13 @@ import { ListingCard, Listing } from '@/components/Listings/ListingCard';
 import { API_BASE_URL } from '@/config/api';
 import { apiClient } from '@/lib/api-client';
 
+import { useAuth } from '@/context/AuthContext';
+
 // Recent trades could also be fetched, but keeping mock for now if no endpoint exists
-const recentTrades = [
-  { user: 'Sarah C.', action: 'traded Camera for Design Services', time: '5 min ago', vp: 450 },
-  { user: 'Mike T.', action: 'offered Custom Desk', time: '12 min ago', vp: 850 },
-  { user: 'Jordan L.', action: 'requested Logo Design', time: '18 min ago', vp: 300 },
-  { user: 'Alex R.', action: 'completed Bike Repair trade', time: '23 min ago', vp: 120 },
-  { user: 'Maria G.', action: 'offered Meal Prep Service', time: '35 min ago', vp: 200 },
-];
+const recentTrades: { user: string; action: string; time: string; vp: number }[] = [];
 
 export default function HomePage() {
+  const { user } = useAuth();
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [filterType, setFilterType] = useState<'all' | 'offer' | 'request'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,7 +47,21 @@ export default function HomePage() {
           const data = await res.json();
           // Transform backend data to Listing interface if necessary
           // Assuming backend returns an array of objects matching Listing interface roughly
-          const mappedListings = data.map((item: any) => ({
+          const mappedListings = data.map((item: {
+            id: string;
+            title: string;
+            description: string;
+            images?: string;
+            type?: 'offer' | 'request';
+            category?: string;
+            location?: string;
+            priceVP: number;
+            user?: { fullName: string; avatarUrl?: string; trustScore?: number; };
+            createdAt: string;
+            tags?: string[];
+            cashSweetener?: number;
+            isFeatured?: boolean;
+          }) => ({
             id: item.id,
             title: item.title,
             description: item.description,
@@ -140,23 +151,27 @@ export default function HomePage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <Card className="border-2 border-green-500/20 hover:border-green-500/40 transition-all hover:shadow-lg hover:shadow-green-500/10 group">
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Package className="h-8 w-8 text-green-500" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-2">I Have Something</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Offer your goods, skills, or services to the community
-                  </p>
-                  <Link href="/create-offer">
-                    <Button className="w-full" size="lg" variant="default">
-                      Create Offer
-                      <ArrowRight className="ml-2 h-5 w-5" />
+              <Link href="/listings/create?type=offer" className="block h-full group">
+                <Card className="h-full border-2 border-green-500/20 hover:border-green-500/40 transition-all hover:shadow-lg hover:shadow-green-500/10 cursor-pointer">
+                  <CardContent className="p-8 text-center h-full flex flex-col justify-between">
+                    <div>
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Package className="h-8 w-8 text-green-500" />
+                      </div>
+                      <h3 className="text-2xl font-bold mb-2">I Have Something</h3>
+                      <p className="text-muted-foreground mb-6">
+                        Offer your goods, skills, or services to the community
+                      </p>
+                    </div>
+                    <Button asChild className="w-full pointer-events-none" size="lg" variant="default">
+                      <span>
+                        Create Offer
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </span>
                     </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             </motion.div>
 
             <motion.div
@@ -164,23 +179,27 @@ export default function HomePage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <Card className="border-2 border-blue-500/20 hover:border-blue-500/40 transition-all hover:shadow-lg hover:shadow-blue-500/10 group">
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Search className="h-8 w-8 text-blue-500" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-2">I Need Something</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Request items, services, or help from community members
-                  </p>
-                  <Link href="/create-request">
-                    <Button className="w-full" size="lg" variant="outline">
-                      Create Request
-                      <ArrowRight className="ml-2 h-5 w-5" />
+              <Link href="/listings/create?type=request" className="block h-full group">
+                <Card className="h-full border-2 border-blue-500/20 hover:border-blue-500/40 transition-all hover:shadow-lg hover:shadow-blue-500/10 cursor-pointer">
+                  <CardContent className="p-8 text-center h-full flex flex-col justify-between">
+                    <div>
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Search className="h-8 w-8 text-blue-500" />
+                      </div>
+                      <h3 className="text-2xl font-bold mb-2">I Need Something</h3>
+                      <p className="text-muted-foreground mb-6">
+                        Request items, services, or help from community members
+                      </p>
+                    </div>
+                    <Button asChild className="w-full pointer-events-none" size="lg" variant="outline">
+                      <span>
+                        Create Request
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </span>
                     </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             </motion.div>
           </div>
         </div>
@@ -191,10 +210,10 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { icon: Users, label: 'Active Traders', value: '12,450+' },
-              { icon: TrendingUp, label: 'Trades Completed', value: '45,230+' },
-              { icon: Shield, label: 'Trust Score Avg', value: '94.2%' },
-              { icon: MapPin, label: 'Cities Covered', value: '230+' },
+              { icon: Users, label: 'Active Traders', value: '0' },
+              { icon: TrendingUp, label: 'Trades Completed', value: '0' },
+              { icon: Shield, label: 'Trust Score Avg', value: '-' },
+              { icon: MapPin, label: 'Cities Covered', value: '0' },
             ].map((stat, index) => (
               <motion.div
                 key={stat.label}
@@ -225,22 +244,26 @@ export default function HomePage() {
                     Live Activity
                   </h3>
                   <div className="space-y-4">
-                    {recentTrades.map((trade, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="border-l-2 border-primary/30 pl-3"
-                      >
-                        <p className="text-sm font-medium">{trade.user}</p>
-                        <p className="text-xs text-muted-foreground">{trade.action}</p>
-                        <div className="flex items-center justify-between mt-1">
-                          <span className="text-xs text-muted-foreground">{trade.time}</span>
-                          <Badge variant="secondary" className="text-xs">{trade.vp} VP</Badge>
-                        </div>
-                      </motion.div>
-                    ))}
+                    {recentTrades.length > 0 ? (
+                      recentTrades.map((trade, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="border-l-2 border-primary/30 pl-3"
+                        >
+                          <p className="text-sm font-medium">{trade.user}</p>
+                          <p className="text-xs text-muted-foreground">{trade.action}</p>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-xs text-muted-foreground">{trade.time}</span>
+                            <Badge variant="secondary" className="text-xs">{trade.vp} VP</Badge>
+                          </div>
+                        </motion.div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">No recent activity.</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -258,7 +281,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Select value={filterType} onValueChange={(value: any) => setFilterType(value)}>
+                  <Select value={filterType} onValueChange={(value: 'all' | 'offer' | 'request') => setFilterType(value)}>
                     <SelectTrigger className="w-[140px]">
                       <Filter className="h-4 w-4 mr-2" />
                       <SelectValue />
@@ -320,37 +343,34 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10">
-        <div className="container mx-auto px-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Ready to Start Trading?
-            </h2>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join thousands of community members building a better economy together
+      {/* CTA Section - Only for non-authenticated users */}
+      {!user && (
+        <section className="py-20 bg-primary text-primary-foreground">
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Start Trading?</h2>
+            <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
+              Join thousands of community members building a better economy together.
             </p>
-            <div className="flex gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/signup">
-                <Button size="lg" className="px-8">
+                <Button size="lg" variant="secondary" className="gap-2">
                   Get Started Free
-                  <ArrowRight className="ml-2" />
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link href="/how-it-works">
-                <Button size="lg" variant="outline" className="px-8">
+              <Link href="/about">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary"
+                >
                   Learn More
                 </Button>
               </Link>
             </div>
-          </motion.div>
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

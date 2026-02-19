@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateMessageDto } from './dto/create-message.dto';
 
 @Injectable()
 export class MessagesService {
@@ -13,7 +14,7 @@ export class MessagesService {
         REQUEST_BETTER_PHOTOS: "The photos are not clear. Could you please upload better quality pictures?",
     };
 
-    async sendMessage(data: { senderId: string; receiverId: string; tradeId?: string; listingId: string; content?: string; templateKey?: string }) {
+    async sendMessage(data: CreateMessageDto) {
         let finalContent = "";
 
         // 1. Template Logic (User demanded specific prompts)

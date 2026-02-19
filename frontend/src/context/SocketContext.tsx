@@ -8,6 +8,10 @@ import { useAuth } from './AuthContext';
 interface SocketContextType {
     socket: Socket | null;
     isConnected: boolean;
+    unreadNotifications: number;
+    unreadMessages: number;
+    markNotificationsRead: () => void;
+    markMessagesRead: () => void;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -24,6 +28,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const { user } = useAuth(); // Assuming AuthContext provides token
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
+    const [unreadMessages, setUnreadMessages] = useState(0);
+
+    const markNotificationsRead = () => setUnreadNotifications(0);
+    const markMessagesRead = () => setUnreadMessages(0);
 
     useEffect(() => {
         if (user && !socket) {
@@ -44,7 +53,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                 setIsConnected(false);
             });
 
-            // eslint-disable-next-line
             setSocket(newSocket);
 
             return () => {
@@ -57,10 +65,18 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             setSocket(null);
             setIsConnected(false);
         }
-    }, [user, socket]); // token will be needed here later
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id]); // Depend on user ID, not the object reference
 
     return (
-        <SocketContext.Provider value={{ socket, isConnected }}>
+        <SocketContext.Provider value={{
+            socket,
+            isConnected,
+            unreadNotifications,
+            unreadMessages,
+            markNotificationsRead,
+            markMessagesRead
+        }}>
             {children}
         </SocketContext.Provider>
     );

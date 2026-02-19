@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsInt, Min, Matches } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsInt, IsNumber, Min, Matches } from 'class-validator';
 
 export class CreateListingDto {
     @IsString()
@@ -38,4 +38,15 @@ export class CreateListingDto {
 
     @IsOptional()
     expiresAt?: Date;
+
+    @IsOptional()
+    priceCash?: number;
+
+    @IsOptional()
+    @IsString()
+    priceCurrency?: string;
+
+    @IsOptional()
+    @IsString()
+    attributes?: string; // JSON: { acceptVP: boolean, acceptBarter: boolean }
 }

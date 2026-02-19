@@ -17,6 +17,7 @@ interface User {
     verificationLevel?: number;
     communityRole?: string;
     trustScore?: number; // Added to match new design
+    country?: string;
 }
 
 interface AuthContextType {

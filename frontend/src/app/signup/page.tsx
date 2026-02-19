@@ -71,10 +71,8 @@ export default function SignupPage() {
                 className="w-full max-w-5xl"
             >
                 <Link href="/" className="flex items-center justify-center space-x-2 mb-8">
-                    <Link href="/" className="flex items-center justify-center space-x-2 mb-8">
-                        <img src="/assets/logo-icon.png" alt="MeetBarter" className="w-12 h-12 rounded-lg" />
-                        <span className="font-bold text-2xl">MeetBarter</span>
-                    </Link>
+                    <img src="/assets/logo-icon.png" alt="MeetBarter" className="w-12 h-12 rounded-lg" />
+                    <span className="font-bold text-2xl">MeetBarter</span>
                 </Link>
 
                 <div className="grid md:grid-cols-2 gap-8">

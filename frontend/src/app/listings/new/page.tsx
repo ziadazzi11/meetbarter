@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/config/api";
 import { adsClient } from "@/lib/ads-client";
 import UpgradeModal from "@/components/UpgradeModal";
 import ImageUpload from "@/components/ImageUpload";
 import { useAuth } from "@/context/AuthContext";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, ChevronRight, AlertCircle, Loader2 } from "lucide-react";
 
-export default function CreateListing() {
+function CreateListingContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { user, loading } = useAuth();
     const [categories, setCategories] = useState<any[]>([]);
 
@@ -19,13 +22,14 @@ export default function CreateListing() {
         }
     }, [user, loading, router]);
 
-    if (loading || !user) return null; // Or a loading spinner
-
     // Form State
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [categoryId, setCategoryId] = useState("");
-    const [listingType, setListingType] = useState("OFFER"); // OFFER | REQUEST
+    // Initialize type from URL or default to OFFER
+    const [listingType, setListingType] = useState(
+        (searchParams.get('type') === 'request') ? "REQUEST" : "OFFER"
+    );
     const [expirationDuration, setExpirationDuration] = useState("NONE"); // 3, 7, 14, NONE
     const [condition, setCondition] = useState("");
     const [originalPrice, setOriginalPrice] = useState("");
@@ -149,36 +153,47 @@ export default function CreateListing() {
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-8 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                <motion.form
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    onSubmit={handleSubmit}
+                    className="space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-white/20"
+                >
 
-                    {/* Type Selection */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-3">What would you like to do?</label>
-                        <div className="grid grid-cols-2 gap-4">
+                    {/* Type Selection - Premium Segmented Control */}
+                    <div className="flex justify-center mb-8">
+                        <div className="bg-muted p-1 rounded-xl inline-flex relative">
+                            {/* Sliding Background */}
+                            <motion.div
+                                className="absolute top-1 bottom-1 rounded-lg bg-white shadow-sm z-0"
+                                initial={false}
+                                animate={{
+                                    x: listingType === 'OFFER' ? 0 : '100%',
+                                    width: '50%'
+                                }}
+                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                            />
+
                             <button
                                 type="button"
-                                className={`
-                                    relative flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all duration-200
-                                    ${listingType === 'OFFER'
-                                        ? 'border-blue-600 bg-blue-50 text-blue-700'
-                                        : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300 hover:bg-gray-100'}
-                                `}
                                 onClick={() => setListingType('OFFER')}
+                                className={`relative z-10 px-8 py-3 rounded-lg text-sm font-medium transition-colors duration-200 ${listingType === 'OFFER' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                                style={{ width: '180px' }}
                             >
-                                <span className="font-bold">I'm Listing an Item</span>
+                                <span className="flex items-center justify-center gap-2">
+                                    <span>🎁</span> List an Item
+                                </span>
                             </button>
                             <button
                                 type="button"
-                                className={`
-                                    relative flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all duration-200
-                                    ${listingType === 'REQUEST'
-                                        ? 'border-purple-600 bg-purple-50 text-purple-700'
-                                        : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300 hover:bg-gray-100'}
-                                `}
                                 onClick={() => setListingType('REQUEST')}
+                                className={`relative z-10 px-8 py-3 rounded-lg text-sm font-medium transition-colors duration-200 ${listingType === 'REQUEST' ? 'text-purple-600' : 'text-muted-foreground hover:text-foreground'}`}
+                                style={{ width: '180px' }}
                             >
-                                <span className="text-3xl mb-2">🔍</span>
-                                <span className="font-bold">I'm Looking For</span>
+                                <span className="flex items-center justify-center gap-2">
+                                    <span>🔍</span> I'm Looking For
+                                </span>
                             </button>
                         </div>
                     </div>
@@ -450,7 +465,7 @@ export default function CreateListing() {
                             {isLoading ? 'Publishing...' : 'Publish Listing'}
                         </button>
                     </div>
-                </form>
+                </motion.form>
 
                 <UpgradeModal
                     isOpen={isUpgradeModalOpen}
@@ -461,5 +476,13 @@ export default function CreateListing() {
                 />
             </div>
         </div>
+    );
+}
+
+export default function CreateListing() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <CreateListingContent />
+        </Suspense>
     );
 }

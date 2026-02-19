@@ -1,14 +1,16 @@
 import { Controller, Post, Body, Get, Param, BadRequestException } from '@nestjs/common';
 import { MessagesService } from './messages.service';
+import { CreateMessageDto } from './dto/create-message.dto';
 
 @Controller('messages')
 export class MessagesController {
     constructor(private readonly messagesService: MessagesService) { }
 
     @Post()
-    async sendMessage(@Body() body: { senderId: string; receiverId: string; tradeId?: string; listingId: string; content?: string; templateKey?: string }) {
-        if (!body.content && !body.templateKey) throw new BadRequestException("Message content or template required");
-        return this.messagesService.sendMessage(body);
+    @Post()
+    async sendMessage(@Body() createMessageDto: CreateMessageDto) {
+        if (!createMessageDto.content && !createMessageDto.templateKey) throw new BadRequestException("Message content or template required");
+        return this.messagesService.sendMessage(createMessageDto);
     }
 
     @Get('trade/:tradeId')

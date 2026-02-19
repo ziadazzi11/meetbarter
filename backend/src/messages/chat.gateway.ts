@@ -10,6 +10,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { MessagesService } from './messages.service';
+import { CreateMessageDto } from './dto/create-message.dto';
 import { JwtService } from '@nestjs/jwt';
 import { Logger } from '@nestjs/common';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
@@ -93,7 +94,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @SubscribeMessage('send_message')
     async handleSendMessage(
         @ConnectedSocket() client: Socket,
-        @MessageBody() payload: { senderId: string; receiverId: string; tradeId: string; listingId: string; content?: string; templateKey?: string }
+        @MessageBody() payload: CreateMessageDto
     ) {
         const start = Date.now();
         // 1. Persist to DB

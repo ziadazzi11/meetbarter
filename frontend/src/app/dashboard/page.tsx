@@ -31,31 +31,9 @@ export default function DashboardPage() {
         { label: 'Messages', value: 0, icon: MessageSquare, change: '0 new', color: 'text-purple-500' },
     ];
 
-    const recentTrades = [
-        // Mock data for now
-        {
-            id: '1',
-            title: 'Vintage Camera for Design Work',
-            partner: 'Jordan Lee',
-            status: 'completed',
-            date: '2 days ago',
-            vp: 450,
-        },
-        {
-            id: '2',
-            title: 'Custom Desk Build',
-            partner: 'Sarah Chen',
-            status: 'in-progress',
-            date: '5 days ago',
-            vp: 850,
-        },
-    ];
+    const recentTrades: { id: string; title: string; partner: string; status: string; date: string; vp: number; }[] = [];
 
-    const activeListings = [
-        // Mock data
-        { id: '1', title: 'Web Development Services', views: 234, inquiries: 12, type: 'offer' },
-        { id: '2', title: 'Need: Moving Help', views: 156, inquiries: 15, type: 'request' },
-    ];
+    const activeListings: { id: string; title: string; views: number; inquiries: number; type: string; }[] = [];
 
     const getStatusIcon = (status: string) => {
         switch (status) {
@@ -84,7 +62,7 @@ export default function DashboardPage() {
                         </p>
                     </div>
                     <div className="flex gap-2">
-                        <Link href="/create-listing">
+                        <Link href="/listings/create">
                             <Button>
                                 <Plus className="h-4 w-4 mr-2" />
                                 Create Listing
@@ -139,94 +117,37 @@ export default function DashboardPage() {
 
                 <div className="grid lg:grid-cols-3 gap-8">
                     {/* Main Content */}
-                    <div className="lg:col-span-2 space-y-8">
-                        {/* Recent Trades */}
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <CardTitle>Recent Trades</CardTitle>
-                                    <Link href="/trades">
-                                        <Button variant="ghost" size="sm">
-                                            View All
-                                            <ArrowRight className="h-4 w-4 ml-2" />
-                                        </Button>
-                                    </Link>
-                                </div>
+                    {/* Main Content Area - Reduced duplication */}
+                    <div className="grid gap-6 md:grid-cols-2">
+                        <Card className="hover:border-primary/50 transition-colors cursor-pointer" onClick={() => window.location.href = '/trades'}>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <TrendingUp className="h-5 w-5 text-blue-500" />
+                                    Active Trades
+                                </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="space-y-4">
-                                    {recentTrades.map((trade) => (
-                                        <div
-                                            key={trade.id}
-                                            className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                {getStatusIcon(trade.status)}
-                                                <div>
-                                                    <p className="font-medium">{trade.title}</p>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        with {trade.partner} • {trade.date}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="font-bold text-primary">{trade.vp} VP</p>
-                                                <Badge
-                                                    variant={
-                                                        trade.status === 'completed'
-                                                            ? 'default'
-                                                            : trade.status === 'in-progress'
-                                                                ? 'secondary'
-                                                                : 'outline'
-                                                    }
-                                                    className="mt-1"
-                                                >
-                                                    {trade.status}
-                                                </Badge>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                <p className="text-3xl font-bold">{stats[0].value || '0'}</p>
+                                <p className="text-muted-foreground text-sm">Negotiations in progress</p>
+                                <Button variant="link" className="px-0 mt-2 text-primary">
+                                    Manage Trades <ArrowRight className="h-4 w-4 ml-1" />
+                                </Button>
                             </CardContent>
                         </Card>
 
-                        {/* Active Listings */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Your Active Listings</CardTitle>
-                                <CardDescription>Track performance of your listings</CardDescription>
+                        <Card className="hover:border-primary/50 transition-colors cursor-pointer" onClick={() => window.location.href = `/profile/${user?.id || ''}`}>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <Package className="h-5 w-5 text-green-500" />
+                                    My Listings
+                                </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="space-y-4">
-                                    {activeListings.map((listing) => (
-                                        <div key={listing.id} className="p-4 rounded-lg border border-border">
-                                            <div className="flex items-start justify-between mb-3">
-                                                <div>
-                                                    <h4 className="font-medium mb-1">{listing.title}</h4>
-                                                    <Badge
-                                                        variant={listing.type === 'offer' ? 'default' : 'secondary'}
-                                                        className="text-xs"
-                                                    >
-                                                        {listing.type === 'offer' ? 'Offering' : 'Requesting'}
-                                                    </Badge>
-                                                </div>
-                                                <Button size="sm" variant="ghost">
-                                                    Edit
-                                                </Button>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-2xl font-bold">{listing.views}</p>
-                                                    <p className="text-xs text-muted-foreground">Views</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-2xl font-bold">{listing.inquiries}</p>
-                                                    <p className="text-xs text-muted-foreground">Inquiries</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                <p className="text-3xl font-bold">{stats[2].value || '0'}</p>
+                                <p className="text-muted-foreground text-sm">Active items in store</p>
+                                <Button variant="link" className="px-0 mt-2 text-primary">
+                                    View Store <ArrowRight className="h-4 w-4 ml-1" />
+                                </Button>
                             </CardContent>
                         </Card>
                     </div>
@@ -280,16 +201,22 @@ export default function DashboardPage() {
                                 <CardTitle>Quick Actions</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-2">
-                                <Link href="/create-offer">
+                                <Link href="/listings/create?type=offer">
                                     <Button variant="outline" className="w-full justify-start">
                                         <Package className="h-4 w-4 mr-2" />
                                         Create Offer
                                     </Button>
                                 </Link>
-                                <Link href="/create-request">
+                                <Link href="/listings/create?type=request">
                                     <Button variant="outline" className="w-full justify-start">
                                         <Plus className="h-4 w-4 mr-2" />
                                         Create Request
+                                    </Button>
+                                </Link>
+                                <Link href="/trades">
+                                    <Button variant="outline" className="w-full justify-start">
+                                        <TrendingUp className="h-4 w-4 mr-2" />
+                                        My Trades
                                     </Button>
                                 </Link>
                                 <Link href="/messages">
@@ -298,7 +225,7 @@ export default function DashboardPage() {
                                         View Messages
                                     </Button>
                                 </Link>
-                                <Link href="/profile">
+                                <Link href="/settings">
                                     <Button variant="outline" className="w-full justify-start">
                                         <Star className="h-4 w-4 mr-2" />
                                         Edit Profile

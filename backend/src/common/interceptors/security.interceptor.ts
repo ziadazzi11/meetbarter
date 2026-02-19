@@ -13,8 +13,11 @@ export class SecurityInterceptor implements NestInterceptor {
 
         if (user) {
             // Evaluate risk on every authenticated request (optimized for Phase 2)
-            const riskScore = await this.anomalyDetection.evaluateRisk(user.userId, ip);
-            request['riskScore'] = riskScore;
+            const userId = user.userId || user.id;
+            if (userId) {
+                const riskScore = await this.anomalyDetection.evaluateRisk(userId, ip);
+                request['riskScore'] = riskScore;
+            }
 
             // If risk is extremely high, we might block here, but for now we let guards handle it
         }

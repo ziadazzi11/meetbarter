@@ -1,242 +1,28 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { API_BASE_URL } from '@/config/api';
+import { Shield } from "lucide-react";
 
-export default function TermsOfService() {
-    const [registrationNumber, setRegistrationNumber] = useState<string>("[PENDING_REGISTRATION_NUMBER]");
-
-    useEffect(() => {
-        fetch(`${API_BASE_URL}/admin/status`) // Reusing status endpoint or creating a public config one? Backend has getPublicConfig in SystemStateService but need controller exposure.
-        // Actually, SystemStateService.getPublicConfig is not exposed via a dedicated public endpoint in AppController yet?
-        // Let's check AppController. Alternatively, use specific endpoint.
-        // Wait, I saw getPublicConfig in SystemStateService. Let's start by adding a clearer public config endpoint in AppController.
-        // For now, I'll assume I can add it or it exists.
-        // Wait, previous turn I saw `whishPhoneNumber` exposed in AppController.
-        fetch(`${API_BASE_URL}/config`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.legalEntityId) setRegistrationNumber(data.legalEntityId);
-            })
-            .catch(() => { });
-    }, []);
-
+export default function TermsPage() {
     return (
-        <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-6">Terms of Service</h1>
-                <p className="text-sm text-gray-600 mb-4">Last Updated: January 27, 2026</p>
-                <div className="bg-gray-100 p-3 rounded text-xs text-gray-500 mb-8 border border-gray-200">
-                    MeetBarter™ is a trademark of MeetBarter Foundation (Registration: {registrationNumber}).
-                    These terms incorporate the principles of our <strong>Internal Bylaws (Article 8 & 9)</strong> regarding ethical exchange.
-                </div>
+        <div className="container mx-auto py-12 px-4 max-w-4xl">
+            <div className="mb-8 flex items-center gap-3">
+                <Shield className="h-8 w-8 text-primary" />
+                <h1 className="text-3xl font-bold">Terms of Service</h1>
+            </div>
+            <div className="prose dark:prose-invert max-w-none">
+                <p className="text-muted-foreground mb-6">Last updated: {new Date().toLocaleDateString()}</p>
 
-                <div className="space-y-6 text-gray-700">
-                    <section>
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">1. Acceptance of Terms</h2>
-                        <p>
-                            By creating an account or using Meetbarter, you agree to these Terms of Service.
-                            If you do not agree, do not use the platform.
-                        </p>
-                    </section>
+                <h2 className="text-2xl font-semibold mt-8 mb-4">1. Introduction</h2>
+                <p>Welcome to MeetBarter. By accessing our website and using our services, you agree to be bound by these Terms of Service.</p>
 
-                    <section>
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">2. Platform Purpose</h2>
-                        <p>
-                            Meetbarter is a <strong>barter coordination platform</strong> that facilitates the exchange of
-                            goods and services using non-convertible Value Points. We do not process payments,
-                            hold money, or participate in transactions.
-                        </p>
-                    </section>
+                <h2 className="text-2xl font-semibold mt-8 mb-4">2. Community Guidelines</h2>
+                <p>MeetBarter is a community-driven platform. We expect all users to treat each other with respect and honesty. Harassment, hate speech, and fraudulent activities are strictly prohibited.</p>
 
-                    <section>
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">3. Prohibited Items (Region-Specific)</h2>
-                        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 my-4">
-                            <p className="font-semibold text-blue-800 mb-2">
-                                ⚖️ Local Laws Apply
-                            </p>
-                            <p className="text-blue-700">
-                                Prohibited items are determined by <strong>your country's laws</strong>.
-                                What is legal in one country may be illegal in another. You are responsible
-                                for knowing and following your local laws.
-                            </p>
-                        </div>
+                <h2 className="text-2xl font-semibold mt-8 mb-4">3. Trading Rules</h2>
+                <p>All trades are conducted at the risk of the parties involved. MeetBarter provides the platform for connection but is not responsible for the quality or delivery of goods and services exchanged.</p>
 
-                        <div className="bg-red-50 border-l-4 border-red-500 p-4 my-4">
-                            <p className="font-semibold text-red-800 mb-2">
-                                Globally Prohibited (Illegal Everywhere):
-                            </p>
-                            <ul className="list-disc list-inside space-y-1 text-red-700">
-                                <li>Stolen property or items without proof of ownership</li>
-                                <li>Counterfeit goods, replicas, or unauthorized copies</li>
-                                <li>Prescription medications without proper authorization</li>
-                                <li>Adult services or explicit content</li>
-                                <li><strong>Human Trafficking & Exploitation</strong> (Zero Tolerance) - Article 8.1</li>
-                                <li><strong>Human Organs & Body Parts</strong> - Article 8.1</li>
-                                <li><strong>Items related to Harmful/Satanic Rituals or Black Magic</strong> - Article 8.1</li>
-                                <li>Weaponized robotics or tactical combat systems</li>
-                                <li>Items that violate international law</li>
-                            </ul>
-                        </div>
-
-                        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 my-4">
-                            <p className="font-semibold text-yellow-800 mb-2">
-                                Region-Specific Restrictions:
-                            </p>
-                            <p className="text-yellow-700">
-                                Items such as cannabis, alcohol, tobacco, knives, and firearms are subject to
-                                local laws. Our system automatically checks your listing location and enforces
-                                applicable restrictions.
-                            </p>
-                            <ul className="list-disc list-inside space-y-1 text-yellow-700 mt-2">
-                                <li><strong>Lebanon/UAE:</strong> Strict prohibition on cannabis, alcohol, weapons</li>
-                                <li><strong>USA/Canada:</strong> Cannabis legal in some states/provinces</li>
-                                <li><strong>Europe:</strong> Moderate restrictions, varies by country</li>
-                            </ul>
-                        </div>
-
-                        <p className="font-semibold text-gray-900 mt-4">
-                            Violation of your local laws will result in immediate account suspension,
-                            content removal, and potential reporting to authorities.
-                        </p>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">4. User Responsibility</h2>
-                        <p>
-                            <strong>You are solely responsible for items you list and trades you complete.</strong>
-                            Meetbarter is not a party to your transactions. We provide a platform for coordination only.
-                        </p>
-                        <ul className="list-disc list-inside mt-2 space-y-1">
-                            <li>You must own or have the right to trade items you list</li>
-                            <li>You must accurately describe item condition and value</li>
-                            <li>You must meet trade obligations in good faith</li>
-                            <li>You assume all risk in person-to-person exchanges</li>
-                        </ul>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">5. Safety Guidelines</h2>
-                        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 my-4">
-                            <p className="font-semibold text-yellow-800 mb-2">
-                                ⚠️ Meeting Safety (Your Responsibility)
-                            </p>
-                            <p className="text-yellow-700 mb-3">
-                                <strong>MeetBarter is not responsible for your safety during in-person trades.</strong>
-                                You are solely responsible for choosing safe meeting locations and protecting yourself.
-                            </p>
-                            <p className="font-semibold text-yellow-800 mb-2">Recommended Safety Practices:</p>
-                            <ul className="list-disc list-inside space-y-1 text-yellow-700">
-                                <li><strong>Always meet in public places</strong> (cafes, malls, police station parking lots)</li>
-                                <li>Meet during daylight hours when possible</li>
-                                <li>Tell a friend or family member where you're going</li>
-                                <li>Inspect items thoroughly before completing the trade</li>
-                                <li>Trust your instincts - cancel if something feels wrong</li>
-                                <li>Never share personal information (home address, financial details) until meeting</li>
-                            </ul>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-2">
-                            These are recommendations only. MeetBarter does not enforce meeting locations and
-                            is not liable for any incidents, injuries, or losses during in-person exchanges.
-                        </p>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">6. Content Moderation</h2>
-                        <p>
-                            We reserve the right to:
-                        </p>
-                        <ul className="list-disc list-inside mt-2 space-y-1">
-                            <li>Review, flag, or remove any listing at our discretion</li>
-                            <li>Ban users who violate these terms</li>
-                            <li>Use automated systems to detect prohibited content</li>
-                            <li>Refuse service to anyone for any reason</li>
-                        </ul>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">6. Cooperation with Law Enforcement</h2>
-                        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 my-4">
-                            <p className="font-semibold text-yellow-800">
-                                We will cooperate fully with law enforcement and report illegal activity.
-                            </p>
-                            <p className="text-yellow-700 mt-2">
-                                If we detect or receive reports of illegal items (drugs, weapons, stolen goods),
-                                we will provide user information, IP addresses, and transaction records to authorities.
-                            </p>
-                        </div>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">7. Value Points</h2>
-                        <p>
-                            Value Points are <strong>non-convertible internal units</strong> used to facilitate
-                            fair barter exchanges. They have no cash value and cannot be redeemed for money.
-                        </p>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">8. Dispute Resolution</h2>
-                        <p>
-                            Users can report issues through our dispute system. Final decisions rest with
-                            platform administrators. We are not liable for trade disputes.
-                        </p>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">9. Account Termination</h2>
-                        <p>
-                            We may suspend or terminate your account for:
-                        </p>
-                        <ul className="list-disc list-inside mt-2 space-y-1">
-                            <li>Listing prohibited items (immediate ban)</li>
-                            <li>Fraudulent activity or scams</li>
-                            <li>Harassment or abuse of other users</li>
-                            <li>Violation of any term in this agreement</li>
-                        </ul>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">10. Limitation of Liability</h2>
-                        <p>
-                            Meetbarter is provided "as is" without warranties. We are not liable for:
-                        </p>
-                        <ul className="list-disc list-inside mt-2 space-y-1">
-                            <li>User conduct or trade outcomes</li>
-                            <li>Item quality, condition, or legality</li>
-                            <li>Losses from scams or fraud</li>
-                            <li>Platform downtime or data loss</li>
-                        </ul>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">11. Changes to Terms</h2>
-                        <p>
-                            We may update these terms at any time. Continued use after changes constitutes acceptance.
-                        </p>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">12. Contact</h2>
-                        <p>
-                            For questions, reports, or legal requests, contact:{' '}
-                            <a href="mailto:meetbarter@gmail.com" className="text-blue-600 hover:underline">
-                                meetbarter@gmail.com
-                            </a>
-                        </p>
-                        <p className="mt-4 text-sm">
-                            MeetBarter Foundation<br />
-                            [PHYSICAL_ADDRESS_IF_APPLICABLE]<br />
-                            Beirut, Lebanon
-                        </p>
-                    </section>
-                </div>
-
-                <div className="mt-8 pt-6 border-t border-gray-200">
-                    <p className="text-center text-sm text-gray-600">
-                        By using Meetbarter, you acknowledge that you have read, understood, and agree to these Terms of Service.
-                    </p>
-                </div>
+                <h2 className="text-2xl font-semibold mt-8 mb-4">4. Value Points (VP)</h2>
+                <p>Value Points are an internal currency used to facilitate trades. They have no monetary value outside of the MeetBarter platform and cannot be exchanged for fiat currency.</p>
             </div>
         </div>
     );

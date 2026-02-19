@@ -110,11 +110,12 @@ class HandshakeService {
     /**
      * Secure Fetch Wrapper
      * Automatically injects X-Handshake-Token header.
+     * Optionally injects Authorization header if token provided.
      */
-    async fetch(url: string, options: RequestInit = {}): Promise<Response> {
-        let token: string;
+    async fetch(url: string, options: RequestInit = {}, authToken?: string): Promise<Response> {
+        let handshakeToken: string;
         try {
-            token = await this.getSecureToken();
+            handshakeToken = await this.getSecureToken();
         } catch (e) {
             // Fallback: Try request without token if handshake fails (unlikely for protected routes)
             console.warn("Proceeding without handshake token due to error");
@@ -122,7 +123,11 @@ class HandshakeService {
         }
 
         const headers = new Headers(options.headers);
-        headers.set("X-Handshake-Token", token);
+        headers.set("X-Handshake-Token", handshakeToken);
+
+        if (authToken) {
+            headers.set("Authorization", `Bearer ${authToken}`);
+        }
 
         const config = {
             ...options,

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Shield, Chrome, Facebook } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -15,13 +15,29 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { API_BASE_URL } from '@/config/api';
 
-export default function LoginPage() {
+function LoginContent() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const { login } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        const token = searchParams.get('token');
+        const uid = searchParams.get('uid');
+
+        if (token && uid) {
+            setIsLoading(true);
+            // Store auth data
+            localStorage.setItem("meetbarter_token", token);
+            localStorage.setItem("meetbarter_uid", uid);
+
+            // Force a hard redirect to ensure AuthContext re-initializes with the new token
+            window.location.href = '/dashboard';
+        }
+    }, [searchParams, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -57,10 +73,8 @@ export default function LoginPage() {
                 className="w-full max-w-md"
             >
                 <Link href="/" className="flex items-center justify-center space-x-2 mb-8">
-                    <Link href="/" className="flex items-center justify-center space-x-2 mb-8">
-                        <img src="/assets/logo-icon.png" alt="MeetBarter" className="w-12 h-12 rounded-lg" />
-                        <span className="font-bold text-2xl">MeetBarter</span>
-                    </Link>
+                    <img src="/assets/logo-icon.png" alt="MeetBarter" className="w-12 h-12 rounded-lg" />
+                    <span className="font-bold text-2xl">MeetBarter</span>
                 </Link>
 
                 <Card>
@@ -172,5 +186,13 @@ export default function LoginPage() {
                 </p>
             </motion.div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+            <LoginContent />
+        </Suspense>
     );
 }

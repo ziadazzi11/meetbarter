@@ -19,6 +19,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useSocket } from '@/context/SocketContext';
 import { useTheme } from '@/components/ThemeContext'; // Use existing context
 import { Button } from '@/components/ui/button';
 import {
@@ -32,9 +33,11 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState } from 'react';
+import CurrencySelector from '@/components/CurrencySelector';
 
 export default function Header() {
   const { user, isAuthenticated, logout } = useAuth();
+  const { unreadNotifications, unreadMessages, markNotificationsRead, markMessagesRead } = useSocket();
   const { darkMode, setDarkMode } = useTheme(); // Adapted to existing context
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -59,14 +62,12 @@ export default function Header() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <img src="/assets/logo-icon.png" alt="MeetBarter" className="w-10 h-10 rounded-lg" />
-            <span className="font-bold text-xl hidden sm:inline-block">MeetBarter</span>
+            <img src="/assets/logo-alt.png" alt="MeetBarter" className="h-10 w-auto" />
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1">
+          <nav className="hidden md:flex items-center gap-6">
             {navigation.map((item) => {
               if (item.protected && !isAuthenticated) return null;
               const Icon = item.icon;
@@ -83,10 +84,21 @@ export default function Header() {
                 </Link>
               );
             })}
+            {isAuthenticated && (
+              <Link href="/listings/create">
+                <Button variant="default" size="sm" className="gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white border-0">
+                  <Package className="h-4 w-4" />
+                  Create Listing
+                </Button>
+              </Link>
+            )}
           </nav>
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-2">
+            {/* Currency Selector */}
+            <CurrencySelector />
+
             {/* Theme Toggle */}
             <Button
               variant="ghost"
@@ -104,20 +116,62 @@ export default function Header() {
             {isAuthenticated ? (
               <>
                 {/* Notifications */}
-                <Button variant="ghost" size="icon" className="relative hidden sm:flex">
-                  <Bell className="h-5 w-5" />
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white">
-                    3
-                  </Badge>
-                </Button>
+                <DropdownMenu onOpenChange={(open) => {
+                  if (open) markNotificationsRead();
+                }}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative hidden sm:flex">
+                      <Bell className="h-5 w-5" />
+                      {unreadNotifications > 0 && (
+                        <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white">
+                          {unreadNotifications}
+                        </Badge>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-80">
+                    <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                      No new notifications
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/notifications" className="w-full text-center text-primary cursor-pointer justify-center flex">
+                        View all notifications
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 {/* Messages */}
-                <Button variant="ghost" size="icon" className="relative hidden sm:flex">
-                  <MessageSquare className="h-5 w-5" />
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-blue-500 text-white">
-                    7
-                  </Badge>
-                </Button>
+                <DropdownMenu onOpenChange={(open) => {
+                  if (open) markMessagesRead();
+                }}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative hidden sm:flex">
+                      <MessageSquare className="h-5 w-5" />
+                      {unreadMessages > 0 && (
+                        <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-blue-500 text-white">
+                          {unreadMessages}
+                        </Badge>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-80">
+                    <DropdownMenuLabel>Messages</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                      No new messages
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/messages" className="w-full text-center text-primary cursor-pointer justify-center flex">
+                        View all messages
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 {/* User Menu */}
                 <DropdownMenu>
@@ -215,6 +269,14 @@ export default function Header() {
                   </Link>
                 );
               })}
+              {isAuthenticated && (
+                <Link href="/listings/create" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="default" className="w-full justify-start gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+                    <Package className="h-4 w-4" />
+                    Create Listing
+                  </Button>
+                </Link>
+              )}
             </nav>
           </div>
         )}

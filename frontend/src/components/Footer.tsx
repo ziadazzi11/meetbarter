@@ -42,10 +42,7 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="lg:col-span-1">
             <Link href="/" className="flex items-center space-x-2 mb-4">
-              <Link href="/" className="flex items-center space-x-2 mb-4">
-                <img src="/assets/logo-icon.png" alt="MeetBarter" className="w-10 h-10 rounded-lg" />
-                <span className="font-bold text-xl">MeetBarter</span>
-              </Link>
+              <img src="/assets/logo-alt.png" alt="MeetBarter" className="h-10 w-auto" />
             </Link>
             <p className="text-sm text-muted-foreground mb-4">
               Building a community-driven, trust-based trading economy. Trade what you have for what you need.
