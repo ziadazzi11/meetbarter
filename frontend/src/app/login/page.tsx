@@ -72,9 +72,8 @@ function LoginContent() {
                 transition={{ duration: 0.5 }}
                 className="w-full max-w-md"
             >
-                <Link href="/" className="flex items-center justify-center space-x-2 mb-8">
-                    <img src="/assets/logo-icon.png" alt="MeetBarter" className="w-12 h-12 rounded-lg" />
-                    <span className="font-bold text-2xl">MeetBarter</span>
+                <Link href="/" className="flex items-center justify-center mb-8">
+                    <img src="/assets/logo-03.png" alt="MeetBarter" className="h-12 w-auto" />
                 </Link>
 
                 <Card>
@@ -89,12 +88,10 @@ function LoginContent() {
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email</Label>
                                 <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="email"
                                         type="email"
                                         placeholder="you@example.com"
-                                        className="pl-14"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
@@ -110,12 +107,10 @@ function LoginContent() {
                                     </Link>
                                 </div>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="password"
                                         type="password"
                                         placeholder="••••••••"
-                                        className="pl-14"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
@@ -170,7 +165,7 @@ function LoginContent() {
                     </CardContent>
                     <CardFooter className="flex flex-col">
                         <p className="text-sm text-center text-muted-foreground">
-                            Don't have an account?{' '}
+                            Don&apos;t have an account?{' '}
                             <Link href="/signup" className="text-primary hover:underline font-medium">
                                 Sign up for free
                             </Link>
