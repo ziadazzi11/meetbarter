@@ -18,6 +18,7 @@ interface User {
     communityRole?: string;
     trustScore?: number; // Added to match new design
     country?: string;
+    totalTrades?: number;
 }
 
 interface AuthContextType {

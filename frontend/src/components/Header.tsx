@@ -9,7 +9,6 @@ import {
   User,
   LogOut,
   Settings,
-  Shield,
   Moon,
   Sun,
   Home,
@@ -33,6 +32,13 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState } from 'react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import CurrencySelector from '@/components/CurrencySelector';
 
 export default function Header() {
@@ -43,7 +49,6 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const toggleTheme = () => setDarkMode(!darkMode);
-  const themeName = darkMode ? 'dark' : 'light';
 
   const navigation = [
     { name: 'Home', href: '/', icon: Home },
@@ -250,47 +255,61 @@ export default function Header() {
             )}
 
             {/* Mobile Menu */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              <Menu className="h-6 w-6" />
-            </Button>
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right">
+                <SheetHeader>
+                  <SheetTitle>Menu</SheetTitle>
+                </SheetHeader>
+                <nav className="flex flex-col space-y-2 mt-6">
+                  {navigation.map((item) => {
+                    if (item.protected && !isAuthenticated) return null;
+                    const Icon = item.icon;
+                    return (
+                      <Link key={item.name} href={item.href} onClick={() => setMobileMenuOpen(false)}>
+                        <Button
+                          variant={isActivePath(item.href) ? 'secondary' : 'ghost'}
+                          className="w-full justify-start gap-2"
+                        >
+                          <Icon className="h-4 w-4" />
+                          {item.name}
+                        </Button>
+                      </Link>
+                    );
+                  })}
+                  {isAuthenticated && (
+                    <Link href="/listings/create" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="default" className="w-full justify-start gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+                        <Package className="h-4 w-4" />
+                        Create Listing
+                      </Button>
+                    </Link>
+                  )}
+                  <div className="pt-4 border-t border-border">
+                    <div className="flex items-center justify-between px-2">
+                      <span className="text-sm font-medium">Theme</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={toggleTheme}
+                      >
+                        {darkMode ? (
+                          <Sun className="h-5 w-5" />
+                        ) : (
+                          <Moon className="h-5 w-5" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </nav>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
-
-        {/* Mobile Navigation */}
-        {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border">
-            <nav className="flex flex-col space-y-2">
-              {navigation.map((item) => {
-                if (item.protected && !isAuthenticated) return null;
-                const Icon = item.icon;
-                return (
-                  <Link key={item.name} href={item.href} onClick={() => setMobileMenuOpen(false)}>
-                    <Button
-                      variant={isActivePath(item.href) ? 'secondary' : 'ghost'}
-                      className="w-full justify-start gap-2"
-                    >
-                      <Icon className="h-4 w-4" />
-                      {item.name}
-                    </Button>
-                  </Link>
-                );
-              })}
-              {isAuthenticated && (
-                <Link href="/listings/create" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="default" className="w-full justify-start gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
-                    <Package className="h-4 w-4" />
-                    Create Listing
-                  </Button>
-                </Link>
-              )}
-            </nav>
-          </div>
-        )}
       </div>
     </header>
   );

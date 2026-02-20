@@ -25,15 +25,11 @@ export default function DashboardPage() {
     const { user } = useAuth();
 
     const stats = [
-        { label: 'Total Trades', value: '0', icon: Package, change: '+0%', color: 'text-blue-500' }, // user?.totalTrades not on type yet
+        { label: 'Total Trades', value: user?.totalTrades || 0, icon: Package, change: '+0%', color: 'text-blue-500' },
         { label: 'Trust Score', value: user?.trustScore || 0, icon: Star, change: '+0 pts', color: 'text-yellow-500' },
         { label: 'Active Listings', value: 0, icon: TrendingUp, change: '+0', color: 'text-green-500' },
         { label: 'Messages', value: 0, icon: MessageSquare, change: '0 new', color: 'text-purple-500' },
     ];
-
-    const recentTrades: { id: string; title: string; partner: string; status: string; date: string; vp: number; }[] = [];
-
-    const activeListings: { id: string; title: string; views: number; inquiries: number; type: string; }[] = [];
 
     const getStatusIcon = (status: string) => {
         switch (status) {
@@ -117,7 +113,6 @@ export default function DashboardPage() {
 
                 <div className="grid lg:grid-cols-3 gap-8">
                     {/* Main Content */}
-                    {/* Main Content Area - Reduced duplication */}
                     <div className="grid gap-6 md:grid-cols-2">
                         <Card className="hover:border-primary/50 transition-colors cursor-pointer" onClick={() => window.location.href = '/trades'}>
                             <CardHeader className="pb-2">
@@ -127,8 +122,12 @@ export default function DashboardPage() {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-3xl font-bold">{stats[0].value || '0'}</p>
-                                <p className="text-muted-foreground text-sm">Negotiations in progress</p>
+                                <p className="text-3xl font-bold">{stats[0].value}</p>
+                                {Number(stats[0].value) === 0 ? (
+                                    <p className="text-muted-foreground text-sm mt-1">No active trades yet. Start exploring!</p>
+                                ) : (
+                                    <p className="text-muted-foreground text-sm">Negotiations in progress</p>
+                                )}
                                 <Button variant="link" className="px-0 mt-2 text-primary">
                                     Manage Trades <ArrowRight className="h-4 w-4 ml-1" />
                                 </Button>

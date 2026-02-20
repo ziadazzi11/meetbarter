@@ -7,10 +7,7 @@ import {
   ArrowRight,
   Package,
   Search,
-  MapPin,
   TrendingUp,
-  Users,
-  Shield,
   Sparkles,
   Grid3x3,
   Map as MapIcon,
@@ -28,6 +25,7 @@ import { apiClient } from '@/lib/api-client';
 import MapViewer from '@/components/MapViewer/MapViewer';
 
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 // Recent trades could also be fetched, but keeping mock for now if no endpoint exists
 const recentTrades: { user: string; action: string; time: string; vp: number }[] = [];
@@ -82,9 +80,11 @@ export default function HomePage() {
           setListings(mappedListings);
         } else {
           console.error("Failed to fetch listings");
+          toast.error("Failed to load listings. Please try again.");
         }
       } catch (error) {
         console.error("Error fetching listings:", error);
+        toast.error("Network error. Please check your connection.");
       } finally {
         setLoading(false);
       }
