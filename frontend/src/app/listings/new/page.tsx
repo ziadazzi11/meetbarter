@@ -178,8 +178,7 @@ function CreateListingContent() {
                             <button
                                 type="button"
                                 onClick={() => setListingType('OFFER')}
-                                className={`relative z-10 px-8 py-3 rounded-lg text-sm font-medium transition-colors duration-200 ${listingType === 'OFFER' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-                                style={{ width: '180px' }}
+                                className={`relative z-10 px-8 py-3 rounded-lg text-sm font-medium transition-colors duration-200 w-[180px] ${listingType === 'OFFER' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                             >
                                 <span className="flex items-center justify-center gap-2">
                                     <span>🎁</span> List an Item
@@ -188,8 +187,7 @@ function CreateListingContent() {
                             <button
                                 type="button"
                                 onClick={() => setListingType('REQUEST')}
-                                className={`relative z-10 px-8 py-3 rounded-lg text-sm font-medium transition-colors duration-200 ${listingType === 'REQUEST' ? 'text-purple-600' : 'text-muted-foreground hover:text-foreground'}`}
-                                style={{ width: '180px' }}
+                                className={`relative z-10 px-8 py-3 rounded-lg text-sm font-medium transition-colors duration-200 w-[180px] ${listingType === 'REQUEST' ? 'text-purple-600' : 'text-muted-foreground hover:text-foreground'}`}
                             >
                                 <span className="flex items-center justify-center gap-2">
                                     <span>🔍</span> I'm Looking For
