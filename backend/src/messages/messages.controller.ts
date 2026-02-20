@@ -17,4 +17,9 @@ export class MessagesController {
     async getTradeMessages(@Param('tradeId') tradeId: string) {
         return this.messagesService.getMessagesForTrade(tradeId);
     }
+    @Get('conversations/:userId')
+    async getConversations(@Param('userId') userId: string) {
+        // In real app, get userId from JWT Guard (Request.user)
+        return this.messagesService.getConversations(userId);
+    }
 }

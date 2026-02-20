@@ -94,7 +94,7 @@ function LoginContent() {
                                         id="email"
                                         type="email"
                                         placeholder="you@example.com"
-                                        className="pl-10"
+                                        className="pl-14"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
@@ -115,7 +115,7 @@ function LoginContent() {
                                         id="password"
                                         type="password"
                                         placeholder="••••••••"
-                                        className="pl-10"
+                                        className="pl-14"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required

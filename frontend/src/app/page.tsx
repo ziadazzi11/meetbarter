@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ListingCard, Listing } from '@/components/Listings/ListingCard';
 import { API_BASE_URL } from '@/config/api';
 import { apiClient } from '@/lib/api-client';
+import MapViewer from '@/components/MapViewer/MapViewer';
 
 import { useAuth } from '@/context/AuthContext';
 
@@ -144,92 +145,70 @@ export default function HomePage() {
             </div>
           </motion.div>
 
-          {/* Split CTA Cards */}
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <Link href="/listings/create?type=offer" className="block h-full group">
-                <Card className="h-full border-2 border-green-500/20 hover:border-green-500/40 transition-all hover:shadow-lg hover:shadow-green-500/10 cursor-pointer">
-                  <CardContent className="p-8 text-center h-full flex flex-col justify-between">
-                    <div>
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Package className="h-8 w-8 text-green-500" />
-                      </div>
-                      <h3 className="text-2xl font-bold mb-2">I Have Something</h3>
-                      <p className="text-muted-foreground mb-6">
-                        Offer your goods, skills, or services to the community
-                      </p>
-                    </div>
-                    <Button asChild className="w-full pointer-events-none" size="lg" variant="default">
-                      <span>
-                        Create Offer
-                        <ArrowRight className="ml-2 h-5 w-5" />
-                      </span>
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Link>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              <Link href="/listings/create?type=request" className="block h-full group">
-                <Card className="h-full border-2 border-blue-500/20 hover:border-blue-500/40 transition-all hover:shadow-lg hover:shadow-blue-500/10 cursor-pointer">
-                  <CardContent className="p-8 text-center h-full flex flex-col justify-between">
-                    <div>
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Search className="h-8 w-8 text-blue-500" />
-                      </div>
-                      <h3 className="text-2xl font-bold mb-2">I Need Something</h3>
-                      <p className="text-muted-foreground mb-6">
-                        Request items, services, or help from community members
-                      </p>
-                    </div>
-                    <Button asChild className="w-full pointer-events-none" size="lg" variant="outline">
-                      <span>
-                        Create Request
-                        <ArrowRight className="ml-2 h-5 w-5" />
-                      </span>
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Link>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-12 border-y border-border/40 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { icon: Users, label: 'Active Traders', value: '0' },
-              { icon: TrendingUp, label: 'Trades Completed', value: '0' },
-              { icon: Shield, label: 'Trust Score Avg', value: '-' },
-              { icon: MapPin, label: 'Cities Covered', value: '0' },
-            ].map((stat, index) => (
+          {user && (
+            /* Split CTA Cards */
+            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-                className="text-center"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
               >
-                <stat.icon className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <div className="text-3xl font-bold mb-1">{stat.value}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
+                <Link href="/listings/create?type=offer" className="block h-full group">
+                  <Card className="h-full border-2 border-green-500/20 hover:border-green-500/40 transition-all hover:shadow-lg hover:shadow-green-500/10 cursor-pointer">
+                    <CardContent className="p-8 text-center h-full flex flex-col justify-between">
+                      <div>
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Package className="h-8 w-8 text-green-500" />
+                        </div>
+                        <h3 className="text-2xl font-bold mb-2">I Have Something</h3>
+                        <p className="text-muted-foreground mb-6">
+                          Offer your goods, skills, or services to the community
+                        </p>
+                      </div>
+                      <Button asChild className="w-full pointer-events-none" size="lg" variant="default">
+                        <span>
+                          Create Offer
+                          <ArrowRight className="ml-2 h-5 w-5" />
+                        </span>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Link>
               </motion.div>
-            ))}
-          </div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                <Link href="/listings/create?type=request" className="block h-full group">
+                  <Card className="h-full border-2 border-blue-500/20 hover:border-blue-500/40 transition-all hover:shadow-lg hover:shadow-blue-500/10 cursor-pointer">
+                    <CardContent className="p-8 text-center h-full flex flex-col justify-between">
+                      <div>
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Search className="h-8 w-8 text-blue-500" />
+                        </div>
+                        <h3 className="text-2xl font-bold mb-2">I Need Something</h3>
+                        <p className="text-muted-foreground mb-6">
+                          Request items, services, or help from community members
+                        </p>
+                      </div>
+                      <Button asChild className="w-full pointer-events-none" size="lg" variant="outline">
+                        <span>
+                          Create Request
+                          <ArrowRight className="ml-2 h-5 w-5" />
+                        </span>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </motion.div>
+            </div>
+          )}
         </div>
       </section>
+
+
 
       {/* Active Trades Feed & Listings */}
       <section className="py-12">
@@ -331,12 +310,20 @@ export default function HomePage() {
                   )}
                 </div>
               ) : (
-                <Card className="h-[600px] flex items-center justify-center">
-                  <div className="text-center text-muted-foreground">
-                    <MapIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Map view coming soon...</p>
-                  </div>
-                </Card>
+                <div className="h-[600px] w-full relative z-0">
+                  <MapViewer
+                    listings={filteredListings.map(l => ({
+                      id: l.id,
+                      title: l.title,
+                      description: l.description,
+                      priceVP: l.valuePoints,
+                      location: l.location,
+                      images: l.image,
+                      type: l.type === 'offer' ? 'OFFER' : 'REQUEST'
+                    }))}
+                    className="h-full border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.1)]"
+                  />
+                </div>
               )}
             </div>
           </div>
@@ -349,7 +336,7 @@ export default function HomePage() {
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Start Trading?</h2>
             <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
-              Join thousands of community members building a better economy together.
+              Join community members building a better economy together.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/signup">

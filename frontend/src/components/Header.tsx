@@ -62,8 +62,19 @@ export default function Header() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <img src="/assets/logo-alt.png" alt="MeetBarter" className="h-10 w-auto" />
+          <Link href="/" className="flex items-center gap-2">
+            <div className="relative h-10 w-32">
+              <img
+                src="/assets/logo-03.png"
+                alt="MeetBarter"
+                className="absolute inset-0 h-full w-full object-contain dark:hidden"
+              />
+              <img
+                src="/assets/logo-02.png"
+                alt="MeetBarter"
+                className="absolute inset-0 h-full w-full object-contain hidden dark:block"
+              />
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -186,8 +197,8 @@ export default function Header() {
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel>
                       <div className="flex flex-col space-y-1">
-                        <p>{user?.fullName}</p>
-                        <p className="text-xs text-muted-foreground">{user?.email}</p>
+                        <p className="truncate max-w-[150px] font-medium">{user?.fullName}</p>
+                        <p className="text-xs text-muted-foreground truncate max-w-[150px]">{user?.email}</p>
                         <div className="flex items-center gap-2 mt-2">
                           <Badge variant="secondary" className="text-xs">
                             Trust: {user?.trustScore || 0}

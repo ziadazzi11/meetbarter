@@ -56,7 +56,7 @@ export default function SignupPage() {
     };
 
     const benefits = [
-        'Access to thousands of trusted traders',
+        'Access to trusted community traders',
         'Build your reputation with every trade',
         'Free to join and list items',
         'Secure messaging and verification',
@@ -109,18 +109,8 @@ export default function SignupPage() {
 
                             <div className="mt-8 p-6 rounded-lg bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/20">
                                 <p className="text-sm italic text-muted-foreground">
-                                    "TrustTrade helped me connect with amazing people in my community. I've traded services for items I needed and built lasting relationships!"
+                                    "Join us in building a compassionate economy. Your skills and goods have value here, regardless of market prices."
                                 </p>
-                                <div className="flex items-center gap-3 mt-4">
-                                    {/* Placeholder for testimonial user */}
-                                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                                        <User className="h-6 w-6 text-muted-foreground" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium">Jordan Lee</p>
-                                        <p className="text-xs text-muted-foreground">Trust Score: 92</p>
-                                    </div>
-                                </div>
                             </div>
                         </motion.div>
                     </div>
@@ -141,9 +131,8 @@ export default function SignupPage() {
                                         <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input
                                             id="name"
-                                            type="text"
-                                            placeholder="John Doe"
-                                            className="pl-10"
+                                            placeholder="Enter your full name"
+                                            className="pl-14"
                                             value={name}
                                             onChange={(e) => setName(e.target.value)}
                                             required
@@ -156,10 +145,9 @@ export default function SignupPage() {
                                     <div className="relative">
                                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input
-                                            id="email"
                                             type="email"
                                             placeholder="you@example.com"
-                                            className="pl-10"
+                                            className="pl-14"
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             required
@@ -172,10 +160,9 @@ export default function SignupPage() {
                                     <div className="relative">
                                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input
-                                            id="password"
                                             type="password"
                                             placeholder="••••••••"
-                                            className="pl-10"
+                                            className="pl-14"
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                             required

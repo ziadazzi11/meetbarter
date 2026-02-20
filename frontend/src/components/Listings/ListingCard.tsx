@@ -146,7 +146,7 @@ export function ListingCard({ listing, onLike, onShare }: ListingCardProps) {
                 <AvatarFallback>{listing.userName[0]}</AvatarFallback>
               </Avatar>
               <div>
-                <p className="text-sm font-medium">{listing.userName}</p>
+                <p className="text-sm font-medium truncate max-w-[100px]">{listing.userName}</p>
                 <p className="text-xs text-muted-foreground">
                   Trust: {listing.userTrustScore}
                 </p>

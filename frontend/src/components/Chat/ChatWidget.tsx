@@ -30,8 +30,8 @@ export default function ChatWidget() {
 
     // Fetch conversations on load
     useEffect(() => {
-        if (isOpen && token) {
-            fetch(`${API_BASE_URL}/chat/conversations`, {
+        if (isOpen && token && user) {
+            fetch(`${API_BASE_URL}/messages/conversations/${user.id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
                 .then(res => res.json())
@@ -226,7 +226,7 @@ export default function ChatWidget() {
                                                 {conv.participants.find(p => p.id !== user.id)?.fullName[0] || '?'}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-semibold text-gray-900 truncate">
+                                                <p className="font-semibold text-gray-900 truncate max-w-[180px]">
                                                     {conv.participants.find(p => p.id !== user.id)?.fullName || 'Unknown'}
                                                 </p>
                                                 <p className="text-sm text-gray-500 truncate">
