@@ -70,12 +70,12 @@ export default function Header() {
           <Link href="/" className="flex items-center gap-2">
             <div className="relative h-10 w-40">
               <img
-                src="/assets/logo horizental color-03.png"
+                src="/assets/logo-full.png"
                 alt="MeetBarter"
                 className="absolute inset-0 h-full w-full object-contain dark:hidden"
               />
               <img
-                src="/assets/logo horizental color-02.png"
+                src="/assets/logo-full negative.png"
                 alt="MeetBarter"
                 className="absolute inset-0 h-full w-full object-contain hidden dark:block"
               />

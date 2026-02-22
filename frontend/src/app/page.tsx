@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
@@ -32,6 +33,7 @@ const recentTrades: { user: string; action: string; time: string; vp: number }[]
 
 export default function HomePage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [filterType, setFilterType] = useState<'all' | 'offer' | 'request'>('all');
   const [searchQuery, setSearchQuery] = useState('');
