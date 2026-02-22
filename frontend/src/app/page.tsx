@@ -126,7 +126,7 @@ export default function HomePage() {
             </p>
 
             {/* Search Bar */}
-            <div className="max-w-2xl mx-auto mb-8">
+            <div className="max-w-2xl mx-auto mb-12">
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -143,17 +143,15 @@ export default function HomePage() {
                 </Button>
               </div>
             </div>
-          </motion.div>
 
-          {user && (
-            /* Split CTA Cards */
+            {/* Split CTA Cards - Moved outside user check */}
             <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
               >
-                <Link href="/listings/create?type=offer" className="block h-full group">
+                <Link href={user ? "/listings/create?type=offer" : "/signup"} className="block h-full group">
                   <Card className="h-full border-2 border-green-500/20 hover:border-green-500/40 transition-all hover:shadow-lg hover:shadow-green-500/10 cursor-pointer">
                     <CardContent className="p-8 text-center h-full flex flex-col justify-between">
                       <div>
@@ -165,9 +163,9 @@ export default function HomePage() {
                           Offer your goods, skills, or services to the community
                         </p>
                       </div>
-                      <Button asChild className="w-full pointer-events-none" size="lg" variant="default">
+                      <Button asChild className="w-full" size="lg" variant="default">
                         <span>
-                          Create Offer
+                          {user ? 'Create Offer' : 'Get Started'}
                           <ArrowRight className="ml-2 h-5 w-5" />
                         </span>
                       </Button>
@@ -181,7 +179,7 @@ export default function HomePage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
               >
-                <Link href="/listings/create?type=request" className="block h-full group">
+                <Link href={user ? "/listings/create?type=request" : "/signup"} className="block h-full group">
                   <Card className="h-full border-2 border-blue-500/20 hover:border-blue-500/40 transition-all hover:shadow-lg hover:shadow-blue-500/10 cursor-pointer">
                     <CardContent className="p-8 text-center h-full flex flex-col justify-between">
                       <div>
@@ -193,9 +191,9 @@ export default function HomePage() {
                           Request items, services, or help from community members
                         </p>
                       </div>
-                      <Button asChild className="w-full pointer-events-none" size="lg" variant="outline">
+                      <Button asChild className="w-full" size="lg" variant="outline">
                         <span>
-                          Create Request
+                          {user ? 'Create Request' : 'Join Now'}
                           <ArrowRight className="ml-2 h-5 w-5" />
                         </span>
                       </Button>
@@ -204,7 +202,7 @@ export default function HomePage() {
                 </Link>
               </motion.div>
             </div>
-          )}
+          </motion.div>
         </div>
       </section>
 
