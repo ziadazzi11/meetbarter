@@ -151,7 +151,7 @@ export default function HomePage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
               >
-                <Link href={user ? "/listings/create?type=offer" : "/signup"} className="block h-full group">
+                <Link href="/dashboard" className="block h-full group">
                   <Card className="h-full border-2 border-green-500/20 hover:border-green-500/40 transition-all hover:shadow-lg hover:shadow-green-500/10 cursor-pointer">
                     <CardContent className="p-8 text-center h-full flex flex-col justify-between">
                       <div>
@@ -165,7 +165,7 @@ export default function HomePage() {
                       </div>
                       <Button asChild className="w-full" size="lg" variant="default">
                         <span>
-                          {user ? 'Create Offer' : 'Get Started'}
+                          Go to Dashboard
                           <ArrowRight className="ml-2 h-5 w-5" />
                         </span>
                       </Button>
@@ -179,7 +179,7 @@ export default function HomePage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
               >
-                <Link href={user ? "/listings/create?type=request" : "/signup"} className="block h-full group">
+                <Link href="/dashboard" className="block h-full group">
                   <Card className="h-full border-2 border-blue-500/20 hover:border-blue-500/40 transition-all hover:shadow-lg hover:shadow-blue-500/10 cursor-pointer">
                     <CardContent className="p-8 text-center h-full flex flex-col justify-between">
                       <div>
@@ -193,7 +193,7 @@ export default function HomePage() {
                       </div>
                       <Button asChild className="w-full" size="lg" variant="outline">
                         <span>
-                          {user ? 'Create Request' : 'Join Now'}
+                          Go to Dashboard
                           <ArrowRight className="ml-2 h-5 w-5" />
                         </span>
                       </Button>
