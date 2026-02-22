@@ -48,7 +48,7 @@ export class AuthController {
     async googleAuthRedirect(@Request() req: any, @Res() res: any) {
         const { access_token, user } = await this.authService.login(req.user);
         // Redirect to frontend with token
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
         return res.redirect(`${frontendUrl}/login?token=${access_token}&uid=${user.id}`);
     }
 
@@ -60,7 +60,7 @@ export class AuthController {
     @UseGuards(FacebookAuthGuard)
     async facebookAuthRedirect(@Request() req: any, @Res() res: any) {
         const { access_token, user } = await this.authService.login(req.user);
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
         return res.redirect(`${frontendUrl}/login?token=${access_token}&uid=${user.id}`);
     }
 

@@ -169,7 +169,15 @@ export class UsersController {
     }
 
     @Post('social-login')
-    socialLogin(@Body() body: { email: string; name: string; provider: string; photoUrl?: string }) {
-        return this.usersService.socialLogin(body);
+    async socialLogin(@Body() body: { email: string; name: string; provider: string; photoUrl?: string }) {
+        try {
+            console.log("Social login attempt:", body.email, body.provider);
+            const result = await this.usersService.socialLogin(body);
+            console.log("Social login success:", result?.id);
+            return result;
+        } catch (error) {
+            console.error("Social login failed:", error);
+            throw error;
+        }
     }
 }

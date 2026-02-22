@@ -119,7 +119,12 @@ class HandshakeService {
         } catch (e) {
             // Fallback: Try request without token if handshake fails (unlikely for protected routes)
             console.warn("Proceeding without handshake token due to error");
-            return fetch(url, options);
+            // Important fix: If handshake fails, still attach the Authorization header
+            const headers = new Headers(options.headers);
+            if (authToken) {
+                headers.set("Authorization", `Bearer ${authToken}`);
+            }
+            return fetch(url, { ...options, headers });
         }
 
         const headers = new Headers(options.headers);
