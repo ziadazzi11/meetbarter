@@ -145,66 +145,62 @@ export default function HomePage() {
                 </Button>
               </div>
             </div>
-
-            {/* Split CTA Cards - Moved outside user check */}
-            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                <Link href="/dashboard" className="block h-full group">
-                  <Card className="h-full border-2 border-green-500/20 hover:border-green-500/40 transition-all hover:shadow-lg hover:shadow-green-500/10 cursor-pointer">
-                    <CardContent className="p-8 text-center h-full flex flex-col justify-between">
-                      <div>
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Package className="h-8 w-8 text-green-500" />
-                        </div>
-                        <h3 className="text-2xl font-bold mb-2">I Have Something</h3>
-                        <p className="text-muted-foreground mb-6">
-                          Offer your goods, skills, or services to the community
-                        </p>
-                      </div>
-                      <Button asChild className="w-full" size="lg" variant="default">
-                        <span>
-                          Go to Dashboard
-                          <ArrowRight className="ml-2 h-5 w-5" />
-                        </span>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-              >
-                <Link href="/dashboard" className="block h-full group">
-                  <Card className="h-full border-2 border-blue-500/20 hover:border-blue-500/40 transition-all hover:shadow-lg hover:shadow-blue-500/10 cursor-pointer">
-                    <CardContent className="p-8 text-center h-full flex flex-col justify-between">
-                      <div>
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Search className="h-8 w-8 text-blue-500" />
-                        </div>
-                        <h3 className="text-2xl font-bold mb-2">I Need Something</h3>
-                        <p className="text-muted-foreground mb-6">
-                          Request items, services, or help from community members
-                        </p>
-                      </div>
-                      <Button asChild className="w-full" size="lg" variant="outline">
-                        <span>
-                          Go to Dashboard
-                          <ArrowRight className="ml-2 h-5 w-5" />
-                        </span>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-            </div>
           </motion.div>
+
+          {/* Split CTA Cards - Moved outside motion for better interaction */}
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-8">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              onClick={() => router.push('/dashboard')}
+              className="cursor-pointer"
+            >
+              <Card className="h-full border-2 border-green-500/20 hover:border-green-500/40 transition-all hover:shadow-lg hover:shadow-green-500/10">
+                <CardContent className="p-8 text-center h-full flex flex-col justify-between">
+                  <div>
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Package className="h-8 w-8 text-green-500" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-2">I Have Something</h3>
+                    <p className="text-muted-foreground mb-6">
+                      Offer your goods, skills, or services to the community
+                    </p>
+                  </div>
+                  <Button className="w-full" size="lg" variant="default">
+                    Go to Dashboard
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              onClick={() => router.push('/dashboard')}
+              className="cursor-pointer"
+            >
+              <Card className="h-full border-2 border-blue-500/20 hover:border-blue-500/40 transition-all hover:shadow-lg hover:shadow-blue-500/10">
+                <CardContent className="p-8 text-center h-full flex flex-col justify-between">
+                  <div>
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Search className="h-8 w-8 text-blue-500" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-2">I Need Something</h3>
+                    <p className="text-muted-foreground mb-6">
+                      Request items, services, or help from community members
+                    </p>
+                  </div>
+                  <Button className="w-full" size="lg" variant="outline">
+                    Go to Dashboard
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
         </div>
       </section>
 
