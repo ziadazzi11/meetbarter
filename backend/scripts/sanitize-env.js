@@ -11,39 +11,40 @@ function run() {
         process.exit(1);
     }
 
-    console.log(`🔍 Inspecting DATABASE_URL (length: ${url.length})...`);
+    // Debug: Log the first 20 characters as hex to see hidden symbols
+    const buffer = Buffer.from(url.substring(0, 30));
+    console.log(`🔍 URL Debug (Hex): ${buffer.toString('hex')}`);
+    console.log(`🔍 URL Debug (Text): "${url.substring(0, 30)}..."`);
 
-    // Log the first few chars to see if they are correct (non-sensitive)
-    const prefix = url.substring(0, 15);
-    console.log(`📍 URL Prefix: "${prefix}..."`);
-
-    // Aggressively sanitize:
-    // 1. Remove Byte Order Mark (BOM)
-    // 2. Remove any non-printable characters (ASCII < 32)
-    // 3. Trim spaces
-    // 4. Strip leading/trailing quotes
-    const cleanUrl = url
+    // Extremely aggressive sanitization
+    let cleanUrl = url
         .replace(/^[\uFEFF\xA0]+|[\uFEFF\xA0]+$/g, '') // BOM and non-breaking space
-        .replace(/[^\x20-\x7E]/g, '')                // Remove all non-printable ASCII
+        .trim()
+        // Remove "DATABASE_URL=" or "DATABASE=" if it was accidentally pasted into the value
+        .replace(/^(DATABASE_URL|DATABASE_URL=|DATABASE=)/i, '')
         .trim()
         .replace(/^["']|["']$/g, '');
 
+    // If it still doesn't start with postgres, try to find where postgres starts
+    if (!cleanUrl.startsWith('postgres') && cleanUrl.includes('postgres')) {
+        console.log('⚠️ URL does not start with postgres. Attempting to locate protocol start...');
+        const index = cleanUrl.indexOf('postgres');
+        cleanUrl = cleanUrl.substring(index);
+    }
+
     if (url !== cleanUrl) {
-        console.log(`🛡️ Sanitized DATABASE_URL! Length changed: ${url.length} -> ${cleanUrl.length}`);
+        console.log(`🛡️ Sanitized DATABASE_URL!`);
+        console.log(`📍 New Prefix: "${cleanUrl.substring(0, 20)}..."`);
         process.env.DATABASE_URL = cleanUrl;
     } else {
-        console.log('✅ DATABASE_URL appears clean according to sanitization rules.');
+        console.log('✅ DATABASE_URL appears clean.');
     }
 
     const command = process.argv.slice(2).join(' ');
-    if (!command) {
-        console.log('✅ DATABASE_URL sanitized.');
-        return;
-    }
+    if (!command) return;
 
     console.log(`🚀 Running: ${command}`);
     try {
-        // Explicitly pass process.env
         execSync(command, {
             stdio: 'inherit',
             env: { ...process.env, DATABASE_URL: cleanUrl }
