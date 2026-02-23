@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
@@ -17,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,7 +32,6 @@ const recentTrades: { user: string; action: string; time: string; vp: number }[]
 
 export default function HomePage() {
   const { user } = useAuth();
-  const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [filterType, setFilterType] = useState<'all' | 'offer' | 'request'>('all');
   const [searchQuery, setSearchQuery] = useState('');

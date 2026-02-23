@@ -73,7 +73,8 @@ function LoginContent() {
                 className="w-full max-w-md"
             >
                 <Link href="/" className="flex items-center justify-center mb-8">
-                    <img src="/assets/logo-full.png?v=2" alt="MeetBarter" className="h-12 w-auto" />
+                    <img src="/assets/logo-alt.png" alt="MeetBarter" className="h-12 w-auto dark:hidden" />
+                    <img src="/assets/logo-alt negative.png" alt="MeetBarter" className="h-12 w-auto hidden dark:block" />
                 </Link>
 
                 <Card>

@@ -530,7 +530,7 @@ export class UsersService {
     async upgradeSubscription(userId: string, tier: 'BUSINESS' | 'PREMIUM') {
         return this.prisma.user.update({
             where: { id: userId },
-            data: { subscriptionTier: tier } // Assuming subscriptionTier exists on User model. If not, I might need to check schema.
+            data: { subscriptionTier: tier }
         });
     }
 }

@@ -1,4 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import * as crypto from 'crypto';
+
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -98,12 +100,13 @@ export class GamificationService {
     }
 
     // 2. Unlock Achievement (Internal System Call)
-    async unlockAchievement(userId: string, achievementType: string) {
+    async unlockAchievement(userId: string, _achievementType: string) {
         // Find achievement by criteria (simplistic mapping for now)
         // In real system, we'd query by Criteria JSON. 
         // For MVP, we'll assume the caller passes the Achievement ID or we lookup by title.
 
         // This method is likely called by other services (e.g. TradeService)
+        console.log(`Unlocking achievement for user ${userId}`);
         return { status: 'Not implemented yet' };
     }
 
@@ -119,7 +122,6 @@ export class GamificationService {
     }) {
         // Generate a secure random hash for the QR code
         // Simple implementation: UUID + Date timestamp to ensure uniqueness
-        const crypto = require('crypto');
         const qrCodeHash = crypto.randomBytes(32).toString('hex');
 
         const drop = await this.prisma.geoDrop.create({

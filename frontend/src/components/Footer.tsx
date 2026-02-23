@@ -43,12 +43,12 @@ export default function Footer() {
           <div className="lg:col-span-1">
             <Link href="/" className="flex items-center space-x-2 mb-4 block relative h-12 w-40">
               <img
-                src="/assets/logo-03.png"
+                src="/assets/logo-alt.png"
                 alt="MeetBarter"
                 className="absolute inset-0 h-full w-full object-contain dark:hidden"
               />
               <img
-                src="/assets/logo-02.png"
+                src="/assets/logo-alt negative.png"
                 alt="MeetBarter"
                 className="absolute inset-0 h-full w-full object-contain hidden dark:block"
               />

@@ -46,10 +46,11 @@ export class AuthController {
     @Get('google/callback')
     @UseGuards(GoogleAuthGuard)
     async googleAuthRedirect(@Request() req: any, @Res() res: any) {
-        const { access_token, user } = await this.authService.login(req.user);
-        // Redirect to frontend with token
+        const handoverCode = await this.authService.generateHandoverCode(req.user);
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        return res.redirect(`${frontendUrl}/login?token=${access_token}&uid=${user.id}`);
+        // URL-safe encoding for the payload
+        const encodedCode = encodeURIComponent(handoverCode);
+        return res.redirect(`${frontendUrl}/login?code=${encodedCode}`);
     }
 
     @Get('facebook')
@@ -59,9 +60,10 @@ export class AuthController {
     @Get('facebook/callback')
     @UseGuards(FacebookAuthGuard)
     async facebookAuthRedirect(@Request() req: any, @Res() res: any) {
-        const { access_token, user } = await this.authService.login(req.user);
+        const handoverCode = await this.authService.generateHandoverCode(req.user);
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        return res.redirect(`${frontendUrl}/login?token=${access_token}&uid=${user.id}`);
+        const encodedCode = encodeURIComponent(handoverCode);
+        return res.redirect(`${frontendUrl}/login?code=${encodedCode}`);
     }
 
     @HttpCode(HttpStatus.OK)
@@ -81,6 +83,11 @@ export class AuthController {
             throw new ServiceUnavailableException('New registrations are currently disabled.');
         }
         return this.authService.register(registerDto);
+    }
+
+    @Post('exchange')
+    async exchangeCode(@Body('code') code: string) {
+        return this.authService.exchangeHandoverCode(code);
     }
 
     @Post('refresh')

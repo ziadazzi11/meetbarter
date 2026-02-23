@@ -42,6 +42,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter();
 
     useEffect(() => {
+        // Check for secure handover code in URL (OAuth redirect)
+        const urlParams = new URLSearchParams(window.location.search);
+        const handoverCode = urlParams.get("code");
+
+        if (handoverCode) {
+            exchangeCode(handoverCode);
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+        }
+
         // Check for token on mount
         const storedToken = localStorage.getItem("meetbarter_token");
         const storedUid = localStorage.getItem("meetbarter_uid");
@@ -54,6 +65,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(false);
         }
     }, []);
+
+    const exchangeCode = async (code: string) => {
+        try {
+            const res = await apiClient.fetch(`${API_BASE_URL}/auth/exchange`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                const { access_token, user } = data;
+                localStorage.setItem("meetbarter_token", access_token);
+                localStorage.setItem("meetbarter_uid", user.id);
+                setToken(access_token);
+                setUser(user);
+                toast.success("Social login successful!");
+            } else {
+                throw new Error("Failed to exchange login code");
+            }
+        } catch (error) {
+            console.error("Exchange failed", error);
+            toast.error("Login verification failed. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const fetchUser = async (userId: string, authToken: string) => {
         try {

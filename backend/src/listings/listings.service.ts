@@ -1,10 +1,9 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { IntelligenceService } from '../intelligence/intelligence.service';
 import { SearchSecurityService } from '../intelligence/search-security.service';
 import { AiPricingService } from './ai-pricing.service';
 import { ValuationService } from '../valuation/valuation.service';
-import { ContentModerationService } from '../moderation/content-moderation.service';
 import { CloudinaryService } from '../upload/cloudinary.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
@@ -16,8 +15,6 @@ export class ListingsService {
     private searchSecurity: SearchSecurityService,
     private aiPricing: AiPricingService,
     private valuation: ValuationService,
-    // @Inject(forwardRef(() => ContentModerationService))
-    // private moderation: ContentModerationService,
     private cloudinary: CloudinaryService,
   ) { }
 
