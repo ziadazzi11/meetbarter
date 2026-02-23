@@ -144,6 +144,10 @@ model User {
   phoneNumber     String?  @unique
   phoneVerified   Boolean  @default(false)
 
+  // Identity Verification (Whish Money Flow)
+  idCardUrl       String?
+  idCardStatus    VerificationStatus @default(NONE)
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

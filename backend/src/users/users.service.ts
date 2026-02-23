@@ -16,9 +16,19 @@ export class UsersService {
     ) { }
 
     // Hardcoded to fetch the 'Demo' user for now
-    async findMe() {
+    async updateIdCard(userId: string, idCardUrl: string) {
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                idCardUrl,
+                idCardStatus: 'PENDING'
+            }
+        });
+    }
+
+    async findMe(userId: string) {
         return this.prisma.user.findUnique({
-            where: { email: 'demo@meetbarter.com' },
+            where: { id: userId },
         });
     }
 
@@ -28,8 +38,11 @@ export class UsersService {
         });
     }
 
-    async getPublicProfile(id: string) {
-        // SECURE: Explicitly select only public fields
+    async getPublicProfile(id: string, viewerId?: string) {
+        // 1. Basic permission checks
+        const isSelf = viewerId === id;
+
+        // 2. Fetch user profile with necessary fields
         const user = await this.prisma.user.findUnique({
             where: { id },
             select: {
@@ -38,7 +51,28 @@ export class UsersService {
                 avatarUrl: true,
                 globalTrustScore: true,
                 verificationLevel: true,
+                walletBalance: true,
+                country: true,
+                idCardStatus: true,
                 createdAt: true,
+                _count: {
+                    select: {
+                        buyerTrades: { where: { status: 'COMPLETED' } },
+                        sellerTrades: { where: { status: 'COMPLETED' } }
+                    }
+                },
+                userAchievements: {
+                    select: {
+                        achievement: {
+                            select: {
+                                title: true,
+                                description: true,
+                                iconUrl: true,
+                                rewardVP: true
+                            }
+                        }
+                    }
+                },
                 listings: {
                     where: { status: 'ACTIVE' },
                     select: {
@@ -55,8 +89,61 @@ export class UsersService {
 
         if (!user) return null;
 
-        const { listings, ...profile } = user;
-        return { profile, listings };
+        // 3. Privacy Logic: Restrict access if trade is finalized
+        let isRestricted = false;
+        if (viewerId && !isSelf) {
+            // Check if there are any active trades between these users
+            const activeTrades = await this.prisma.trade.count({
+                where: {
+                    OR: [
+                        { buyerId: viewerId, sellerId: id },
+                        { buyerId: id, sellerId: viewerId }
+                    ],
+                    status: {
+                        notIn: ['COMPLETED', 'CANCELLED', 'DISPUTE_RESOLVED']
+                    }
+                }
+            });
+
+            const hasPastTrades = await this.prisma.trade.count({
+                where: {
+                    OR: [
+                        { buyerId: viewerId, sellerId: id },
+                        { buyerId: id, sellerId: viewerId }
+                    ]
+                }
+            });
+
+            // If they have traded before but no longer have an active trade, restrict access
+            if (hasPastTrades > 0 && activeTrades === 0) {
+                isRestricted = true;
+            }
+        }
+
+        const completedTrades = user._count.buyerTrades + user._count.sellerTrades;
+        const { listings, _count, ...profileItems } = user;
+
+        // If restricted, we hide listings, photo, and sensitive contact info
+        // But we ALWAYS show reputation: trust score and completed trade count
+        const profile = isRestricted ? {
+            id: user.id,
+            fullName: user.fullName,
+            country: user.country,
+            globalTrustScore: user.globalTrustScore,
+            completedTrades,
+            userAchievements: user.userAchievements,
+            isRestricted: true,
+            message: "Privacy Mode: Contact information and photo are hidden after trade finalization. Reputation metrics remain visible for trust."
+        } : {
+            ...profileItems,
+            completedTrades,
+            isRestricted: false
+        };
+
+        return {
+            profile,
+            listings: isRestricted ? [] : listings
+        };
     }
 
     async getOtpQueue() {
@@ -472,6 +559,7 @@ export class UsersService {
                     passwordHash: "SOCIAL_LOGIN", // Placeholder
                     authProvider: data.provider,
                     avatarUrl: data.photoUrl,
+                    role: data.email === 'meetbarter@gmail.com' ? 'ADMIN' : 'USER',
                     globalTrustScore: 1.1 // Small bonus for verified social
                 }
             });

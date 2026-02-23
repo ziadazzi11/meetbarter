@@ -33,6 +33,7 @@ function CreateListingContent() {
         category: "General",
         location: user?.country || "",
     });
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     // React to URL changes for type
     useEffect(() => {
@@ -48,7 +49,26 @@ function CreateListingContent() {
     const [acceptBarter, setAcceptBarter] = useState(false);
     const [acceptVP, setAcceptVP] = useState(true);
 
-    const categories = ["General", "Electronics", "Home & Garden", "Clothing", "Services", "Collectibles", "Vehicles"];
+    const [categories, setCategories] = useState<{ id: string, name: string }[]>([]);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/listings/categories`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setCategories(data);
+                    if (data.length > 0) {
+                        setFormData(prev => ({ ...prev, category: data[0].id }));
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch categories", err);
+            }
+        };
+        fetchCategories();
+    }, []);
+
     const VP_EXCHANGE_RATE = 10; // 1 USD = 10 VP
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -121,17 +141,24 @@ function CreateListingContent() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const newErrors: Record<string, string> = {};
 
-        if (!formData.title || !formData.description || !formData.priceVP || !formData.location) {
-            toast.error("Please fill in all required fields.");
-            return;
-        }
+        if (!formData.title) newErrors.title = "Title is required";
+        if (!formData.description) newErrors.description = "Description is required";
+        if (!formData.priceVP && acceptVP) newErrors.priceVP = "Price in VP is required";
+        if (!formData.location) newErrors.location = "Location is required";
 
         if (!acceptVP && !acceptBarter && !formData.priceCash) {
-            toast.error("Please select at least one exchange option.");
+            newErrors.exchange = "Please select at least one exchange option.";
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            toast.error("Please fix the errors before submitting.");
             return;
         }
 
+        setErrors({});
         setLoading(true);
 
         try {
@@ -143,6 +170,8 @@ function CreateListingContent() {
                 },
                 body: JSON.stringify({
                     ...formData,
+                    sellerId: user?.id,
+                    categoryId: formData.category, // Send the UUID
                     priceVP: parseFloat(formData.priceVP) || 0,
                     priceCash: parseFloat(formData.priceCash) || 0,
                     priceCurrency: formData.priceCurrency || "USD",
@@ -208,31 +237,40 @@ function CreateListingContent() {
                         </div >
 
                         {/* Title */}
-                        < div className="space-y-2" >
-                            <Label htmlFor="title">Title</Label>
+                        <div className="space-y-2">
+                            <Label htmlFor="title" className={errors.title ? "text-red-500" : ""}>Title</Label>
                             <Input
                                 id="title"
                                 name="title"
                                 placeholder="e.g. Vintage Camera Service or Need Python Tutor"
                                 value={formData.title}
-                                onChange={handleChange}
+                                onChange={(e) => {
+                                    handleChange(e);
+                                    if (errors.title) setErrors(prev => ({ ...prev, title: "" }));
+                                }}
+                                className={errors.title ? "border-red-500 focus-visible:ring-red-500" : ""}
                                 required
                             />
-                        </div >
+                            {errors.title && <p className="text-xs text-red-500 font-medium">{errors.title}</p>}
+                        </div>
 
                         {/* Description */}
-                        < div className="space-y-2" >
-                            <Label htmlFor="description">Description</Label>
+                        <div className="space-y-2">
+                            <Label htmlFor="description" className={errors.description ? "text-red-500" : ""}>Description</Label>
                             <Textarea
                                 id="description"
                                 name="description"
                                 placeholder="Describe the item or service in detail..."
-                                className="min-h-[120px]"
+                                className={`min-h-[120px] ${errors.description ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                                 value={formData.description}
-                                onChange={handleChange}
+                                onChange={(e) => {
+                                    handleChange(e);
+                                    if (errors.description) setErrors(prev => ({ ...prev, description: "" }));
+                                }}
                                 required
                             />
-                        </div >
+                            {errors.description && <p className="text-xs text-red-500 font-medium">{errors.description}</p>}
+                        </div>
 
                         {/* Category & Location */}
                         < div className="grid grid-cols-1 md:grid-cols-2 gap-4" >
@@ -247,28 +285,36 @@ function CreateListingContent() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {categories.map(cat => (
-                                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                            <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="location">Location</Label>
+                                <Label htmlFor="location" className={errors.location ? "text-red-500" : ""}>Location</Label>
                                 <Input
                                     id="location"
                                     name="location"
                                     placeholder="City, Neighborhood, or Online"
                                     value={formData.location}
-                                    onChange={handleChange}
+                                    onChange={(e) => {
+                                        handleChange(e);
+                                        if (errors.location) setErrors(prev => ({ ...prev, location: "" }));
+                                    }}
+                                    className={errors.location ? "border-red-500 focus-visible:ring-red-500" : ""}
                                     required
                                 />
+                                {errors.location && <p className="text-xs text-red-500 font-medium">{errors.location}</p>}
                             </div>
-                        </div >
+                        </div>
 
                         {/* Valuation & Transaction Type */}
-                        < div className="space-y-4 border p-4 rounded-lg bg-muted/20" >
-                            <h3 className="font-semibold text-gray-900">Exchange Options</h3>
+                        <div className={`space-y-4 border p-4 rounded-lg bg-muted/20 ${errors.exchange ? "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,1)]" : ""}`}>
+                            <h3 className="font-semibold text-gray-900 flex items-center justify-between">
+                                Exchange Options
+                                {errors.exchange && <span className="text-xs text-red-500 font-normal flex items-center gap-1 animate-in fade-in slide-in-from-right-1"><AlertCircle className="h-3 w-3" /> {errors.exchange}</span>}
+                            </h3>
                             <p className="text-sm text-muted-foreground mb-4">Select how you want to exchange this item. You can choose multiple options.</p>
 
                             {/* Option 1: Cash/Currency Sale */}

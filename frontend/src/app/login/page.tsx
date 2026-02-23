@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Shield, Chrome, Facebook } from 'lucide-react';
+import { Chrome, Facebook } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ function LoginContent() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
     const { login } = useAuth();
     const router = useRouter();
@@ -41,14 +42,23 @@ function LoginContent() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const newErrors: Record<string, string> = {};
+
+        if (!email) newErrors.email = 'Email is required';
+        if (!password) newErrors.password = 'Password is required';
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
+        setErrors({});
         setIsLoading(true);
 
         try {
             await login(email, password);
-            // Success toast handled in AuthContext or here if preferred
-            // toast.success('Welcome back!'); // AuthContext handles it
             router.push('/dashboard');
-        } catch (error) {
+        } catch {
             toast.error('Invalid credentials. Please try again.');
         } finally {
             setIsLoading(false);
@@ -87,22 +97,27 @@ function LoginContent() {
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="email" className={errors.email ? "text-red-500" : ""}>Email</Label>
                                 <div className="relative">
                                     <Input
                                         id="email"
                                         type="email"
                                         placeholder="you@example.com"
                                         value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        onChange={(e) => {
+                                            setEmail(e.target.value);
+                                            if (errors.email) setErrors(prev => ({ ...prev, email: "" }));
+                                        }}
+                                        className={errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}
                                         required
                                     />
                                 </div>
+                                {errors.email && <p className="text-xs text-red-500 font-medium">{errors.email}</p>}
                             </div>
 
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="password">Password</Label>
+                                    <Label htmlFor="password" className={errors.password ? "text-red-500" : ""}>Password</Label>
                                     <Link href="/forgot-password" className="text-sm text-primary hover:underline">
                                         Forgot password?
                                     </Link>
@@ -113,11 +128,17 @@ function LoginContent() {
                                         type="password"
                                         placeholder="••••••••"
                                         value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
+                                        onChange={(e) => {
+                                            setPassword(e.target.value);
+                                            if (errors.password) setErrors(prev => ({ ...prev, password: "" }));
+                                        }}
+                                        className={errors.password ? "border-red-500 focus-visible:ring-red-500" : ""}
                                         required
                                     />
                                 </div>
+                                {errors.password && <p className="text-xs text-red-500 font-medium">{errors.password}</p>}
                             </div>
+                            industrial
 
                             <div className="flex items-center space-x-2">
                                 <Checkbox

@@ -35,6 +35,9 @@ export default function HomePage() {
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [filterType, setFilterType] = useState<'all' | 'offer' | 'request'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [locationQuery, setLocationQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [marketType, setMarketType] = useState('all');
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -97,7 +100,10 @@ export default function HomePage() {
     const matchesType = filterType === 'all' || listing.type === filterType;
     const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       listing.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesType && matchesSearch;
+    const matchesLocation = !locationQuery || listing.location.toLowerCase().includes(locationQuery.toLowerCase());
+    const matchesCategory = categoryFilter === 'all' || listing.category === categoryFilter;
+    const matchesMarketType = marketType === 'all' || (listing as any).marketType === marketType;
+    return matchesType && matchesSearch && matchesLocation && matchesCategory && matchesMarketType;
   });
 
   return (
@@ -125,20 +131,79 @@ export default function HomePage() {
               Build your reputation, help your community, and get what you need.
             </p>
 
-            {/* Search Bar */}
-            <div className="max-w-2xl mx-auto mb-12">
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            {/* Redesigned Search Hub */}
+            <div className="max-w-4xl mx-auto mb-12">
+              <div className="text-left mb-4">
+                <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                  <Search className="h-6 w-6 text-primary" />
+                  Search for items, services or skills
+                </h2>
+              </div>
+
+              <div className="bg-card/50 backdrop-blur-md border border-border p-2 rounded-2xl shadow-xl flex flex-col md:flex-row gap-2">
+                {/* Keyword Search */}
+                <div className="relative flex-[2]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search for items, services, or skills..."
-                    className="pl-10 h-12"
+                    placeholder="Keywords (e.g. laptop, tutoring...)"
+                    className="pl-9 h-12 border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-base"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-                <Button size="lg" className="px-8">
-                  <Search className="h-5 w-5 mr-2" />
+
+                <div className="hidden md:block w-px h-8 bg-border self-center" />
+
+                {/* Location Search */}
+                <div className="relative flex-1">
+                  <MapIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Location"
+                    className="pl-9 h-12 border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-base"
+                    value={locationQuery}
+                    onChange={(e) => setLocationQuery(e.target.value)}
+                  />
+                </div>
+
+                <div className="hidden md:block w-px h-8 bg-border self-center" />
+
+                {/* Market Type Select */}
+                <div className="flex-1">
+                  <Select value={marketType} onValueChange={setMarketType}>
+                    <SelectTrigger className="h-12 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-base">
+                      <SelectValue placeholder="Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="Goods">Goods</SelectItem>
+                      <SelectItem value="Services">Services</SelectItem>
+                      <SelectItem value="Skills">Skills</SelectItem>
+                      <SelectItem value="Labor">Labor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="hidden md:block w-px h-8 bg-border self-center" />
+
+                {/* Category Select */}
+                <div className="flex-1">
+                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <SelectTrigger className="h-12 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-base">
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      <SelectItem value="Electronics">Electronics</SelectItem>
+                      <SelectItem value="Design">Design</SelectItem>
+                      <SelectItem value="Tutoring">Tutoring</SelectItem>
+                      <SelectItem value="Home Services">Home Services</SelectItem>
+                      <SelectItem value="Legal">Legal</SelectItem>
+                      <SelectItem value="Marketing">Marketing</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button size="lg" className="h-12 px-8 rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">
                   Search
                 </Button>
               </div>

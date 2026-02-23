@@ -8,7 +8,7 @@ export class GamificationService {
     constructor(private prisma: PrismaService) { }
 
     // 1. Claim a GeoDrop (QR Code Scan)
-    async claimGeoDrop(userId: string, qrHash: string, userLocation?: string) {
+    async claimGeoDrop(userId: string, qrHash: string, _userLocation?: string) {
         // Find the active drop by hash
         const drop = await this.prisma.geoDrop.findFirst({
             where: {

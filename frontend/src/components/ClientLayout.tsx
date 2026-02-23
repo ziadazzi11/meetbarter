@@ -6,6 +6,7 @@ import { ThemeProvider, useTheme } from "@/components/ThemeContext";
 
 import RouteThemeController from "@/components/RouteThemeController";
 import Footer from "@/components/Footer";
+import VerificationGate from "@/components/VerificationGate";
 // import { Geist, Geist_Mono } from "next/font/google";
 
 // const geistSans = Geist({
@@ -56,7 +57,9 @@ function ThemedContent({ children }: { children: React.ReactNode }) {
 
             <ChatWidget />
             <div className="flex-grow">
-                {children}
+                <VerificationGate>
+                    {children}
+                </VerificationGate>
             </div>
             <Footer />
         </body>

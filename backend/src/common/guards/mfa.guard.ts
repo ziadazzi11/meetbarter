@@ -1,5 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { MfaService } from '../../auth/mfa.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { EncryptionService } from '../../security/encryption.service';
 
 @Injectable()
 export class MfaGuard implements CanActivate {

@@ -9,22 +9,22 @@ import { FacebookAuthGuard } from './guards/facebook-auth.guard';
 
 class LoginDto {
     @IsEmail()
-    email: string;
+    email!: string;
 
     @IsString()
-    password: string;
+    password!: string;
 }
 
 class RegisterDto {
     @IsEmail()
-    email: string;
+    email!: string;
 
     @IsString()
     @MinLength(8)
-    password: string;
+    password!: string;
 
     @IsString()
-    fullName: string;
+    fullName!: string;
 
     @IsString()
     @IsOptional()
@@ -41,7 +41,7 @@ export class AuthController {
 
     @Get('google')
     @UseGuards(GoogleAuthGuard)
-    async googleAuth(@Request() req: any) { }
+    async googleAuth(@Request() _req: any) { }
 
     @Get('google/callback')
     @UseGuards(GoogleAuthGuard)
@@ -55,7 +55,7 @@ export class AuthController {
 
     @Get('facebook')
     @UseGuards(FacebookAuthGuard)
-    async facebookAuth(@Request() req: any) { }
+    async facebookAuth(@Request() _req: any) { }
 
     @Get('facebook/callback')
     @UseGuards(FacebookAuthGuard)

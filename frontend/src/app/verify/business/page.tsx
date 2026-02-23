@@ -1,35 +1,40 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { API_BASE_URL } from '@/config/api';
+import { apiClient } from '@/lib/api-client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Shield, Building2, Phone, FileText, ArrowLeft, Loader2, Upload } from 'lucide-react';
+import { toast } from 'sonner';
 import ImageUpload from "@/components/ImageUpload";
-import { API_BASE_URL } from "@/config/api";
 
 export default function BusinessLicenseSubmission() {
+    const { user, token } = useAuth();
     const router = useRouter();
-    const [user, setUser] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [submitting, setSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({
-        registrationNumber: "",
-        permitType: "Physical Goods",
-        issuingAuthority: "",
-        issuedAt: "",
-        expiresAt: ""
+        registrationNumber: '',
+        phoneNumber: '',
+        permitType: 'Physical Goods',
+        issuingAuthority: '',
+        issuedAt: '',
+        expiresAt: ''
     });
-    const [links, setLinks] = useState<string[]>([""]);
+    const [links, setLinks] = useState<string[]>(['']);
     const [photos, setPhotos] = useState<string[]>([]);
 
-    useEffect(() => {
-        fetch(`${API_BASE_URL}/users/me`)
-            .then(res => res.json())
-            .then(data => {
-                setUser(data);
-                setLoading(false);
-            });
-    }, []);
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
 
-    const handleAddLink = () => setLinks([...links, ""]);
+    const handleAddLink = () => setLinks([...links, '']);
     const handleLinkChange = (index: number, val: string) => {
         const newLinks = [...links];
         newLinks[index] = val;
@@ -38,155 +43,234 @@ export default function BusinessLicenseSubmission() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setSubmitting(true);
-
-        const payload = {
-            ...formData,
-            evidence: {
-                links: links.filter(l => l.trim() !== ""),
-                photos
-            }
-        };
+        if (!user || !token) {
+            toast.error('Session expired. Please login again.');
+            return;
+        }
+        setIsLoading(true);
 
         try {
-            const res = await fetch(`${API_BASE_URL}/users/${user.id}/submit-license`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
+            const res = await apiClient.fetch(`${API_BASE_URL}/users/${user.id}/submit-license`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    ...formData,
+                    evidence: {
+                        links: links.filter(l => l.trim() !== ""),
+                        photos
+                    }
+                })
             });
 
-            if (res.ok) {
-                alert("Institutional Permit Submitted for Review! Our administration will verify the documents within 48 hours.");
-                router.push("/profile");
-            } else {
-                alert("Submission failed. Please check your data.");
-            }
-        } catch (err) {
-            alert("An error occurred.");
+            if (!res.ok) throw new Error('Failed to submit license');
+
+            toast.success('Institutional Permit Submitted! Review usually takes 48 hours.');
+            router.push('/profile');
+        } catch (error) {
+            console.error(error);
+            toast.error('Submission failed. Please check your data or try again.');
         } finally {
-            setSubmitting(false);
+            setIsLoading(false);
         }
     };
 
-    if (loading) return <div className="p-20 text-center">Loading Institutional Protocol...</div>;
+    if (!user) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-background">
+                <Card className="max-w-md w-full mx-4">
+                    <CardHeader className="text-center">
+                        <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                        <CardTitle>Authentication Required</CardTitle>
+                        <CardDescription>You must be signed in to access business verification.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex justify-center">
+                        <Link href="/login">
+                            <Button className="bg-blue-600 hover:bg-blue-700">Sign In</Button>
+                        </Link>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-white text-gray-900 p-8 font-sans">
-            <div className="max-w-2xl mx-auto">
-                <div className="mb-8 border-b pb-6">
-                    <h1 className="text-3xl font-bold tracking-tight">🏛️ Institutional Business Onboarding</h1>
-                    <p className="text-gray-500 mt-2">Submit your commercial permits for official Association verification and the &quot;Institutional Partner&quot; badge.</p>
-                </div>
+        <div className="min-h-screen bg-slate-50/50 py-16 px-4">
+            <div className="max-w-3xl mx-auto">
+                <Link href="/profile" className="flex items-center text-muted-foreground hover:text-blue-600 mb-8 transition-colors group">
+                    <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+                    Back to Profile
+                </Link>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Commercial Register / Tax ID</label>
-                            <input
-                                required
-                                type="text"
-                                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder="e.g. 12345/B"
-                                value={formData.registrationNumber}
-                                onChange={(e) => setFormData({ ...formData, registrationNumber: e.target.value })}
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Permit Type</label>
-                            <select
-                                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                value={formData.permitType}
-                                onChange={(e) => setFormData({ ...formData, permitType: e.target.value })}
-                            >
-                                <option>Physical Goods</option>
-                                <option>Logistics & Transport</option>
-                                <option>Food & Health</option>
-                                <option>Professional Services</option>
-                                <option>Manufacturing</option>
-                            </select>
-                        </div>
-
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Issuing Authority</label>
-                            <input
-                                required
-                                type="text"
-                                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder="e.g. Ministry of Industry, Chamber of Commerce"
-                                value={formData.issuingAuthority}
-                                onChange={(e) => setFormData({ ...formData, issuingAuthority: e.target.value })}
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Issue Date</label>
-                            <input
-                                required
-                                type="date"
-                                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                value={formData.issuedAt}
-                                onChange={(e) => setFormData({ ...formData, issuedAt: e.target.value })}
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Expiry Date</label>
-                            <input
-                                required
-                                type="date"
-                                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                value={formData.expiresAt}
-                                onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
-                            />
-                        </div>
-
-                        {/* Multi-Link Section */}
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Verification Links</label>
-                            <div className="space-y-3">
-                                {links.map((link, idx) => (
-                                    <input
-                                        key={idx}
-                                        type="url"
-                                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                        placeholder="https://official-registry.gov/verify/123"
-                                        value={link}
-                                        onChange={(e) => handleLinkChange(idx, e.target.value)}
-                                    />
-                                ))}
-                                <button
-                                    type="button"
-                                    onClick={handleAddLink}
-                                    className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                                >
-                                    + Add Another Link
-                                </button>
+                <Card className="border-none shadow-xl">
+                    <CardHeader className="bg-blue-600 text-white rounded-t-lg pb-8">
+                        <div className="flex items-center gap-4 mb-2">
+                            <div className="p-3 bg-white/20 rounded-xl">
+                                <Building2 className="h-8 w-8 text-white" />
+                            </div>
+                            <div>
+                                <CardTitle className="text-3xl font-bold">Business Onboarding</CardTitle>
+                                <CardDescription className="text-blue-100 text-lg">Official Association Verification Protocol</CardDescription>
                             </div>
                         </div>
+                    </CardHeader>
 
-                        {/* Photo Evidence Section */}
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Evidence Photos (Official Scans)</label>
-                            <ImageUpload initialImages={photos} onUpload={setPhotos} maxImages={5} />
-                            <p className="text-[10px] text-gray-400 mt-2 italic">Please upload clear photos of your commercial register, tax cards, and relevant professional permits.</p>
-                        </div>
-                    </div>
+                    <CardContent className="p-8">
+                        <form onSubmit={handleSubmit} className="space-y-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="registrationNumber">Commercial Register / Tax ID</Label>
+                                    <Input
+                                        id="registrationNumber"
+                                        name="registrationNumber"
+                                        required
+                                        className="h-12 border-slate-200 focus:ring-blue-500"
+                                        placeholder="e.g. 12345/B"
+                                        value={formData.registrationNumber}
+                                        onChange={handleChange}
+                                    />
+                                </div>
 
-                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                        <p className="text-xs text-blue-700 leading-relaxed">
-                            <strong>Institutional Shield:</strong> By submitting these documents, you authorize the Association to verify their legitimacy with the relevant authorities. This permit must be renewed annually to maintain your &quot;Institutional Partner&quot; status.
-                        </p>
-                    </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="permitType">Permit Category</Label>
+                                    <select
+                                        id="permitType"
+                                        name="permitType"
+                                        title="Select Permit Category"
+                                        aria-label="Select Permit Category"
+                                        className="flex h-12 w-full rounded-md border border-slate-200 bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                                        value={formData.permitType}
+                                        onChange={handleChange}
+                                    >
+                                        <option>Physical Goods</option>
+                                        <option>Logistics & Transport</option>
+                                        <option>Food & Health</option>
+                                        <option>Professional Services</option>
+                                        <option>Manufacturing</option>
+                                    </select>
+                                </div>
 
-                    <button
-                        type="submit"
-                        disabled={submitting}
-                        className={`w-full py-4 rounded-xl font-bold text-white transition-all shadow-lg ${submitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 hover:scale-[1.01] active:scale-95'}`}
-                    >
-                        {submitting ? "Processing Institutional Onboarding..." : "Submit Permit for Verification"}
-                    </button>
-                </form>
+                                <div className="md:col-span-2 space-y-2">
+                                    <Label htmlFor="phoneNumber">Official Business Phone</Label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                        <Input
+                                            id="phoneNumber"
+                                            name="phoneNumber"
+                                            type="tel"
+                                            required
+                                            className="h-12 pl-12 border-slate-200 focus:ring-blue-500"
+                                            placeholder="+961 XX XXX XXX"
+                                            value={formData.phoneNumber}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="md:col-span-2 space-y-2">
+                                    <Label htmlFor="issuingAuthority">Issuing Authority</Label>
+                                    <Input
+                                        id="issuingAuthority"
+                                        name="issuingAuthority"
+                                        required
+                                        className="h-12 border-slate-200 focus:ring-blue-500"
+                                        placeholder="e.g. Ministry of Industry"
+                                        value={formData.issuingAuthority}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="issuedAt">Issue Date</Label>
+                                    <Input
+                                        id="issuedAt"
+                                        name="issuedAt"
+                                        type="date"
+                                        required
+                                        className="h-12 border-slate-200"
+                                        value={formData.issuedAt}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="expiresAt">Expiry Date</Label>
+                                    <Input
+                                        id="expiresAt"
+                                        name="expiresAt"
+                                        type="date"
+                                        required
+                                        className="h-12 border-slate-200"
+                                        value={formData.expiresAt}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Verification Links */}
+                            <div className="space-y-4">
+                                <Label className="text-base font-bold text-slate-900">Verification Links</Label>
+                                <div className="space-y-3">
+                                    {links.map((link, idx) => (
+                                        <Input
+                                            key={idx}
+                                            type="url"
+                                            className="h-12 border-slate-200"
+                                            placeholder="https://official-registry.gov/verify/..."
+                                            value={link}
+                                            onChange={(e) => handleLinkChange(idx, e.target.value)}
+                                        />
+                                    ))}
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleAddLink}
+                                        className="text-blue-600 hover:text-blue-700 p-0 h-auto"
+                                    >
+                                        + Add Another Link
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Image Upload */}
+                            <div className="space-y-4">
+                                <Label className="text-base font-bold text-slate-900">Evidence Photos (Official Scans)</Label>
+                                <div className="bg-slate-50 p-6 rounded-xl border-2 border-dashed border-slate-200">
+                                    <ImageUpload initialImages={photos} onUpload={setPhotos} maxImages={5} />
+                                    <p className="text-xs text-slate-500 mt-4 flex items-center gap-2">
+                                        <Shield className="h-3 w-3" />
+                                        Upload clear photos of commercial register and tax permits.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-start gap-3">
+                                <Shield className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+                                <p className="text-xs text-slate-600 leading-relaxed">
+                                    <strong>Institutional Shield:</strong> By submitting, you authorize Meetbarter to verify these details. False information will lead to permanent account suspension.
+                                </p>
+                            </div>
+
+                            <Button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full h-14 text-lg font-bold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all rounded-xl"
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                        Processing Protocol...
+                                    </>
+                                ) : (
+                                    "Submit for Verification"
+                                )}
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

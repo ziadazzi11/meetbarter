@@ -1,5 +1,9 @@
 {
     "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "strict": true,
+        "forceConsistentCasingInFileNames": true
+    },
     "exclude": [
         "node_modules",
         "test",

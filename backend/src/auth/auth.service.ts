@@ -8,6 +8,7 @@ import { SignalIngestionService } from '../ads/signal-ingestion.service';
 import * as crypto from 'crypto';
 
 import { UsersService } from '../users/users.service';
+import { EncryptionService } from '../security/encryption.service';
 
 @Injectable()
 export class AuthService {
@@ -67,7 +68,8 @@ export class AuthService {
                 id: user.id,
                 email: user.email,
                 fullName: user.fullName,
-                role: user.role
+                role: user.role,
+                idCardStatus: user.idCardStatus
             }
         };
     }
@@ -166,7 +168,7 @@ export class AuthService {
                     country: data.country || 'Lebanon'
                 }
             });
-        } catch (error) {
+        } catch (error: any) {
             if (error.code === 'P2002') {
                 throw new ConflictException('Email already exists');
             }

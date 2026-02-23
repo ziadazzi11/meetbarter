@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Param, Put, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { PermissionGuard } from '../common/guards/permission.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../security/security.types';
@@ -11,8 +12,8 @@ export class UsersController {
 
     @Get('me')
     @UseGuards(JwtAuthGuard)
-    findMe() {
-        return this.usersService.findMe();
+    findMe(@Request() req: any) {
+        return this.usersService.findMe(req.user.sub);
     }
 
     @Get('pending-businesses')
@@ -58,8 +59,10 @@ export class UsersController {
     }
 
     @Get(':id/profile')
-    getProfile(@Param('id') id: string) {
-        return this.usersService.getPublicProfile(id);
+    @UseGuards(OptionalJwtAuthGuard)
+    getProfile(@Param('id') id: string, @Request() req: any) {
+        const viewerId = req.user?.sub;
+        return this.usersService.getPublicProfile(id, viewerId);
     }
 
     @Put(':id/profile')
@@ -166,6 +169,12 @@ export class UsersController {
     upgradeSubscription(@Param('id') id: string) {
         // Mock Payment: Just upgrade to PREMIUM
         return this.usersService.upgradeSubscription(id, 'PREMIUM');
+    }
+
+    @Post(':id/upload-id')
+    @UseGuards(JwtAuthGuard)
+    uploadId(@Param('id') id: string, @Body('idCardUrl') idCardUrl: string) {
+        return this.usersService.updateIdCard(id, idCardUrl);
     }
 
     @Post('social-login')

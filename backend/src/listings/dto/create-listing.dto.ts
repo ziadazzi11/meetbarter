@@ -4,24 +4,24 @@ export class CreateListingDto {
     @IsString()
     @IsNotEmpty()
     @Matches(/^(?:(?!(?:\d[\s-]*){8,}).)*$/, { message: 'Title cannot contain phone numbers. Contact info is shared after trade approval.' })
-    title: string;
+    title!: string;
 
     @IsString()
     @IsNotEmpty()
     @Matches(/^(?:(?!(?:\d[\s-]*){8,}).)*$/, { message: 'Description cannot contain phone numbers. Contact info is shared after trade approval.' })
-    description: string;
+    description!: string;
 
     @IsInt()
     @Min(0)
-    priceVP: number;
+    priceVP!: number;
 
     @IsString()
     @IsNotEmpty()
-    categoryId: string;
+    categoryId!: string;
 
     @IsString()
     @IsNotEmpty()
-    sellerId: string;
+    sellerId!: string;
 
     @IsString()
     @IsOptional()

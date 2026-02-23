@@ -20,31 +20,45 @@ export default function SignupPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [agreeToTerms, setAgreeToTerms] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
     const { signup } = useAuth();
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const newErrors: Record<string, string> = {};
 
-        if (!agreeToTerms) {
-            toast.error('Please agree to the terms and conditions');
+        if (!name) newErrors.name = 'Full name is required';
+        if (!email) newErrors.email = 'Email is required';
+        if (!password) {
+            newErrors.password = 'Password is required';
+        } else if (password.length < 8) {
+            newErrors.password = 'Password must be at least 8 characters';
+        }
+        if (!agreeToTerms) newErrors.terms = 'You must agree to the terms';
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            if (newErrors.terms && Object.keys(newErrors).length === 1) {
+                toast.error('Please agree to the terms and conditions');
+            }
             return;
         }
 
+        setErrors({});
         setIsLoading(true);
 
         try {
             await signup(name, email, password);
-            // Success is usually handled by auth context or redirect
-            // toast.success('Account created! Welcome to TrustTrade'); 
             router.push('/dashboard');
-        } catch (error) {
+        } catch {
             toast.error('Failed to create account. Please try again.');
         } finally {
             setIsLoading(false);
         }
     };
+    industrial
 
     const handleSocialSignup = (provider: 'Google' | 'Facebook') => {
         // Redirect to backend OAuth endpoint which handles the handshake
@@ -109,7 +123,7 @@ export default function SignupPage() {
 
                             <div className="mt-8 p-6 rounded-lg bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/20">
                                 <p className="text-sm italic text-muted-foreground">
-                                    "Join us in building a compassionate economy. Your skills and goods have value here, regardless of market prices."
+                                    &quot;Join us in building a compassionate economy. Your skills and goods have value here, regardless of market prices.&quot;
                                 </p>
                             </div>
                         </motion.div>

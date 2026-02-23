@@ -7,6 +7,7 @@ import Link from "next/link";
 import ExpirationBadge from "@/components/ExpirationBadge";
 import ActivityBadge from "@/components/ActivityBadge";
 import BusinessBadge from "@/components/BusinessBadge";
+import { UserIdentityBadge } from "@/components/UserIdentityBadge";
 
 export default function ListingDetails() {
     const { id } = useParams();
@@ -150,7 +151,7 @@ export default function ListingDetails() {
                             )}
                         </div>
 
-                        <div className="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                        <div className="mt-4 p-3 bg-indigo-50 rounded-lg border-indigo-100">
                             <p className="text-[11px] text-indigo-700 leading-tight">
                                 <strong>Valuation Notice:</strong> This item's <strong>{listing.priceVP} VP</strong> value is algorithmically verified against market Reference Values, condition, and origin to ensure a fair and non-inflationary barter economy.
                             </p>
@@ -159,17 +160,24 @@ export default function ListingDetails() {
 
                     <div className="bg-gray-50 rounded-xl p-5 mb-8 border border-gray-100">
                         <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Seller Information</div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className="font-bold text-gray-900 text-lg">{listing.seller.fullName}</span>
-                            <BusinessBadge isBusiness={listing.seller.isBusiness} businessName={listing.seller.businessName} />
-                        </div>
-                        <div className="text-sm text-gray-600 mb-4">Trust Score: <span className="font-bold text-green-600">{listing.seller.globalTrustScore}</span></div>
-
-                        <ActivityBadge
-                            variant="block"
-                            lastSeenAt={sellerActivity?.lastSeenAt}
-                            averageReplyHours={sellerActivity?.averageReplyHours}
+                        <UserIdentityBadge
+                            user={{
+                                id: listing.sellerId,
+                                fullName: listing.seller.fullName,
+                                globalTrustScore: listing.seller.globalTrustScore || 0,
+                                completedTrades: listing.seller._count?.sellerTrades + listing.seller._count?.buyerTrades || 0,
+                                country: listing.seller.country,
+                                userAchievements: listing.seller.userAchievements
+                            }}
+                            size="md"
                         />
+                        <div className="mt-4">
+                            <ActivityBadge
+                                variant="block"
+                                lastSeenAt={sellerActivity?.lastSeenAt}
+                                averageReplyHours={sellerActivity?.averageReplyHours}
+                            />
+                        </div>
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-4 mt-8">
